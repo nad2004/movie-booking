@@ -1,0 +1,101 @@
+import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
+import { errorResponse } from "../utils/response.js";
+
+// Middleware xác thực token
+export const authenticateToken = async (req, res, next) => {
+  try {
+    // Lấy token từ header
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+
+    if (!token) {
+      return errorResponse(res, "Không tìm thấy token xác thực", 401);
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Kiểm tra user còn tồn tại
+    const user = await User.findById(decoded.userId).select("-password");
+    if (!user) {
+      return errorResponse(res, "Token không hợp lệ", 401);
+    }
+
+    // Attach user info vào request
+    req.userId = decoded.userId;
+    req.userRole = decoded.role;
+    req.user = user;
+
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return errorResponse(res, "Token đã hết hạn", 401);
+    }
+    if (error.name === "JsonWebTokenError") {
+      return errorResponse(res, "Token không hợp lệ", 401);
+    }
+    console.error("Auth middleware error:", error);
+    return errorResponse(res, "Lỗi xác thực", 500);
+  }
+};
+
+// Middleware kiểm tra role (dùng sau authenticateToken)
+export const authorize = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.userRole) {
+      return errorResponse(res, "Chưa xác thực", 401);
+    }
+
+    if (!allowedRoles.includes(req.userRole)) {
+      return errorResponse(res, "Bạn không có quyền truy cập", 403);
+    }
+
+    next();
+  };
+};
+
+// Middleware cho optional authentication (không bắt buộc đăng nhập)
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId).select("-password");
+
+      if (user) {
+        req.userId = decoded.userId;
+        req.userRole = decoded.role;
+        req.user = user;
+      }
+    }
+
+    next();
+  } catch (error) {
+    // Không báo lỗi, chỉ không có thông tin user
+    next();
+  }
+};
+
+// Middleware kiểm tra quyền theo permissions cụ thể
+export const checkPermission = (permission) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return errorResponse(res, "Chưa xác thực", 401);
+    }
+
+    // Super admin có tất cả quyền
+    if (req.userRole === "super-admin") {
+      return next();
+    }
+
+    // Kiểm tra permission
+    if (!req.user.permissions || !req.user.permissions.includes(permission)) {
+      return errorResponse(res, `Bạn không có quyền ${permission}`, 403);
+    }
+
+    next();
+  };
+};
