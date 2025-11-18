@@ -3,6 +3,8 @@ import Movie from "../models/movie.model.js";
 import User from "../models/user.model.js";
 import Schedule from "../models/schedule.model.js";
 import { successResponse, errorResponse } from "../utils/response.js";
+import ExcelJS from "exceljs";
+import PDFDocument from "pdfkit";
 
 const statisticsController = {
   // Tổng quan hệ thống
@@ -470,12 +472,201 @@ const statisticsController = {
   // Export báo cáo
   exportReport: async (req, res) => {
     try {
-      const { type, startDate, endDate, format = "json" } = req.query;
+      const { type, startDate, endDate, format = "excel" } = req.query;
 
-      // TODO: Implement export to Excel/PDF
-      // Có thể dùng thư viện: exceljs, pdfkit
+      const start = startDate ? new Date(startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
+      const end = endDate ? new Date(endDate) : new Date();
 
-      return successResponse(res, { type, startDate, endDate, format }, "Export báo cáo sẽ được implement sau");
+      // Get data based on type
+      let data = [];
+      let filename = "";
+      let title = "";
+
+      if (type === "revenue" || !type) {
+        const bookings = await Booking.find({
+          createdAt: { $gte: start, $lte: end },
+          status: "Hoàn tất",
+        })
+          .populate("customer", "fullName email")
+          .populate("schedule", "movie showDate")
+          .lean();
+
+        data = bookings.map((b) => ({
+          "Mã đặt vé": b.bookingCode,
+          "Khách hàng": b.customer?.fullName || "N/A",
+          "Email": b.customer?.email || "N/A",
+          "Phim": b.movieTitle,
+          "Rạp": b.theaterName,
+          "Ngày chiếu": b.showDate?.toISOString().split("T")[0] || "N/A",
+          "Số ghế": b.seats?.length || 0,
+          "Tổng tiền": b.totalAmount,
+          "Ngày đặt": b.createdAt.toISOString().split("T")[0],
+        }));
+
+        title = "Báo cáo doanh thu";
+        filename = `revenue_${start.toISOString().split("T")[0]}_${end.toISOString().split("T")[0]}`;
+      } else if (type === "bookings") {
+        const bookings = await Booking.find({
+          createdAt: { $gte: start, $lte: end },
+        })
+          .populate("customer", "fullName email")
+          .lean();
+
+        data = bookings.map((b) => ({
+          "Mã đặt vé": b.bookingCode,
+          "Khách hàng": b.customer?.fullName || "N/A",
+          "Trạng thái": b.status,
+          "Tổng tiền": b.totalAmount,
+          "Ngày đặt": b.createdAt.toISOString().split("T")[0],
+        }));
+
+        title = "Báo cáo đặt vé";
+        filename = `bookings_${start.toISOString().split("T")[0]}_${end.toISOString().split("T")[0]}`;
+      } else if (type === "customers") {
+        // ✅ FIX: Extract customer stats logic directly instead of calling controller method
+        const topCustomers = await Booking.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: start, $lte: end },
+              status: "Hoàn tất",
+            },
+          },
+          {
+            $group: {
+              _id: "$customer",
+              totalSpent: { $sum: "$totalAmount" },
+              totalBookings: { $sum: 1 },
+              totalTickets: { $sum: { $size: "$seats" } },
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "_id",
+              foreignField: "_id",
+              as: "customerInfo",
+            },
+          },
+          {
+            $unwind: "$customerInfo",
+          },
+          {
+            $project: {
+              _id: 1,
+              fullName: "$customerInfo.fullName",
+              email: "$customerInfo.email",
+              membershipLevel: "$customerInfo.membershipLevel",
+              totalSpent: 1,
+              totalBookings: 1,
+              totalTickets: 1,
+            },
+          },
+          {
+            $sort: { totalSpent: -1 },
+          },
+          {
+            $limit: 100,
+          },
+        ]);
+
+        data = topCustomers.map((c) => ({
+          "Tên": c.fullName || "N/A",
+          "Email": c.email || "N/A",
+          "Hạng thành viên": c.membershipLevel || "Bạc",
+          "Tổng chi tiêu": c.totalSpent || 0,
+          "Số đơn": c.totalBookings || 0,
+          "Số vé": c.totalTickets || 0,
+        }));
+
+        title = "Báo cáo khách hàng";
+        filename = `customers_${start.toISOString().split("T")[0]}_${end.toISOString().split("T")[0]}`;
+      }
+
+      // ✅ FIX: Export to Excel or PDF
+      if (format === "excel") {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet(title);
+
+        // Add header
+        if (data.length > 0) {
+          worksheet.columns = Object.keys(data[0]).map((key) => ({
+            header: key,
+            key: key,
+            width: 20,
+          }));
+
+          // Add data
+          data.forEach((row) => {
+            worksheet.addRow(row);
+          });
+
+          // Style header
+          worksheet.getRow(1).font = { bold: true };
+          worksheet.getRow(1).fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFE0E0E0" },
+          };
+        }
+
+        // Set headers
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}.xlsx"`);
+
+        await workbook.xlsx.write(res);
+        res.end();
+      } else if (format === "pdf") {
+        const doc = new PDFDocument({ margin: 50 });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}.pdf"`);
+        doc.pipe(res);
+
+        // Add title
+        doc.fontSize(20).text(title, { align: "center" });
+        doc.moveDown();
+
+        // Add date range
+        doc.fontSize(12).text(`Từ: ${start.toLocaleDateString("vi-VN")} đến ${end.toLocaleDateString("vi-VN")}`, {
+          align: "center",
+        });
+        doc.moveDown(2);
+
+        // Add table
+        if (data.length > 0) {
+          const headers = Object.keys(data[0]);
+          const colWidth = 500 / headers.length;
+
+          // Headers
+          doc.fontSize(10).font("Helvetica-Bold");
+          let x = 50;
+          headers.forEach((header) => {
+            doc.text(header, x, doc.y, { width: colWidth });
+            x += colWidth;
+          });
+          doc.moveDown();
+
+          // Data
+          doc.font("Helvetica");
+          data.forEach((row, index) => {
+            if (doc.y > 700) {
+              doc.addPage();
+            }
+            x = 50;
+            headers.forEach((header) => {
+              doc.text(String(row[header] || ""), x, doc.y, { width: colWidth });
+              x += colWidth;
+            });
+            doc.moveDown();
+          });
+        }
+
+        doc.end();
+      } else {
+        return successResponse(res, data, "Export thành công", 200);
+      }
     } catch (error) {
       console.error("Export report error:", error);
       return errorResponse(res, "Lỗi server", 500);

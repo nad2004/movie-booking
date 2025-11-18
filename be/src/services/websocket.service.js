@@ -199,15 +199,46 @@ class WebSocketService {
         return;
       }
 
-      // Hold seats
+      // Hold seats using atomic operation
       const holdUntil = new Date(Date.now() + holdDuration * 60 * 1000);
-      for (const seatNumber of seatNumbers) {
-        const seat = schedule.seatAvailability.find((s) => s.seatNumber === seatNumber);
-        seat.holdUntil = holdUntil;
-        seat.bookedBy = socket.userId;
-      }
 
-      await schedule.save();
+      const updatedSchedule = await Schedule.findOneAndUpdate(
+        {
+          _id: scheduleId,
+          $and: seatNumbers.map((seatNum) => ({
+            seatAvailability: {
+              $elemMatch: {
+                seatNumber: seatNum,
+                isBooked: false,
+                $or: [{ holdUntil: { $exists: false } }, { holdUntil: null }, { holdUntil: { $lt: new Date() } }],
+              },
+            },
+          })),
+        },
+        {
+          $set: seatNumbers.reduce((update, seatNum) => {
+            update[`seatAvailability.$[seat_${seatNum}].holdUntil`] = holdUntil;
+            update[`seatAvailability.$[seat_${seatNum}].bookedBy`] = socket.userId;
+            return update;
+          }, {}),
+        },
+        {
+          arrayFilters: seatNumbers.map((seatNum) => ({
+            [`seat_${seatNum}.seatNumber`]: seatNum,
+          })),
+          new: true,
+        }
+      );
+
+      if (!updatedSchedule) {
+        socket.emit("seats-hold-failed", {
+          unavailableSeats: seatNumbers.map((seatNumber) => ({
+            seatNumber,
+            reason: "Already held by another user",
+          })),
+        });
+        return;
+      }
 
       // Emit to user
       socket.emit("seats-held", {
@@ -217,10 +248,10 @@ class WebSocketService {
         userId: socket.userId,
       });
 
-      // Broadcast to all users in room
+      // Broadcast to all users in room with updated schedule
       socket.to(`schedule:${scheduleId}`).emit("seats-status-changed", {
         scheduleId,
-        seatAvailability: schedule.seatAvailability,
+        seatAvailability: updatedSchedule.seatAvailability,
         action: "held",
         seatNumbers,
         userId: socket.userId,
@@ -228,13 +259,8 @@ class WebSocketService {
 
       console.log(`User ${socket.userId} held seats ${seatNumbers.join(", ")} in schedule ${scheduleId}`);
 
-      // Auto-release after hold duration
-      setTimeout(
-        async () => {
-          await this.autoReleaseSeats(scheduleId, seatNumbers, socket.userId);
-        },
-        holdDuration * 60 * 1000 + 1000
-      ); // Add 1 second buffer
+      // Auto-release is now handled by cleanup service with Redis TTL
+      // No need for setTimeout which is unreliable across server restarts
     } catch (error) {
       console.error("Hold seats error:", error);
       socket.emit("error", { message: "Failed to hold seats" });
@@ -392,6 +418,63 @@ class WebSocketService {
         }
       }
     });
+
+    // Auto-release any seats held by this user
+    if (socket.userId) {
+      this.autoReleaseUserSeats(socket.userId);
+    }
+
+    // Clean up socket references
+    socket.removeAllListeners();
+  }
+
+  // Auto-release seats held by disconnected user
+  async autoReleaseUserSeats(userId) {
+    try {
+      const Schedule = (await import("../models/schedule.model.js")).default;
+
+      // Find all schedules with seats held by this user
+      const schedulesWithHeldSeats = await Schedule.find({
+        seatAvailability: {
+          $elemMatch: {
+            bookedBy: userId,
+            holderType: "user",
+            isBooked: false,
+            holdUntil: { $gte: new Date() },
+          },
+        },
+      });
+
+      for (const schedule of schedulesWithHeldSeats) {
+        const heldSeats = schedule.seatAvailability.filter(
+          (seat) => seat.bookedBy && seat.bookedBy.toString() === userId && seat.holderType === "user" && !seat.isBooked
+        );
+
+        if (heldSeats.length > 0) {
+          // Release seats
+          heldSeats.forEach((seat) => {
+            seat.holdUntil = null;
+            seat.bookedBy = null;
+            seat.holderType = "user";
+          });
+
+          await schedule.save();
+
+          // Broadcast release to room
+          this.io.to(`schedule:${schedule._id}`).emit("seats-status-changed", {
+            scheduleId: schedule._id,
+            seatAvailability: schedule.seatAvailability,
+            action: "auto-released",
+            seatNumbers: heldSeats.map((s) => s.seatNumber),
+            reason: "User disconnected",
+          });
+
+          console.log(`Auto-released ${heldSeats.length} seats for disconnected user ${userId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Auto release user seats error:", error);
+    }
   }
 
   // Public method to emit events from other parts of the app

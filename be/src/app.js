@@ -13,6 +13,7 @@ import redisService from "./services/redis.service.js";
 import websocketService from "./services/websocket.service.js";
 import { specs, swaggerUi } from "./config/swagger.js";
 import { successResponse, errorResponse } from "./utils/response.js";
+import { errorHandler, notFoundHandler } from "./utils/errors.js";
 
 const app = express();
 
@@ -49,9 +50,10 @@ const limiter = rateLimit({
 app.use("/api/", limiter);
 
 // Giới hạn tỷ lệ chặt chẽ hơn cho các endpoint xác thực
+// Trong development: 100 requests/15 phút, Production: 5 requests/15 phút
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === "production" ? 5 : 100,
   message: "Quá nhiều lần đăng nhập, vui lòng thử lại sau 15 phút",
 });
 app.use("/api/auth/login", authLimiter);
@@ -64,15 +66,22 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 // -------ROUTES--------
 
 // Health check
-app.get("/health", (req, res) => {
-  res.json({
-    status: "OK",
+app.get("/health", async (req, res) => {
+  const mongoStatus = mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
+  const redisStatus = redisService.isConnected ? "Connected" : "Disconnected";
+  const websocketStatus = websocketService.io ? "Active" : "Inactive";
+
+  const allServicesHealthy =
+    mongoStatus === "Connected" && (process.env.REDIS_ENABLED === "false" || redisStatus === "Connected");
+
+  res.status(allServicesHealthy ? 200 : 503).json({
+    status: allServicesHealthy ? "OK" : "DEGRADED",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     services: {
-      mongodb: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
-      redis: redisService.isConnected ? "Connected" : "Disconnected",
-      websocket: websocketService.io ? "Active" : "Inactive",
+      mongodb: mongoStatus,
+      redis: process.env.REDIS_ENABLED === "false" ? "Disabled" : redisStatus,
+      websocket: process.env.WEBSOCKET_ENABLED === "false" ? "Disabled" : websocketStatus,
     },
   });
 });
@@ -83,46 +92,9 @@ app.use("/api", routes);
 // ------ERROR HANDLING---------
 
 // Xử lý lỗi 404
-app.use((req, res) => {
-  return errorResponse(res, "Endpoint không tồn tại", 404);
-});
+app.use(notFoundHandler);
 
 // Trình xử lý lỗi toàn cục
-app.use((err, req, res, next) => {
-  console.error("Global error:", err);
-
-  // Lỗi validation của Mongoose
-  if (err.name === "ValidationError") {
-    const errors = Object.values(err.errors).map((e) => e.message);
-    return res.status(400).json({
-      success: false,
-      message: "Lỗi validation",
-      errors,
-    });
-  }
-
-  // Lỗi khóa trùng lặp của Mongoose
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern)[0];
-    return errorResponse(res, `${field} đã tồn tại trong hệ thống`, 400);
-  }
-
-  // Lỗi cast của Mongoose
-  if (err.name === "CastError") {
-    return errorResponse(res, "ID không hợp lệ", 400);
-  }
-
-  // Lỗi từ Multer
-  if (err.name === "MulterError") {
-    return errorResponse(res, err.message, 400);
-  }
-
-  // Lỗi mặc định
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Lỗi server",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  });
-});
+app.use(errorHandler);
 
 export default app;

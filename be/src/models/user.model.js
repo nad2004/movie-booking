@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 const { Schema } = mongoose;
 
 const userSchema = new Schema(
   {
     username: {
       type: String,
-      required: function () {
-        return this.authProvider === "local";
-      },
+      required: false, // ✅ FIX: Username is optional, email is the primary identifier
       unique: true,
       sparse: true,
       trim: true,
@@ -55,11 +54,47 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: {
-        values: ["customer", "admin", "super-admin"],
+        values: ["customer", "admin", "super-admin", "staff"],
         message: "{VALUE} không phải là role hợp lệ",
       },
       default: "customer",
       index: true,
+    },
+    // Staff-specific information
+    staffInfo: {
+      staffId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        index: true,
+      },
+      assignedTheater: {
+        type: Schema.Types.ObjectId,
+        ref: "Theater",
+      },
+      position: {
+        type: String,
+        enum: ["cashier", "usher", "supervisor", "manager"],
+      },
+      shift: {
+        type: String,
+        enum: ["morning", "afternoon", "evening", "night"],
+      },
+      hireDate: {
+        type: Date,
+      },
+      salary: {
+        type: Number,
+        min: 0,
+      },
+      isActive: {
+        type: Boolean,
+        default: true,
+      },
+      permissions: {
+        type: [String],
+        default: [],
+      },
     },
     authProvider: {
       type: String,
@@ -178,16 +213,24 @@ userSchema.virtual("nextMembershipLevel").get(function () {
 
 // === PRE-SAVE MIDDLEWARE ===
 userSchema.pre("save", async function (next) {
+  // ✅ FIX #2: Hash password consistently
+  if (this.isModified("password") && this.authProvider === "local") {
+    try {
+      // ✅ FIX #2: Luôn hash nếu password được modified
+      // Không cần check prefix vì controller đã gửi plain password
+      const salt = await bcrypt.genSalt(12); // ✅ Consistent salt rounds
+      this.password = await bcrypt.hash(this.password, salt);
+      this.passwordChangedAt = new Date();
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   // Auto-upgrade membership
   if (this.loyaltyPoints >= 5000 && this.membershipLevel !== "Bạch kim") {
     this.membershipLevel = "Bạch kim";
   } else if (this.loyaltyPoints >= 1000 && this.membershipLevel === "Bạc") {
     this.membershipLevel = "Vàng";
-  }
-
-  // Track password changes
-  if (this.isModified("password")) {
-    this.passwordChangedAt = new Date();
   }
 
   next();

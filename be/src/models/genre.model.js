@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { generateSlug } from "../utils/slug.js";
 const { Schema } = mongoose;
 
 const genreSchema = new Schema(
@@ -62,13 +63,7 @@ genreSchema.virtual("movieCount", {
 // === PRE-SAVE MIDDLEWARE ===
 genreSchema.pre("save", function (next) {
   if (this.isModified("name") && !this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .trim();
+    this.slug = generateSlug(this.name);
   }
   next();
 });

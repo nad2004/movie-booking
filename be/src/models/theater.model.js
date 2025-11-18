@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { generateSlug } from "../utils/slug.js";
 const { Schema } = mongoose;
 
 const seatSchema = new Schema({
@@ -133,12 +134,9 @@ const theaterSchema = new Schema(
     },
     rooms: {
       type: [roomSchema],
-      validate: {
-        validator: function (rooms) {
-          return rooms.length > 0;
-        },
-        message: "Rạp phải có ít nhất 1 phòng chiếu",
-      },
+      default: [],
+      // Removed validation to allow creating theater without rooms initially
+      // Rooms can be added later via update endpoint
     },
     amenities: {
       type: [String],
@@ -187,23 +185,17 @@ theaterSchema.index({ name: "text", address: "text" });
 
 // === VIRTUAL FIELDS ===
 theaterSchema.virtual("totalRooms").get(function () {
-  return this.rooms.length;
+  return this.rooms?.length || 0;
 });
 
 theaterSchema.virtual("totalCapacity").get(function () {
-  return this.rooms.reduce((sum, room) => sum + room.totalSeats, 0);
+  return this.rooms?.reduce((sum, room) => sum + room.totalSeats, 0) || 0;
 });
 
 // === PRE-SAVE MIDDLEWARE ===
 theaterSchema.pre("save", function (next) {
   if (this.isModified("name") && !this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .trim();
+    this.slug = generateSlug(this.name);
   }
   next();
 });

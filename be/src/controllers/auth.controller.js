@@ -15,6 +15,11 @@ const authController = {
         return errorResponse(res, "Email, mật khẩu và họ tên là bắt buộc", 400);
       }
 
+      // Validate password strength
+      if (password.length < 6) {
+        return errorResponse(res, "Mật khẩu phải có ít nhất 6 ký tự", 400);
+      }
+
       // Kiểm tra email đã tồn tại
       const existingUser = await User.findOne({ email: email.toLowerCase() });
       if (existingUser) {
@@ -29,22 +34,19 @@ const authController = {
         }
       }
 
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
+      // Không hash ở đây, để model pre-save hook xử lý
       // Tạo user mới
       const newUser = new User({
         username: username?.toLowerCase(),
         email: email.toLowerCase(),
-        password: hashedPassword,
+        password: password, // Plain password, sẽ được hash trong pre-save hook
         fullName,
         phoneNumber,
         authProvider: "local",
         role: "customer",
       });
 
-      await newUser.save();
+      await newUser.save(); // Pre-save hook sẽ hash password
 
       // Tạo token
       // const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -217,10 +219,9 @@ const authController = {
         return errorResponse(res, "Mật khẩu cũ không đúng", 401);
       }
 
-      // Hash mật khẩu mới
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
-      await user.save();
+      //    Không hash ở đây, để pre-save hook xử lý
+      user.password = newPassword; //  Plain password
+      await user.save(); //  Pre-save hook sẽ hash
 
       return successResponse(res, {}, "Đổi mật khẩu thành công");
     } catch (error) {
@@ -244,17 +245,28 @@ const authController = {
       }
 
       // Tạo reset token
-      // const resetToken = jwt.sign({ userId: user._id, purpose: "reset-password" }, process.env.JWT_SECRET, {
-      //   expiresIn: "1h",
-      // });
       const resetToken = generatePasswordResetToken(user._id);
 
-      // TODO: Gửi email với link reset
-      // const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-      // await sendEmail(user.email, 'Reset Password', resetLink);
+      //  : Gửi email với link reset
+      const emailService = (await import("../services/email.service.js")).default;
+      const emailResult = await emailService.sendPasswordResetEmail(user, resetToken);
 
-      // Trong sản phẩm thực tế, token này chỉ nên được gửi qua email.
-      return successResponse(res, { resetToken }, "Đã gửi link reset mật khẩu đến email");
+      if (!emailResult.success) {
+        console.error("Failed to send password reset email:", emailResult.error);
+        // Không fail request nếu email gửi lỗi, chỉ log
+      } else {
+        console.log(` Password reset email sent successfully to ${user.email}`);
+      }
+
+      //  DEV ONLY: Log reset URL for testing
+      if (process.env.NODE_ENV === "development") {
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+        console.log(`🔗 Reset URL (DEV ONLY): ${resetUrl}`);
+      }
+
+      // Trong production, không nên trả về token trong response
+      // Chỉ trả về thông báo đã gửi email
+      return successResponse(res, {}, "Đã gửi link reset mật khẩu đến email của bạn. Vui lòng kiểm tra hộp thư.");
     } catch (error) {
       console.error("Forgot password error:", error);
       return errorResponse(res, "Lỗi server không xác định");
@@ -270,6 +282,10 @@ const authController = {
         return errorResponse(res, "Vui lòng nhập đầy đủ thông tin", 400);
       }
 
+      if (newPassword.length < 6) {
+        return errorResponse(res, "Mật khẩu mới phải có ít nhất 6 ký tự", 400);
+      }
+
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       if (decoded.purpose !== "reset-password") {
@@ -281,10 +297,9 @@ const authController = {
         return errorResponse(res, "Không tìm thấy người dùng", 404);
       }
 
-      // Hash mật khẩu mới
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
-      await user.save();
+      //    Không hash ở đây, để pre-save hook xử lý
+      user.password = newPassword; //  Plain password
+      await user.save(); //  Pre-save hook sẽ hash
 
       return successResponse(res, {}, "Reset mật khẩu thành công");
     } catch (error) {

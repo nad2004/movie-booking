@@ -1,5 +1,7 @@
 import crypto from "crypto";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 class MoMoService {
   constructor() {
@@ -10,7 +12,15 @@ class MoMoService {
     this.returnUrl = process.env.MOMO_RETURN_URL || "http://localhost:5000/api/payment/momo-return";
     this.notifyUrl = process.env.MOMO_NOTIFY_URL || "http://localhost:5000/api/payment/momo-notify";
 
-    if (this.partnerCode && this.accessKey && this.secretKey) {
+    const hasRealCredentials =
+      this.partnerCode &&
+      this.accessKey &&
+      this.secretKey &&
+      !this.partnerCode.includes("your_") &&
+      !this.accessKey.includes("your_") &&
+      !this.secretKey.includes("your_");
+
+    if (hasRealCredentials) {
       console.log("MoMo initialized");
     } else {
       console.warn("MoMo credentials not found");

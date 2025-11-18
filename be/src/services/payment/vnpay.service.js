@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import querystring from "qs";
 import moment from "moment";
+import dotenv from "dotenv";
+dotenv.config();
 
 class VNPayService {
   constructor() {
@@ -121,11 +123,12 @@ class VNPayService {
   }
 
   // Verify IPN (Instant Payment Notification)
-  verifyIpn(vnpParams) {
+  async verifyIpn(vnpParams, booking = null) {
     try {
       const secureHash = vnpParams["vnp_SecureHash"];
       const orderId = vnpParams["vnp_TxnRef"];
       const rspCode = vnpParams["vnp_ResponseCode"];
+      const amount = parseInt(vnpParams["vnp_Amount"]) / 100; // Convert from smallest currency unit
 
       delete vnpParams["vnp_SecureHash"];
       delete vnpParams["vnp_SecureHashType"];
@@ -136,40 +139,59 @@ class VNPayService {
       const hmac = crypto.createHmac("sha512", this.hashSecret);
       const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
-      let checkOrderId = true; // TODO: Check orderId exists in DB
-      let checkAmount = true; // TODO: Check amount matches
+      // ✅ FIX: Verify signature first
+      if (secureHash !== signed) {
+        console.warn(`VNPay IPN signature verification failed for order ${orderId}`);
+        return {
+          RspCode: "97",
+          Message: "Invalid signature",
+        };
+      }
 
-      if (secureHash === signed) {
-        if (checkOrderId) {
-          if (checkAmount) {
-            if (rspCode === "00") {
-              console.log(`VNPay IPN verified successfully for order ${orderId}`);
-              return {
-                RspCode: "00",
-                Message: "Success",
-              };
-            } else {
-              return {
-                RspCode: "00",
-                Message: "Success",
-              };
-            }
+      // ✅ FIX: Check orderId exists in DB if booking provided
+      let checkOrderId = true;
+      if (booking) {
+        const bookingCode = orderId.split("_")[0];
+        checkOrderId = booking.bookingCode === bookingCode;
+        if (!checkOrderId) {
+          console.warn(`VNPay IPN orderId mismatch: expected ${booking.bookingCode}, got ${orderId}`);
+        }
+      }
+
+      // ✅ FIX: Check amount matches
+      let checkAmount = true;
+      if (booking) {
+        // Allow small difference due to rounding (within 1 VND)
+        checkAmount = Math.abs(booking.totalAmount - amount) < 1;
+        if (!checkAmount) {
+          console.warn(`VNPay IPN amount mismatch: expected ${booking.totalAmount}, got ${amount}`);
+        }
+      }
+
+      if (checkOrderId) {
+        if (checkAmount) {
+          if (rspCode === "00") {
+            console.log(`VNPay IPN verified successfully for order ${orderId}`);
+            return {
+              RspCode: "00",
+              Message: "Success",
+            };
           } else {
             return {
-              RspCode: "04",
-              Message: "Amount invalid",
+              RspCode: "00",
+              Message: "Success",
             };
           }
         } else {
           return {
-            RspCode: "01",
-            Message: "Order not found",
+            RspCode: "04",
+            Message: "Amount invalid",
           };
         }
       } else {
         return {
-          RspCode: "97",
-          Message: "Invalid signature",
+          RspCode: "01",
+          Message: "Order not found",
         };
       }
     } catch (error) {

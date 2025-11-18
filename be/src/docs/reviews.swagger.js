@@ -50,6 +50,15 @@
  *         name: id
  *         required: true
  *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating: { type: number, minimum: 1, maximum: 5 }
+ *               comment: { type: string }
  *     responses:
  *       200:
  *         description: Cập nhật thành công

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { generateSlug } from "../utils/slug.js";
 const { Schema } = mongoose;
 
 const productSchema = new Schema(
@@ -130,6 +131,9 @@ const productSchema = new Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    // ✅ FIX #8: Enable optimistic locking cho Product
+    versionKey: "__v",
+    optimisticConcurrency: true,
   }
 );
 
@@ -160,15 +164,9 @@ productSchema.virtual("discountAmount").get(function () {
 
 // === PRE-SAVE MIDDLEWARE ===
 productSchema.pre("save", function (next) {
-  // Auto-generate slug
+  // Auto-generate slug using slugify package
   if (this.isModified("name") && !this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .trim();
+    this.slug = generateSlug(this.name);
   }
 
   // Auto-set inStock based on quantity

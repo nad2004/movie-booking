@@ -6,8 +6,8 @@ const { Schema } = mongoose;
 const paymentDetailSchema = new Schema({
   paymentMethod: {
     type: String,
-    enum: ["VNPAY", "MoMo", "ZaloPay", "Tại quầy", "Thẻ tín dụng"],
-    required: true,
+    enum: ["pending", "VNPAY", "MoMo", "ZaloPay", "Tại quầy", "Thẻ tín dụng"],
+    default: "pending",
   },
   transactionId: { type: String }, // Mã giao dịch từ bên thứ 3
   status: {
@@ -182,23 +182,30 @@ bookingSchema.pre("save", function (next) {
     this.bookingCode = `BK${dateStr}${randomStr}`;
   }
 
-  // Validate subtotal
+  // ✅ FIX #15: Auto-calculate subtotal và totalAmount
   this.subtotal = this.ticketsAmount + this.productsAmount;
-
-  // Validate totalAmount
-  if (this.totalAmount !== this.subtotal - this.discountAmount) {
-    return next(new Error("Tổng tiền không khớp với tính toán"));
-  }
+  this.totalAmount = this.subtotal - this.discountAmount;
+  // Remove validation check vì đã auto-calculate
 
   next();
 });
 
 // === INSTANCE METHODS ===
 bookingSchema.methods.canBeCancelled = function () {
-  if (this.status !== "Hoàn tất") return false;
+  // Allow cancellation for pending payment or completed bookings
+  const allowedStatuses = ["Chờ thanh toán", "Hoàn tất"];
+  if (!allowedStatuses.includes(this.status)) return false;
+
   const showDateTime = new Date(`${this.showDate.toISOString().split("T")[0]} ${this.showTime.split(" - ")[0]}`);
   const hoursUntilShow = (showDateTime - new Date()) / (1000 * 60 * 60);
-  return hoursUntilShow > 24; // Chỉ hủy được trước 24h
+
+  // For pending payment, allow cancellation anytime before show
+  if (this.status === "Chờ thanh toán") {
+    return hoursUntilShow > 0;
+  }
+
+  // For completed bookings, must cancel 24h before
+  return hoursUntilShow > 24;
 };
 
 bookingSchema.methods.calculateRefund = function () {

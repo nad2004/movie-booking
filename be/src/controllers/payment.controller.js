@@ -1,11 +1,281 @@
+import mongoose from "mongoose";
+import QRCode from "qrcode";
 import Booking from "../models/booking.model.js";
+import Schedule from "../models/schedule.model.js";
+import User from "../models/user.model.js";
+import Voucher from "../models/voucher.model.js";
+import Product from "../models/product.model.js";
 import vnpayService from "../services/payment/vnpay.service.js";
 import momoService from "../services/payment/momo.service.js";
 import emailService from "../services/email.service.js";
 import smsService from "../services/sms.service.js";
+import websocketService from "../services/websocket.service.js";
+import redisService from "../services/redis.service.js";
 import Notification from "../models/notification.model.js";
-import User from "../models/user.model.js";
 import { successResponse, errorResponse } from "../utils/response.js";
+import { BOOKING_STATUS } from "../constants/booking.js";
+
+/**
+ *  #1-4, #9-10: Helper function để confirm payment
+ * Tập trung logic confirm payment để tránh duplicate code
+ */
+async function confirmPaymentSuccess(booking, paymentMethod, transactionId, paymentInfo = {}) {
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      //  #3: Check double confirmation
+      if (booking.status === BOOKING_STATUS.COMPLETED) {
+        // Đã được confirm rồi, return success
+        return;
+      }
+
+      // Update booking status
+      booking.status = BOOKING_STATUS.COMPLETED;
+      booking.paymentDetails = {
+        paymentMethod,
+        transactionId,
+        status: "Thành công",
+        amount: booking.totalAmount,
+        paymentDate: new Date(),
+        paymentInfo: typeof paymentInfo === "string" ? paymentInfo : JSON.stringify(paymentInfo),
+      };
+
+      //  #9: Generate QR code
+      try {
+        const qrData = JSON.stringify({
+          bookingId: booking._id.toString(),
+          bookingCode: booking.bookingCode,
+          movieTitle: booking.movieTitle,
+          theaterName: booking.theaterName,
+          roomName: booking.roomName,
+          showDate: booking.showDate.toISOString().split("T")[0],
+          showTime: booking.showTime,
+          seats: booking.seats.map((s) => s.seatNumber).join(", "),
+          totalAmount: booking.totalAmount,
+          timestamp: new Date().toISOString(),
+        });
+
+        const qrCodeUrl = await QRCode.toDataURL(qrData, {
+          errorCorrectionLevel: "M",
+          type: "image/png",
+          quality: 0.92,
+          margin: 1,
+          color: {
+            dark: "#000000",
+            light: "#FFFFFF",
+          },
+          width: 256,
+        });
+
+        booking.qrCode = qrCodeUrl;
+      } catch (qrError) {
+        console.error("QR Code generation error:", qrError);
+        booking.qrCode = null;
+      }
+
+      await booking.save({ session });
+
+      //  #1: Confirm seats trong schedule
+      const schedule = await Schedule.findById(booking.schedule).session(session);
+      if (schedule) {
+        await schedule.confirmSeats(
+          booking.seats.map((s) => s.seatNumber),
+          booking._id
+        );
+        await schedule.save({ session });
+
+        // Broadcast qua WebSocket
+        websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
+          scheduleId: booking.schedule,
+          seatAvailability: schedule.seatAvailability,
+          action: "booked",
+          seatNumbers: booking.seats.map((s) => s.seatNumber),
+        });
+      }
+
+      //  #10: Cộng loyalty points cho customer
+      const customer = await User.findById(booking.customer).session(session);
+      if (customer) {
+        const pointsEarned = Math.floor(booking.totalAmount / 10000); // 1 điểm / 10k
+        customer.loyaltyPoints += pointsEarned;
+
+        // Tự động nâng hạng membership
+        const oldLevel = customer.membershipLevel;
+        if (customer.loyaltyPoints >= 1000 && customer.membershipLevel === "Bạc") {
+          customer.membershipLevel = "Vàng";
+        } else if (customer.loyaltyPoints >= 5000 && customer.membershipLevel === "Vàng") {
+          customer.membershipLevel = "Bạch kim";
+        }
+
+        await customer.save({ session });
+
+        // Send notifications (không chờ, không block transaction)
+        Promise.all([
+          emailService.sendBookingConfirmation(booking, customer).catch((err) => console.error("Email error:", err)),
+          customer.phoneNumber
+            ? smsService
+                .sendBookingConfirmation(customer.phoneNumber, booking)
+                .catch((err) => console.error("SMS error:", err))
+            : null,
+          Notification.createNotification({
+            user: customer._id,
+            ...Notification.templates.bookingSuccess(booking),
+          }).catch((err) => console.error("Notification error:", err)),
+        ]).catch((err) => console.error("Notification error:", err));
+
+        // Notification nếu nâng hạng
+        if (oldLevel !== customer.membershipLevel) {
+          Notification.createNotification({
+            user: customer._id,
+            ...Notification.templates.membershipUpgrade(customer.membershipLevel),
+          }).catch((err) => console.error("Membership upgrade notification error:", err));
+        }
+      }
+
+      // Xóa cache
+      redisService.del(`booking:temp:${booking._id}`).catch(() => {});
+      redisService.invalidateScheduleCache(booking.schedule.toString()).catch(() => {});
+    });
+  } finally {
+    await session.endSession();
+  }
+}
+
+/**
+ *  #4: Helper function để release seats khi payment fail
+ *  CRITICAL: Thêm rollback voucher và product
+ */
+async function handlePaymentFailure(booking) {
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      // Check nếu đã được cancel rồi
+      if (booking.status === BOOKING_STATUS.CANCELLED) {
+        return;
+      }
+
+      booking.status = BOOKING_STATUS.CANCELLED;
+      if (booking.paymentDetails) {
+        booking.paymentDetails.status = "Thất bại";
+      }
+      await booking.save({ session });
+
+      // Release seats trong schedule
+      const schedule = await Schedule.findById(booking.schedule).session(session);
+      if (schedule) {
+        await schedule.releaseSeats(booking.seats.map((s) => s.seatNumber));
+        await schedule.save({ session });
+
+        // Broadcast qua WebSocket
+        websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
+          scheduleId: booking.schedule,
+          seatAvailability: schedule.seatAvailability,
+          action: "released",
+          seatNumbers: booking.seats.map((s) => s.seatNumber),
+        });
+      }
+
+      //  CRITICAL: Rollback voucher usage và remove from usedBy array
+      if (booking.appliedVoucher) {
+        await Voucher.findByIdAndUpdate(
+          booking.appliedVoucher,
+          {
+            $inc: { usageCount: -1 },
+            $pull: {
+              usedBy: {
+                bookingId: booking._id,
+              },
+            },
+          },
+          { session }
+        );
+      }
+
+      //  CRITICAL: Restore product stock khi payment fail
+      if (booking.products && booking.products.length > 0) {
+        for (const item of booking.products) {
+          let retries = 3;
+          let restored = false;
+
+          while (retries > 0 && !restored) {
+            try {
+              const product = await Product.findById(item.product).session(session);
+
+              if (product) {
+                const currentVersion = product.__v;
+
+                const updated = await Product.findOneAndUpdate(
+                  {
+                    _id: item.product,
+                    __v: currentVersion,
+                  },
+                  {
+                    $inc: {
+                      stockQuantity: item.quantity,
+                      totalSold: -item.quantity,
+                      __v: 1,
+                    },
+                    $set: { inStock: true },
+                  },
+                  {
+                    session,
+                    new: true,
+                  }
+                );
+
+                if (updated) {
+                  restored = true;
+                } else {
+                  retries--;
+                  if (retries > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, 50));
+                  }
+                }
+              } else {
+                restored = true; // Product deleted, skip
+              }
+            } catch (error) {
+              console.error(`Error restoring product ${item.product}:`, error);
+              retries--;
+            }
+          }
+
+          if (!restored) {
+            console.warn(`Failed to restore product ${item.product} after 3 retries`);
+          }
+        }
+      }
+
+      // : Gửi notification cho customer về payment failure
+      const customer = await User.findById(booking.customer).session(session);
+      if (customer) {
+        // Send notification (không block transaction)
+        Promise.all([
+          Notification.createNotification({
+            user: customer._id,
+            ...Notification.templates.paymentFailed(booking),
+            channels: {
+              inApp: true,
+              email: true,
+              sms: !!customer.phoneNumber,
+            },
+          }).catch((err) => console.error("Payment failure notification error:", err)),
+          customer.phoneNumber
+            ? smsService.sendPaymentNotification(customer.phoneNumber, booking, "failed").catch(() => {})
+            : null,
+        ]).catch((err) => console.error("Payment failure notification error:", err));
+      }
+
+      // Xóa cache
+      redisService.del(`booking:temp:${booking._id}`).catch(() => {});
+      redisService.invalidateScheduleCache(booking.schedule.toString()).catch(() => {});
+    });
+  } finally {
+    await session.endSession();
+  }
+}
 
 const paymentController = {
   // ============================================
@@ -29,6 +299,16 @@ const paymentController = {
 
       if (booking.status !== "Chờ thanh toán") {
         return errorResponse(res, "Đơn đặt vé không ở trạng thái chờ thanh toán", 400);
+      }
+
+      // Check if payment is already in progress or completed
+      if (booking.paymentDetails.status === "Thành công") {
+        return errorResponse(res, "Đơn đặt vé đã được thanh toán", 400);
+      }
+
+      // Check if payment URL was already created recently (prevent spam)
+      if (booking.paymentDetails.transactionId && booking.updatedAt > new Date(Date.now() - 5 * 60 * 1000)) {
+        return errorResponse(res, "Vui lòng đợi 5 phút trước khi tạo link thanh toán mới", 429);
       }
 
       // Create payment URL
@@ -74,38 +354,24 @@ const paymentController = {
         return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=Booking not found`);
       }
 
+      // : Verify amount matches
+      if (Math.abs(booking.totalAmount - result.amount) >= 1) {
+        console.error(`VNPay return amount mismatch: expected ${booking.totalAmount}, got ${result.amount}`);
+        await handlePaymentFailure(booking);
+        return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=Amount mismatch`);
+      }
+
       if (result.isSuccess) {
-        // Update booking status
-        booking.status = "Hoàn tất";
-        booking.paymentDetails = {
-          paymentMethod: "VNPAY",
-          transactionId: result.transactionNo,
-          status: "Thành công",
-          amount: result.amount,
-          paymentDate: new Date(),
-          paymentInfo: `Bank: ${result.bankCode}`,
-        };
-        await booking.save();
-
-        // Get customer
-        const customer = await User.findById(booking.customer);
-
-        // Send notifications (không chờ)
-        Promise.all([
-          emailService.sendBookingConfirmation(booking, customer),
-          customer.phoneNumber ? smsService.sendBookingConfirmation(customer.phoneNumber, booking) : null,
-          Notification.createNotification({
-            user: customer._id,
-            ...Notification.templates.paymentSuccess(booking),
-          }),
-        ]).catch((err) => console.error("Notification error:", err));
+        //  #1-4, #9-10: Sử dụng helper function
+        await confirmPaymentSuccess(booking, "VNPAY", result.transactionNo, {
+          bankCode: result.bankCode,
+          payDate: result.payDate,
+        });
 
         return res.redirect(`${process.env.FRONTEND_URL}/payment/success?bookingId=${booking._id}`);
       } else {
-        // Payment failed
-        booking.status = "Đã hủy";
-        booking.paymentDetails.status = "Thất bại";
-        await booking.save();
+        //  #4: Release seats khi payment fail
+        await handlePaymentFailure(booking);
 
         const message = vnpayService.getResponseMessage(result.responseCode);
         return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=${encodeURIComponent(message)}`);
@@ -120,22 +386,28 @@ const paymentController = {
   handleVNPayIPN: async (req, res) => {
     try {
       const vnpParams = req.query;
+      const orderId = vnpParams["vnp_TxnRef"];
+      const bookingCode = orderId ? orderId.split("_")[0] : null;
 
-      const result = vnpayService.verifyIpn(vnpParams);
+      // : Load booking first to verify orderId and amount
+      let booking = null;
+      if (bookingCode) {
+        booking = await Booking.findOne({ bookingCode });
+      }
 
-      // Return response to VNPay
+      // : Verify with booking data to check orderId and amount
+      const result = await vnpayService.verifyIpn(vnpParams, booking);
+
+      // Return response to VNPay ngay để tránh timeout
       res.json(result);
 
       // Process payment in background
-      if (result.RspCode === "00") {
-        const orderId = vnpParams["vnp_TxnRef"];
-        const bookingCode = orderId.split("_")[0];
-        const booking = await Booking.findOne({ bookingCode });
-
-        if (booking && booking.status === "Chờ thanh toán") {
-          // Update booking (similar to return handler)
-          // ... (implementation)
-        }
+      if (result.RspCode === "00" && booking && booking.status === BOOKING_STATUS.PENDING_PAYMENT) {
+        // Sử dụng helper function giống return handler
+        confirmPaymentSuccess(booking, "VNPAY", vnpParams["vnp_TransactionNo"], {
+          bankCode: vnpParams["vnp_BankCode"],
+          payDate: vnpParams["vnp_PayDate"],
+        }).catch((err) => console.error("VNPay IPN processing error:", err));
       }
     } catch (error) {
       console.error("VNPay IPN error:", error);
@@ -187,7 +459,7 @@ const paymentController = {
           requestId: result.requestId,
         });
       } else {
-        return errorResponse(res, 'Không thể tạo payment MoMo', 500);
+        return errorResponse(res, "Không thể tạo payment MoMo", 500);
       }
     } catch (error) {
       console.error("Create MoMo payment error:", error);
@@ -215,37 +487,16 @@ const paymentController = {
       }
 
       if (result.isSuccess) {
-        // Update booking
-        booking.status = "Hoàn tất";
-        booking.paymentDetails = {
-          paymentMethod: "MoMo",
-          transactionId: result.transId,
-          status: "Thành công",
-          amount: result.amount,
-          paymentDate: new Date(),
-          paymentInfo: result.message,
-        };
-        await booking.save();
-
-        // Get customer
-        const customer = await User.findById(booking.customer);
-
-        // Send notifications
-        Promise.all([
-          emailService.sendBookingConfirmation(booking, customer),
-          customer.phoneNumber ? smsService.sendBookingConfirmation(customer.phoneNumber, booking) : null,
-          Notification.createNotification({
-            user: customer._id,
-            ...Notification.templates.paymentSuccess(booking),
-          }),
-        ]).catch((err) => console.error("Notification error:", err));
+        //  #1-4, #9-10: Sử dụng helper function
+        await confirmPaymentSuccess(booking, "MoMo", result.transId, {
+          message: result.message,
+          orderInfo: result.orderInfo,
+        });
 
         return res.redirect(`${process.env.FRONTEND_URL}/payment/success?bookingId=${booking._id}`);
       } else {
-        // Payment failed
-        booking.status = "Đã hủy";
-        booking.paymentDetails.status = "Thất bại";
-        await booking.save();
+        //  #4: Release seats khi payment fail
+        await handlePaymentFailure(booking);
 
         const message = momoService.getResultMessage(result.resultCode);
         return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=${encodeURIComponent(message)}`);
@@ -264,23 +515,23 @@ const paymentController = {
       const result = momoService.verifySignature(momoData);
 
       if (result.verified) {
-        // Return success to MoMo
+        // Return success to MoMo ngay để tránh timeout
         res.json({
           resultCode: 0,
           message: "Success",
         });
 
-        // Process in background
+        //  #11: Process in background
         if (result.isSuccess) {
           const bookingCode = result.orderId.split("_")[0];
           const booking = await Booking.findOne({ bookingCode });
 
-          if (booking && booking.status === "Chờ thanh toán") {
-            // Update booking
-            booking.status = "Hoàn tất";
-            booking.paymentDetails.status = "Thành công";
-            booking.paymentDetails.transactionId = result.transId;
-            await booking.save();
+          if (booking && booking.status === BOOKING_STATUS.PENDING_PAYMENT) {
+            // Sử dụng helper function giống return handler
+            confirmPaymentSuccess(booking, "MoMo", result.transId, {
+              message: result.message,
+              orderInfo: result.orderInfo,
+            }).catch((err) => console.error("MoMo notify processing error:", err));
           }
         }
       } else {
@@ -341,7 +592,7 @@ const paymentController = {
       }
 
       if (booking.status !== "Đã hủy") {
-        return errorResponse(res, 'Chỉ có thể hoàn tiền cho vé đã hủy', 400);
+        return errorResponse(res, "Chỉ có thể hoàn tiền cho vé đã hủy", 400);
       }
 
       // Refund based on payment method
@@ -367,9 +618,9 @@ const paymentController = {
         booking.paymentDetails.status = "Đã hoàn tiền";
         await booking.save();
 
-        return successResponse(res, result, 'Hoàn tiền thành công');
+        return successResponse(res, result, "Hoàn tiền thành công");
       } else {
-        return errorResponse(res, 'Hoàn tiền thất bại', 500);
+        return errorResponse(res, "Hoàn tiền thất bại", 500);
       }
     } catch (error) {
       console.error("Refund payment error:", error);

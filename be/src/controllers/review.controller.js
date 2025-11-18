@@ -27,7 +27,7 @@ const reviewController = {
           .lean(),
         Review.countDocuments(query),
         Review.aggregate([
-          { $match: { movie: mongoose.Types.ObjectId(movieId), status: "Đã duyệt" } },
+          { $match: { movie: new mongoose.Types.ObjectId(movieId), status: "Đã duyệt" } },
           { $group: { _id: null, avgRating: { $avg: "$rating" }, totalReviews: { $sum: 1 } } },
         ]),
       ]);
@@ -50,10 +50,11 @@ const reviewController = {
   // Tạo đánh giá mới
   createReview: async (req, res) => {
     try {
-      const { movieId, rating, comment } = req.body;
+      const { movieId, movie, rating, comment } = req.body;
+      const movieIdToUse = movieId || movie;
 
       // Validate input
-      if (!movieId || !rating) {
+      if (!movieIdToUse || !rating) {
         return errorResponse(res, "Movie ID và rating là bắt buộc", 400);
       }
 
@@ -62,22 +63,15 @@ const reviewController = {
       }
 
       // Kiểm tra movie tồn tại
-      const movie = await Movie.findById(movieId);
-      if (!movie) {
+      const movieDoc = await Movie.findById(movieIdToUse);
+      if (!movieDoc) {
         return errorResponse(res, "Không tìm thấy phim", 404);
       }
-
-      // Kiểm tra user đã xem phim chưa (optional)
-      const hasWatched = await Booking.findOne({
-        customer: req.userId,
-        schedule: { $in: await Schedule.find({ movie: movieId }).distinct("_id") },
-        status: "Đã sử dụng",
-      });
 
       // Kiểm tra đã review chưa
       const existingReview = await Review.findOne({
         customer: req.userId,
-        movie: movieId,
+        movie: movieIdToUse,
       });
 
       if (existingReview) {
@@ -86,7 +80,7 @@ const reviewController = {
 
       const newReview = new Review({
         customer: req.userId,
-        movie: movieId,
+        movie: movieIdToUse,
         rating,
         comment,
         status: "Chờ duyệt", // Auto approve nếu muốn: 'Đã duyệt'
@@ -109,10 +103,16 @@ const reviewController = {
       const { id } = req.params;
       const { rating, comment } = req.body;
 
+      console.log("Update review - ID:", id);
+      console.log("Update review - Body:", { rating, comment });
+      console.log("Update review - User ID:", req.userId);
+
       const review = await Review.findById(id);
       if (!review) {
         return errorResponse(res, "Không tìm thấy đánh giá", 404);
       }
+
+      console.log("Review customer:", review.customer.toString());
 
       // Kiểm tra quyền sở hữu
       if (review.customer.toString() !== req.userId) {
@@ -146,10 +146,15 @@ const reviewController = {
     try {
       const { id } = req.params;
 
+      console.log("Delete review - ID:", id);
+      console.log("Delete review - User ID:", req.userId);
+
       const review = await Review.findById(id);
       if (!review) {
         return errorResponse(res, "Không tìm thấy đánh giá", 404);
       }
+
+      console.log("Review customer:", review.customer.toString());
 
       // Kiểm tra quyền sở hữu
       if (review.customer.toString() !== req.userId) {

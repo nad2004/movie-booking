@@ -14,16 +14,41 @@
  *             type: object
  *             required: [scheduleId, seats]
  *             properties:
- *               scheduleId: { type: string }
+ *               scheduleId:
+ *                 type: string
+ *                 example: "6919ab92a5ca4e33ac76e928"
  *               seats:
  *                 type: array
  *                 items:
  *                   type: object
  *                   properties:
- *                     seatNumber: { type: string }
- *                     seatType: { type: string }
- *                     price: { type: number }
- *               voucherCode: { type: string }
+ *                     seatNumber:
+ *                       type: string
+ *                       example: "A1"
+ *                     seatType:
+ *                       type: string
+ *                       example: "VIP"
+ *                     price:
+ *                       type: number
+ *                       example: 120000
+ *               products:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                       example: "69198f14b80a32bf8ea5d920"
+ *                     quantity:
+ *                       type: number
+ *                       example: 2
+ *                     size:
+ *                       type: string
+ *                       enum: [S, M, L, N/A]
+ *                       example: "L"
+ *               voucherCode:
+ *                 type: string
+ *                 example: "SUMMER2024"
  *     responses:
  *       201:
  *         description: Đặt vé thành công

@@ -89,16 +89,35 @@ const theaterController = {
   // Tạo rạp mới (Admin)
   createTheater: async (req, res) => {
     try {
+      console.log("=== CREATE THEATER START ===");
+      console.log("Theater data:", req.body);
+
       const theaterData = req.body;
       theaterData.createdBy = req.userId;
 
+      // Fix Swagger array issue for coordinates
+      if (theaterData.location && theaterData.location.coordinates) {
+        if (typeof theaterData.location.coordinates === "object" && !Array.isArray(theaterData.location.coordinates)) {
+          theaterData.location.coordinates = Object.values(theaterData.location.coordinates);
+        }
+      }
+
+      // Ensure rooms is an array (can be empty initially)
+      if (!theaterData.rooms) {
+        theaterData.rooms = [];
+      }
+
+      console.log("Fixed theater data:", theaterData);
+      console.log("Creating theater...");
       const newTheater = new Theater(theaterData);
       await newTheater.save();
 
+      console.log("Theater created successfully:", newTheater._id);
       return successResponse(res, newTheater, "Tạo rạp thành công", 201);
     } catch (error) {
       console.error("Create theater error:", error);
-      return errorResponse(res, "Lỗi server", 500);
+      console.error("Error message:", error.message);
+      return errorResponse(res, error.message || "Lỗi server", 500);
     }
   },
 
@@ -127,13 +146,45 @@ const theaterController = {
     try {
       const { id } = req.params;
 
-      // TODO: Kiểm tra xem rạp có lịch chiếu trong tương lai không
-
-      const deletedTheater = await Theater.findByIdAndDelete(id);
-
-      if (!deletedTheater) {
+      const theater = await Theater.findById(id);
+      if (!theater) {
         return errorResponse(res, "Không tìm thấy rạp", 404);
       }
+
+      // ✅ FIX: Kiểm tra xem rạp có lịch chiếu trong tương lai không
+      const Schedule = (await import("../models/schedule.model.js")).default;
+      const now = new Date();
+      const futureSchedules = await Schedule.countDocuments({
+        theater: id,
+        showDate: { $gte: now },
+        status: { $ne: "Đã hủy" },
+      });
+
+      if (futureSchedules > 0) {
+        return errorResponse(
+          res,
+          `Không thể xóa rạp. Rạp còn ${futureSchedules} suất chiếu trong tương lai. Vui lòng hủy tất cả lịch chiếu trước khi xóa rạp.`,
+          400
+        );
+      }
+
+      // ✅ FIX: Kiểm tra rạp có phòng chiếu nào không (optional check)
+      if (theater.rooms && theater.rooms.length > 0) {
+        return errorResponse(
+          res,
+          `Không thể xóa rạp. Rạp còn ${theater.rooms.length} phòng chiếu. Vui lòng xóa tất cả phòng chiếu trước khi xóa rạp.`,
+          400
+        );
+      }
+
+      // ✅ FIX: Soft delete thay vì hard delete
+      theater.isActive = false;
+      theater.updatedBy = req.userId;
+      await theater.save();
+
+      // Xóa cache
+      const redisService = (await import("../services/redis.service.js")).default;
+      redisService.invalidateTheaterCache(id.toString()).catch(() => {});
 
       return successResponse(res, {}, "Xóa rạp thành công");
     } catch (error) {

@@ -14,22 +14,50 @@ import voucherController from "../controllers/voucher.controller.js";
 import paymentController from "../controllers/payment.controller.js";
 import uploadController from "../controllers/upload.controller.js";
 import statisticsController from "../controllers/statistics.controller.js";
+import staffController from "../controllers/staff.controller.js";
+import counterBookingController from "../controllers/counter-booking.controller.js";
+import ticketValidationController from "../controllers/ticket-validation.controller.js";
+import customerSupportController from "../controllers/customer-support.controller.js";
+import staffReportsController from "../controllers/staff-reports.controller.js";
+import shiftController from "../controllers/shift.controller.js";
+import analyticsController from "../controllers/analytics.controller.js";
+import performanceController from "../controllers/performance.controller.js";
+import qrScannerController from "../controllers/qr-scanner.controller.js";
 
 // Import middleware
 import { authenticateToken, authorize, optionalAuth } from "../middlewares/auth.middleware.js";
 import uploadMiddleware from "../middlewares/upload.middleware.js";
+import {
+  validateBookingInput,
+  validateRegisterInput,
+  validateLoginInput,
+  validateObjectId,
+  sanitizeInput,
+} from "../middlewares/validation.middleware.js";
+import {
+  bookingRateLimiter,
+  paymentRateLimiter,
+  qrScanRateLimiter,
+  passwordResetRateLimiter,
+  voucherRateLimiter,
+  reviewRateLimiter,
+} from "../middlewares/rate-limit.middleware.js";
 
 const router = express.Router();
+
+// ✅ FIX #5: Apply sanitization to all routes
+router.use(sanitizeInput);
 
 // ============================================
 // PUBLIC ROUTES (Không cần authentication)
 // ============================================
 
-router.post("/auth/register", authController.register);
-router.post("/auth/login", authController.login);
+// ✅ FIX #5 & #9: Add validation and rate limiting
+router.post("/auth/register", validateRegisterInput, authController.register);
+router.post("/auth/login", validateLoginInput, authController.login);
 router.post("/auth/google-login", authController.googleLogin);
-router.post("/auth/forgot-password", authController.forgotPassword);
-router.post("/auth/reset-password", authController.resetPassword);
+router.post("/auth/forgot-password", passwordResetRateLimiter, authController.forgotPassword);
+router.post("/auth/reset-password", passwordResetRateLimiter, authController.resetPassword);
 
 router.get("/movies", movieController.getAllMovies);
 router.get("/movies/now-showing", movieController.getNowShowingMovies);
@@ -72,16 +100,407 @@ router.put("/auth/change-password", authenticateToken, authController.changePass
 router.put("/users/profile", authenticateToken, userController.updateProfile);
 router.get("/users/loyalty-points", authenticateToken, userController.getLoyaltyPoints);
 
-router.post("/bookings", authenticateToken, bookingController.createBooking);
+// ✅ FIX #5 & #9: Add validation and rate limiting for bookings
+router.post("/bookings", authenticateToken, bookingRateLimiter, validateBookingInput, bookingController.createBooking);
 router.get("/bookings/my-bookings", authenticateToken, bookingController.getMyBookings);
-router.get("/bookings/:id", authenticateToken, bookingController.getBookingById);
-router.post("/bookings/:id/confirm-payment", authenticateToken, bookingController.confirmPayment);
-router.post("/bookings/:id/cancel", authenticateToken, bookingController.cancelBooking);
+router.get("/bookings/:id", authenticateToken, validateObjectId("id"), bookingController.getBookingById);
+router.post(
+  "/bookings/:id/confirm-payment",
+  authenticateToken,
+  paymentRateLimiter,
+  validateObjectId("id"),
+  bookingController.confirmPayment
+);
+router.post("/bookings/:id/cancel", authenticateToken, validateObjectId("id"), bookingController.cancelBooking);
+router.post(
+  "/bookings/:id/regenerate-qr",
+  authenticateToken,
+  validateObjectId("id"),
+  bookingController.regenerateQRCode
+);
 
 // Review routes (Customer - write)
 router.post("/reviews", authenticateToken, reviewController.createReview);
 router.put("/reviews/:id", authenticateToken, reviewController.updateReview);
 router.delete("/reviews/:id", authenticateToken, reviewController.deleteReview);
+
+// ============================================
+// STAFF ROUTES (Nhân viên rạp)
+// ============================================
+
+// Staff profile & dashboard
+router.get("/staff/profile", authenticateToken, authorize("staff"), staffController.getProfile);
+router.put("/staff/profile", authenticateToken, authorize("staff"), staffController.updateProfile);
+router.get("/staff/dashboard", authenticateToken, authorize("staff"), staffController.getDashboard);
+router.get("/staff/theater", authenticateToken, authorize("staff"), staffController.getAssignedTheater);
+router.get("/staff/permissions/:permission", authenticateToken, authorize("staff"), staffController.hasPermission);
+
+// Counter booking
+router.post("/staff/bookings", authenticateToken, authorize("staff"), counterBookingController.createBooking);
+router.get(
+  "/staff/bookings/my-transactions",
+  authenticateToken,
+  authorize("staff"),
+  counterBookingController.getMyTransactions
+);
+router.get(
+  "/staff/bookings/theater-transactions",
+  authenticateToken,
+  authorize("staff"),
+  counterBookingController.getTheaterTransactions
+);
+
+// Ticket validation
+router.post(
+  "/staff/tickets/validate-code",
+  authenticateToken,
+  authorize("staff"),
+  ticketValidationController.validateByBookingCode
+);
+router.post(
+  "/staff/tickets/validate-qr",
+  authenticateToken,
+  authorize("staff"),
+  ticketValidationController.validateByQRCode
+);
+router.get(
+  "/staff/tickets/my-validations",
+  authenticateToken,
+  authorize("staff"),
+  ticketValidationController.getMyValidations
+);
+router.get(
+  "/staff/tickets/theater-entries",
+  authenticateToken,
+  authorize("staff"),
+  ticketValidationController.getTheaterEntries
+);
+router.get(
+  "/staff/tickets/check/:bookingCode",
+  authenticateToken,
+  authorize("staff"),
+  ticketValidationController.checkTicketStatus
+);
+
+// Customer support - Complaints
+router.post("/staff/complaints", authenticateToken, authorize("staff"), customerSupportController.createComplaint);
+router.get("/staff/complaints", authenticateToken, authorize("staff"), customerSupportController.getComplaints);
+router.get("/staff/complaints/:id", authenticateToken, authorize("staff"), customerSupportController.getComplaintById);
+router.put(
+  "/staff/complaints/:id/status",
+  authenticateToken,
+  authorize("staff"),
+  customerSupportController.updateComplaintStatus
+);
+router.post(
+  "/staff/complaints/:id/resolve",
+  authenticateToken,
+  authorize("staff"),
+  customerSupportController.resolveComplaint
+);
+
+// Customer support - Incidents
+router.post("/staff/incidents", authenticateToken, authorize("staff"), customerSupportController.reportIncident);
+router.get("/staff/incidents", authenticateToken, authorize("staff"), customerSupportController.getIncidents);
+router.get("/staff/incidents/:id", authenticateToken, authorize("staff"), customerSupportController.getIncidentById);
+router.post(
+  "/staff/incidents/:id/acknowledge",
+  authenticateToken,
+  authorize("staff"),
+  customerSupportController.acknowledgeIncident
+);
+router.post(
+  "/staff/incidents/:id/resolve",
+  authenticateToken,
+  authorize("staff"),
+  customerSupportController.resolveIncident
+);
+router.post(
+  "/staff/incidents/:id/actions",
+  authenticateToken,
+  authorize("staff"),
+  customerSupportController.addIncidentAction
+);
+
+// Daily reports
+router.get("/staff/reports/draft", authenticateToken, authorize("staff"), staffReportsController.getDraftReport);
+router.get(
+  "/staff/reports/generate-data",
+  authenticateToken,
+  authorize("staff"),
+  staffReportsController.generateReportData
+);
+router.put("/staff/reports/:id", authenticateToken, authorize("staff"), staffReportsController.updateReport);
+router.post("/staff/reports/:id/submit", authenticateToken, authorize("staff"), staffReportsController.submitReport);
+router.get("/staff/reports/my-reports", authenticateToken, authorize("staff"), staffReportsController.getMyReports);
+router.get("/staff/reports/theater", authenticateToken, authorize("staff"), staffReportsController.getTheaterReports);
+router.post("/staff/reports/:id/review", authenticateToken, authorize("staff"), staffReportsController.reviewReport);
+router.get("/staff/reports/stats", authenticateToken, authorize("staff"), staffReportsController.getReportStats);
+
+// ============================================
+// QR SCANNER & HARDWARE INTEGRATION (Staff)
+// ============================================
+
+// QR validation
+router.post(
+  "/qr-scanner/validate",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.validateQR
+);
+router.post(
+  "/qr-scanner/quick-validate",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.quickValidate
+);
+
+// Check-in via QR
+router.post(
+  "/qr-scanner/scan-check-in",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.scanCheckIn
+);
+router.post(
+  "/qr-scanner/check-in-by-code",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.checkInByCode
+);
+router.post(
+  "/qr-scanner/bulk-check-in",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.bulkCheckIn
+);
+
+// QR generation
+router.post(
+  "/qr-scanner/generate/:bookingId",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.generateQR
+);
+
+// Booking code verification
+router.post(
+  "/qr-scanner/verify-code",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.verifyBookingCode
+);
+
+// History and statistics
+router.get(
+  "/qr-scanner/history/:theaterId",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.getScanHistory
+);
+router.get(
+  "/qr-scanner/statistics/:theaterId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  qrScannerController.getScanStatistics
+);
+
+// Camera stream initialization
+router.post(
+  "/qr-scanner/init-camera",
+  authenticateToken,
+  authorize("staff", "admin", "manager"),
+  qrScannerController.initCameraStream
+);
+
+// Testing endpoint
+router.post("/qr-scanner/test", authenticateToken, authorize("admin"), qrScannerController.testScanner);
+
+// ============================================
+// SHIFT MANAGEMENT ROUTES (Staff & Manager)
+// ============================================
+
+// Shift routes
+router.post("/shifts", authenticateToken, authorize("admin", "manager"), shiftController.createShift);
+router.get(
+  "/shifts/theater/:theaterId",
+  authenticateToken,
+  authorize("admin", "manager", "staff"),
+  shiftController.getShiftsByTheater
+);
+router.get(
+  "/shifts/staff/:staffId",
+  authenticateToken,
+  authorize("admin", "manager", "staff"),
+  shiftController.getShiftsByStaff
+);
+router.post("/shifts/:shiftId/check-in", authenticateToken, authorize("staff", "manager"), shiftController.checkIn);
+router.post("/shifts/:shiftId/check-out", authenticateToken, authorize("staff", "manager"), shiftController.checkOut);
+router.post("/shifts/:shiftId/swap-request", authenticateToken, authorize("staff"), shiftController.requestShiftSwap);
+router.post(
+  "/shifts/:shiftId/swap-approve",
+  authenticateToken,
+  authorize("admin", "manager"),
+  shiftController.approveShiftSwap
+);
+router.get(
+  "/shifts/attendance/:theaterId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  shiftController.getAttendanceReport
+);
+router.post(
+  "/shifts/generate-schedule",
+  authenticateToken,
+  authorize("admin", "manager"),
+  shiftController.generateSchedule
+);
+router.put("/shifts/:shiftId", authenticateToken, authorize("admin", "manager"), shiftController.updateShift);
+router.delete("/shifts/:shiftId", authenticateToken, authorize("admin", "manager"), shiftController.deleteShift);
+
+// ============================================
+// ANALYTICS & REPORTING ROUTES (Admin & Manager)
+// ============================================
+
+// Analytics reports
+router.post("/analytics/reports", authenticateToken, authorize("admin", "manager"), analyticsController.generateReport);
+router.get("/analytics/reports", authenticateToken, authorize("admin", "manager"), analyticsController.getReports);
+router.get(
+  "/analytics/reports/:reportId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getReport
+);
+router.delete(
+  "/analytics/reports/:reportId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.deleteReport
+);
+router.get(
+  "/analytics/dashboard/:theaterId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getDashboardMetrics
+);
+router.get(
+  "/analytics/revenue",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getRevenueAnalytics
+);
+router.get(
+  "/analytics/attendance",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getAttendanceAnalytics
+);
+router.get(
+  "/analytics/movies",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getMoviePerformance
+);
+router.get(
+  "/analytics/staff",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getStaffPerformance
+);
+router.get(
+  "/analytics/theaters",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getTheaterPerformance
+);
+router.get(
+  "/analytics/satisfaction",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getCustomerSatisfaction
+);
+
+// ============================================
+// PERFORMANCE METRICS & KPI ROUTES (Admin & Manager)
+// ============================================
+
+// Performance tracking
+router.post(
+  "/performance/theater/:theaterId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.trackTheaterPerformance
+);
+router.post(
+  "/performance/staff/:staffId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.trackStaffPerformance
+);
+router.post(
+  "/performance/movie/:movieId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.trackMoviePerformance
+);
+router.get(
+  "/performance/history/:entityType/:entityId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getPerformanceHistory
+);
+router.get(
+  "/performance/comparison/:entityType",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getPerformanceComparison
+);
+
+// KPI routes
+router.get(
+  "/performance/kpi/staff/:staffId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getStaffKPI
+);
+router.post(
+  "/performance/kpi/staff/:staffId/calculate",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.calculateStaffKPI
+);
+router.get(
+  "/performance/kpi/theater/:theaterId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getTheaterKPIs
+);
+router.get(
+  "/performance/kpi/movie/:movieId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getMovieKPIs
+);
+
+// Performance insights
+router.get(
+  "/performance/alerts/:entityType/:entityId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getPerformanceAlerts
+);
+router.get(
+  "/performance/trends/:entityType/:entityId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getPerformanceTrends
+);
+router.get(
+  "/performance/top-performers",
+  authenticateToken,
+  authorize("admin", "manager"),
+  performanceController.getTopPerformers
+);
 
 // ============================================
 // ADMIN ROUTES
@@ -98,6 +517,12 @@ router.post(
   authenticateToken,
   authorize("admin", "super-admin"),
   scheduleController.createSchedule
+);
+router.get(
+  "/admin/schedules/:id",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  scheduleController.getScheduleById
 );
 router.put(
   "/admin/schedules/:id",

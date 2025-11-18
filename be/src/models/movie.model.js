@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { generateSlug } from "../utils/slug.js";
 const { Schema } = mongoose;
 
 const movieSchema = new Schema(
@@ -188,16 +189,9 @@ movieSchema.virtual("durationFormatted").get(function () {
 
 // === PRE-SAVE MIDDLEWARE ===
 movieSchema.pre("save", function (next) {
-  // Auto-generate slug
+  // Auto-generate slug using utility function
   if (this.isModified("title") && !this.slug) {
-    this.slug = this.title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
+    this.slug = generateSlug(this.title);
   }
 
   // Auto-update status based on release date

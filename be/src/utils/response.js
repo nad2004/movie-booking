@@ -12,3 +12,4 @@ export const errorResponse = (res, message = "Something went wrong", status = 50
     message,
   });
 };
+  

@@ -6,7 +6,8 @@ const seatAvailabilitySchema = new Schema({
   seatNumber: { type: String, required: true },
   seatType: { type: String, enum: ["Thường", "VIP", "Ghế đôi"], required: true },
   isBooked: { type: Boolean, default: false },
-  bookedBy: { type: Schema.Types.ObjectId, ref: "Booking" }, // Reference đến booking
+  bookedBy: { type: Schema.Types.ObjectId }, // User ID (khi hold) hoặc Booking ID (khi confirm booking)
+  holderType: { type: String, enum: ["user", "booking"], default: "user" }, // Track holder type
   holdUntil: { type: Date }, // Thời gian giữ ghế tạm (khi đang đặt)
   _id: false,
 });
@@ -87,7 +88,7 @@ const scheduleSchema = new Schema(
     // === TRẠNG THÁI SUẤT CHIẾU ===
     status: {
       type: String,
-      enum: ["Đang mở bán vé", "Sắp đầy", "Hết vé", "Đã chiếu", "Đã hủy"],
+      enum: ["Sắp chiếu", "Đang mở bán vé", "Sắp đầy", "Hết vé", "Đã chiếu", "Đã hủy"],
       default: "Đang mở bán vé",
       index: true,
     },
@@ -102,6 +103,9 @@ const scheduleSchema = new Schema(
   },
   {
     timestamps: true,
+    // ✅ FIX #7: Enable optimistic locking với version control
+    versionKey: "__v",
+    optimisticConcurrency: true,
   }
 );
 
@@ -122,6 +126,15 @@ scheduleSchema.virtual("isAlmostFull").get(function () {
 
 // === PRE-SAVE MIDDLEWARE ===
 scheduleSchema.pre("save", function (next) {
+  // Ensure bookedSeatsCount is always accurate
+  if (this.seatAvailability && this.seatAvailability.length > 0) {
+    const actualBookedCount = this.seatAvailability.filter((seat) => seat.isBooked).length;
+    if (this.bookedSeatsCount !== actualBookedCount) {
+      console.warn(`Fixing bookedSeatsCount mismatch: ${this.bookedSeatsCount} -> ${actualBookedCount}`);
+      this.bookedSeatsCount = actualBookedCount;
+    }
+  }
+
   // Tự động cập nhật availableSeatsCount
   this.availableSeatsCount = this.totalSeats - this.bookedSeatsCount;
 
@@ -145,18 +158,29 @@ scheduleSchema.pre("save", function (next) {
 });
 
 // === INSTANCE METHODS ===
-scheduleSchema.methods.holdSeats = function (seatNumbers, bookingId, holdMinutes = 10) {
+// Unified hold method with type specification
+scheduleSchema.methods.holdSeats = function (seatNumbers, holderId, holdMinutes = 10, holderType = "user") {
   const holdUntil = new Date(Date.now() + holdMinutes * 60 * 1000);
 
   seatNumbers.forEach((seatNum) => {
     const seat = this.seatAvailability.find((s) => s.seatNumber === seatNum);
     if (seat && !seat.isBooked) {
       seat.holdUntil = holdUntil;
-      seat.bookedBy = bookingId;
+      seat.bookedBy = holderId;
+      seat.holderType = holderType; // 'user' or 'booking'
     }
   });
 
   return this.save();
+};
+
+// Backward compatibility methods
+scheduleSchema.methods.holdSeatsForUser = function (seatNumbers, userId, holdMinutes = 10) {
+  return this.holdSeats(seatNumbers, userId, holdMinutes, "user");
+};
+
+scheduleSchema.methods.holdSeatsForBooking = function (seatNumbers, bookingId, holdMinutes = 10) {
+  return this.holdSeats(seatNumbers, bookingId, holdMinutes, "booking");
 };
 
 scheduleSchema.methods.confirmSeats = function (seatNumbers, bookingId) {
@@ -164,12 +188,13 @@ scheduleSchema.methods.confirmSeats = function (seatNumbers, bookingId) {
     const seat = this.seatAvailability.find((s) => s.seatNumber === seatNum);
     if (seat) {
       seat.isBooked = true;
-      seat.bookedBy = bookingId;
+      seat.bookedBy = bookingId; // Lưu Booking ID khi confirm
       seat.holdUntil = null;
     }
   });
 
-  this.bookedSeatsCount += seatNumbers.length;
+  // Calculate actual booked count instead of manual increment
+  this.bookedSeatsCount = this.seatAvailability.filter((seat) => seat.isBooked).length;
   return this.save();
 };
 
@@ -183,7 +208,8 @@ scheduleSchema.methods.releaseSeats = function (seatNumbers) {
     }
   });
 
-  this.bookedSeatsCount -= seatNumbers.length;
+  // Calculate actual booked count instead of manual decrement
+  this.bookedSeatsCount = this.seatAvailability.filter((seat) => seat.isBooked).length;
   return this.save();
 };
 

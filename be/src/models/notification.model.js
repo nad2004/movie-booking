@@ -144,10 +144,85 @@ notificationSchema.statics.createNotification = async function (data) {
   const notification = new this(data);
   await notification.save();
 
-  // TODO: Send via other channels (email, SMS) if enabled
-  // if (data.channels?.email) {
-  //     await emailService.send(...);
-  // }
+  // ✅ FIX: Send via other channels (email, SMS) if enabled
+  // Don't block notification save if email/SMS fails
+  if (data.channels?.email || notification.channels?.email) {
+    try {
+      const emailService = (await import("../services/email.service.js")).default;
+      const User = (await import("./user.model.js")).default;
+      const user = await User.findById(notification.user);
+
+      if (user && user.email) {
+        // Map notification type to email template
+        let emailSubject = notification.title || "Thông báo mới";
+        let emailContent = notification.message || "";
+
+        if (notification.type === "booking_success") {
+          emailSubject = `Xác nhận đặt vé - ${notification.metadata?.movieTitle || ""}`;
+        } else if (notification.type === "booking_cancelled") {
+          emailSubject = `Hủy vé - ${notification.metadata?.movieTitle || ""}`;
+        } else if (notification.type === "payment_success") {
+          emailSubject = `Thanh toán thành công`;
+        } else if (notification.type === "payment_failed") {
+          emailSubject = `Thanh toán thất bại`;
+        }
+
+        // Simple email sending (can be enhanced with templates)
+        const msg = {
+          to: user.email,
+          from: process.env.SENDGRID_FROM_EMAIL || "noreply@cinema.com",
+          subject: emailSubject,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+              <h2>${notification.title}</h2>
+              <p>${notification.message}</p>
+              ${notification.metadata ? `<p><small>Chi tiết: ${JSON.stringify(notification.metadata)}</small></p>` : ""}
+            </div>
+          `,
+        };
+
+        // Use SendGrid directly
+        const sgMail = (await import("@sendgrid/mail")).default;
+        // Ensure API key is set
+        if (process.env.SENDGRID_API_KEY && !sgMail.apiKey) {
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        }
+        await sgMail.send(msg);
+        notification.deliveryStatus.email = "sent";
+        await notification.save();
+      }
+    } catch (emailError) {
+      console.error("Notification email error:", emailError);
+      notification.deliveryStatus.email = "failed";
+      await notification.save();
+    }
+  }
+
+  if (data.channels?.sms || notification.channels?.sms) {
+    try {
+      const smsService = (await import("../services/sms.service.js")).default;
+      const User = (await import("./user.model.js")).default;
+      const user = await User.findById(notification.user);
+
+      if (user && user.phoneNumber) {
+        const smsMessage = `${notification.title}: ${notification.message}`;
+        
+        // Use bulkSendSMS for single message or create generic method
+        const smsResult = await smsService.bulkSendSMS([user.phoneNumber], smsMessage);
+        
+        if (smsResult.success && smsResult.results && smsResult.results[0]) {
+          notification.deliveryStatus.sms = smsResult.results[0].success ? "sent" : "failed";
+        } else {
+          notification.deliveryStatus.sms = "failed";
+        }
+        await notification.save();
+      }
+    } catch (smsError) {
+      console.error("Notification SMS error:", smsError);
+      notification.deliveryStatus.sms = "failed";
+      await notification.save();
+    }
+  }
 
   return notification;
 };
@@ -237,6 +312,21 @@ notificationSchema.statics.templates = {
     link: link,
     priority: "medium",
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+  }),
+
+  paymentFailed: (booking) => ({
+    title: "Thanh toán thất bại",
+    message: `Thanh toán cho vé ${booking.bookingCode} đã thất bại. Vui lòng thử lại hoặc liên hệ hỗ trợ.`,
+    type: "payment_failed",
+    link: `/bookings/${booking._id}`,
+    relatedModel: "Booking",
+    relatedId: booking._id,
+    priority: "high",
+    metadata: {
+      bookingCode: booking.bookingCode,
+      movieTitle: booking.movieTitle,
+      totalAmount: booking.totalAmount,
+    },
   }),
 };
 

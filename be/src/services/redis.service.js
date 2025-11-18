@@ -107,15 +107,77 @@ class RedisService {
   async invalidateMovieCache(movieId) {
     await this.delPattern(`movie:${movieId}*`);
     await this.delPattern("movies:*");
+    await this.delPattern("schedules:movie:*"); // Related schedules
+    await this.delPattern("reviews:movie:*"); // Related reviews
   }
 
   async invalidateScheduleCache(scheduleId) {
     await this.delPattern(`schedule:${scheduleId}*`);
     await this.delPattern("schedules:*");
+    await this.delPattern("bookings:schedule:*"); // Related bookings
+
+    // Get schedule to invalidate related caches
+    try {
+      const Schedule = (await import("../models/schedule.model.js")).default;
+      const schedule = await Schedule.findById(scheduleId).select("movie theater");
+      if (schedule) {
+        await this.delPattern(`movie:${schedule.movie}*`);
+        await this.delPattern(`theater:${schedule.theater}*`);
+      }
+    } catch (error) {
+      console.error("Schedule cache invalidation error:", error);
+    }
   }
 
   async invalidateUserCache(userId) {
     await this.delPattern(`user:${userId}*`);
+    await this.delPattern(`bookings:user:${userId}*`);
+    await this.delPattern(`reviews:user:${userId}*`);
+  }
+
+  async invalidateTheaterCache(theaterId) {
+    await this.delPattern(`theater:${theaterId}*`);
+    await this.delPattern("theaters:*");
+    await this.delPattern("schedules:theater:*");
+  }
+
+  async invalidateBookingCache(bookingId, customerId = null) {
+    await this.delPattern(`booking:${bookingId}*`);
+    if (customerId) {
+      await this.delPattern(`bookings:user:${customerId}*`);
+    }
+  }
+
+  async invalidateProductCache(productId) {
+    await this.delPattern(`product:${productId}*`);
+    await this.delPattern("products:*");
+  }
+
+  async invalidateVoucherCache(voucherCode) {
+    await this.delPattern(`voucher:${voucherCode}*`);
+    await this.delPattern("vouchers:*");
+  }
+
+  // Comprehensive cache invalidation for booking flow
+  async invalidateBookingFlowCache(scheduleId, movieId, theaterId, customerId) {
+    await Promise.all([
+      this.invalidateScheduleCache(scheduleId),
+      this.invalidateMovieCache(movieId),
+      this.invalidateTheaterCache(theaterId),
+      this.invalidateUserCache(customerId),
+    ]);
+  }
+
+  async ping() {
+    try {
+      if (!this.isConnected || !this.client) return false;
+      await this.client.ping();
+      return true;
+    } catch (error) {
+      console.error("Redis ping error:", error);
+      this.isConnected = false;
+      return false;
+    }
   }
 
   async disconnect() {
@@ -127,11 +189,5 @@ class RedisService {
 }
 
 const redisService = new RedisService();
-
-if (process.env.REDIS_ENABLED !== "false") {
-  redisService.connect().catch((err) => {
-    console.error("Failed to connect to Redis:", err);
-  });
-}
 
 export default redisService;
