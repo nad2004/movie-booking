@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import Booking from "../models/booking.model.js";
-import Schedule from "../models/schedule.model.js";
-import Product from "../models/product.model.js";
-import User from "../models/user.model.js";
-import CounterTransaction from "../models/counter-transaction.model.js";
 import QRCode from "qrcode";
+import Booking from "../models/booking.model.js";
+import CounterTransaction from "../models/counter-transaction.model.js";
+import Product from "../models/product.model.js";
+import Schedule from "../models/schedule.model.js";
+import User from "../models/user.model.js";
 import { BookingError, SeatUnavailableError } from "../utils/errors.js";
 
 class CounterBookingService {
@@ -158,7 +158,7 @@ class CounterBookingService {
           isGuestCustomer = true;
         }
 
-        // 6.5. ✅ FIX: Handle voucher if provided
+        // 6.5.  FIX: Handle voucher if provided
         let discountAmount = 0;
         let appliedVoucher = null;
 
@@ -254,7 +254,7 @@ class CounterBookingService {
 
         await newBooking.save({ session });
 
-        // 8.5. ✅ FIX: Update bookingId vào voucher.usedBy sau khi tạo booking
+        // 8.5.  FIX: Update bookingId vào voucher.usedBy sau khi tạo booking
         if (appliedVoucher) {
           const Voucher = (await import("../models/voucher.model.js")).default;
           await Voucher.updateOne(

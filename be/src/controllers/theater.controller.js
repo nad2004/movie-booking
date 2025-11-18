@@ -1,5 +1,5 @@
 import Theater from "../models/theater.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const theaterController = {
   // Lấy danh sách rạp
@@ -151,7 +151,7 @@ const theaterController = {
         return errorResponse(res, "Không tìm thấy rạp", 404);
       }
 
-      // ✅ FIX: Kiểm tra xem rạp có lịch chiếu trong tương lai không
+      //  FIX: Kiểm tra xem rạp có lịch chiếu trong tương lai không
       const Schedule = (await import("../models/schedule.model.js")).default;
       const now = new Date();
       const futureSchedules = await Schedule.countDocuments({
@@ -168,7 +168,7 @@ const theaterController = {
         );
       }
 
-      // ✅ FIX: Kiểm tra rạp có phòng chiếu nào không (optional check)
+      //  FIX: Kiểm tra rạp có phòng chiếu nào không (optional check)
       if (theater.rooms && theater.rooms.length > 0) {
         return errorResponse(
           res,
@@ -177,7 +177,7 @@ const theaterController = {
         );
       }
 
-      // ✅ FIX: Soft delete thay vì hard delete
+      //  FIX: Soft delete thay vì hard delete
       theater.isActive = false;
       theater.updatedBy = req.userId;
       await theater.save();

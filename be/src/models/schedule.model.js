@@ -30,7 +30,7 @@ const scheduleSchema = new Schema(
       index: true,
     },
     room: {
-      // ⚠️ THIẾU QUAN TRỌNG trong version cũ
+      //  THIẾU QUAN TRỌNG trong version cũ
       type: Schema.Types.ObjectId,
       required: true,
       index: true,
@@ -103,7 +103,7 @@ const scheduleSchema = new Schema(
   },
   {
     timestamps: true,
-    // ✅ FIX #7: Enable optimistic locking với version control
+    //  FIX #7: Enable optimistic locking với version control
     versionKey: "__v",
     optimisticConcurrency: true,
   }

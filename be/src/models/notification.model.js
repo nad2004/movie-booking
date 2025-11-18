@@ -144,7 +144,7 @@ notificationSchema.statics.createNotification = async function (data) {
   const notification = new this(data);
   await notification.save();
 
-  // ✅ FIX: Send via other channels (email, SMS) if enabled
+  //  FIX: Send via other channels (email, SMS) if enabled
   // Don't block notification save if email/SMS fails
   if (data.channels?.email || notification.channels?.email) {
     try {
@@ -206,10 +206,10 @@ notificationSchema.statics.createNotification = async function (data) {
 
       if (user && user.phoneNumber) {
         const smsMessage = `${notification.title}: ${notification.message}`;
-        
+
         // Use bulkSendSMS for single message or create generic method
         const smsResult = await smsService.bulkSendSMS([user.phoneNumber], smsMessage);
-        
+
         if (smsResult.success && smsResult.results && smsResult.results[0]) {
           notification.deliveryStatus.sms = smsResult.results[0].success ? "sent" : "failed";
         } else {

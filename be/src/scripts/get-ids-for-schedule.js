@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import mongoose from "mongoose";
 import connectDB from "../config/db.js";
 import Movie from "../models/movie.model.js";
 import Theater from "../models/theater.model.js";
@@ -91,12 +90,12 @@ const getIdsForSchedule = async () => {
       });
     }
 
-    console.log("✅ Done! Sử dụng các ID trên để tạo schedule trên Swagger UI");
+    console.log(" Done! Sử dụng các ID trên để tạo schedule trên Swagger UI");
     console.log("📖 Xem hướng dẫn chi tiết trong file: SCHEDULE_CREATION_GUIDE.md");
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error(" Error:", error);
     process.exit(1);
   }
 };

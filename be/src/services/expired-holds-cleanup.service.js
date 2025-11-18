@@ -1,13 +1,13 @@
-import cron from "node-cron";
-import Schedule from "../models/schedule.model.js";
-import Booking from "../models/booking.model.js";
-import Voucher from "../models/voucher.model.js";
-import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import cron from "node-cron";
 import { BOOKING_CONSTANTS, BOOKING_STATUS } from "../constants/booking.js";
+import Booking from "../models/booking.model.js";
+import Product from "../models/product.model.js";
+import Schedule from "../models/schedule.model.js";
+import Voucher from "../models/voucher.model.js";
 
 /**
- * ✅ FIX #6: Service để cleanup expired seat holds và expired bookings
+ *  FIX #6: Service để cleanup expired seat holds và expired bookings
  * Chạy mỗi 5 phút để:
  * 1. Release ghế đã hold quá 10 phút nhưng chưa thanh toán
  * 2. Cancel bookings đã quá 15 phút chưa thanh toán
@@ -31,13 +31,13 @@ class ExpiredHoldsCleanupService {
         this.isRunning = true;
         await this.cleanup();
       } catch (error) {
-        console.error("❌ Expired holds cleanup error:", error);
+        console.error(" Expired holds cleanup error:", error);
       } finally {
         this.isRunning = false;
       }
     });
 
-    console.log("✅ Expired holds cleanup service scheduled (every 5 minutes)");
+    console.log(" Expired holds cleanup service scheduled (every 5 minutes)");
 
     // Chạy ngay lần đầu sau 1 phút
     setTimeout(() => this.cleanup(), 60000);
@@ -59,7 +59,7 @@ class ExpiredHoldsCleanupService {
 
       const [seatsResult, bookingsResult] = results;
 
-      console.log(`✅ Cleanup completed in ${Date.now() - startTime}ms`);
+      console.log(` Cleanup completed in ${Date.now() - startTime}ms`);
       console.log(`   - Released ${seatsResult.releasedSeats} expired seat holds`);
       console.log(`   - Cancelled ${bookingsResult.cancelledBookings} expired bookings`);
       console.log(`   - Rolled back ${bookingsResult.rolledBackVouchers} vouchers`);
@@ -67,20 +67,20 @@ class ExpiredHoldsCleanupService {
 
       return results;
     } catch (error) {
-      console.error("❌ Cleanup error:", error);
+      console.error(" Cleanup error:", error);
       throw error;
     }
   }
 
   /**
-   * ✅ FIX #6: Release ghế đã hold quá thời gian
+   *  FIX #6: Release ghế đã hold quá thời gian
    */
   async cleanupExpiredSeats() {
     const now = new Date();
     let releasedSeats = 0;
 
     try {
-      // ✅ FIX #13: Tìm schedules có ghế expired với pagination
+      //  FIX #13: Tìm schedules có ghế expired với pagination
       let skip = 0;
       const limit = 50;
       let hasMore = true;
@@ -143,7 +143,7 @@ class ExpiredHoldsCleanupService {
   }
 
   /**
-   * ✅ FIX #6: Cancel bookings quá 15 phút chưa thanh toán
+   *  FIX #6: Cancel bookings quá 15 phút chưa thanh toán
    * Rollback voucher usage và product stock
    */
   async cleanupExpiredBookings() {
@@ -153,7 +153,7 @@ class ExpiredHoldsCleanupService {
     let restoredProducts = 0;
 
     try {
-      // ✅ FIX #12: Tìm bookings expired với pagination để process tất cả
+      //  FIX #12: Tìm bookings expired với pagination để process tất cả
       let skip = 0;
       const limit = 100;
       let hasMore = true;
@@ -202,7 +202,7 @@ class ExpiredHoldsCleanupService {
                 }
               );
 
-              // 3. ✅ FIX #8: Rollback voucher usage và remove from usedBy array
+              // 3.  FIX #8: Rollback voucher usage và remove from usedBy array
               if (booking.appliedVoucher) {
                 await Voucher.updateOne(
                   {
@@ -221,7 +221,7 @@ class ExpiredHoldsCleanupService {
                 rolledBackVouchers++;
               }
 
-              // 4. ✅ FIX #8: Restore product stock với optimistic locking
+              // 4.  FIX #8: Restore product stock với optimistic locking
               if (booking.products && booking.products.length > 0) {
                 for (const item of booking.products) {
                   // Retry logic cho optimistic locking
@@ -238,12 +238,12 @@ class ExpiredHoldsCleanupService {
                         const updated = await Product.findOneAndUpdate(
                           {
                             _id: item.product,
-                            __v: currentVersion, // ✅ Version check
+                            __v: currentVersion, //  Version check
                           },
                           {
                             $inc: {
                               stockQuantity: item.quantity,
-                              totalSold: -item.quantity, // ✅ Rollback totalSold
+                              totalSold: -item.quantity, //  Rollback totalSold
                               __v: 1,
                             },
                             $set: { inStock: true },

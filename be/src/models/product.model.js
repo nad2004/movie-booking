@@ -131,7 +131,7 @@ const productSchema = new Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-    // ✅ FIX #8: Enable optimistic locking cho Product
+    //  FIX #8: Enable optimistic locking cho Product
     versionKey: "__v",
     optimisticConcurrency: true,
   }

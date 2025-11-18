@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import querystring from "qs";
-import moment from "moment";
 import dotenv from "dotenv";
+import moment from "moment";
+import querystring from "qs";
 dotenv.config();
 
 class VNPayService {
@@ -139,7 +139,7 @@ class VNPayService {
       const hmac = crypto.createHmac("sha512", this.hashSecret);
       const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
-      // ✅ FIX: Verify signature first
+      //  FIX: Verify signature first
       if (secureHash !== signed) {
         console.warn(`VNPay IPN signature verification failed for order ${orderId}`);
         return {
@@ -148,7 +148,7 @@ class VNPayService {
         };
       }
 
-      // ✅ FIX: Check orderId exists in DB if booking provided
+      //  FIX: Check orderId exists in DB if booking provided
       let checkOrderId = true;
       if (booking) {
         const bookingCode = orderId.split("_")[0];
@@ -158,7 +158,7 @@ class VNPayService {
         }
       }
 
-      // ✅ FIX: Check amount matches
+      //  FIX: Check amount matches
       let checkAmount = true;
       if (booking) {
         // Allow small difference due to rounding (within 1 VND)

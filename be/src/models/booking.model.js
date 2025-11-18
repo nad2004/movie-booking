@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import Notification from "../models/notification.model.js";
 const { Schema } = mongoose;
 
 // Sub-document cho chi tiết thanh toán
@@ -182,7 +181,7 @@ bookingSchema.pre("save", function (next) {
     this.bookingCode = `BK${dateStr}${randomStr}`;
   }
 
-  // ✅ FIX #15: Auto-calculate subtotal và totalAmount
+  //  FIX #15: Auto-calculate subtotal và totalAmount
   this.subtotal = this.ticketsAmount + this.productsAmount;
   this.totalAmount = this.subtotal - this.discountAmount;
   // Remove validation check vì đã auto-calculate

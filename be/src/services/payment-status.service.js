@@ -1,18 +1,18 @@
 import mongoose from "mongoose";
 import QRCode from "qrcode";
+import { BOOKING_STATUS } from "../constants/booking.js";
 import Booking from "../models/booking.model.js";
+import Notification from "../models/notification.model.js";
+import Product from "../models/product.model.js";
 import Schedule from "../models/schedule.model.js";
 import User from "../models/user.model.js";
 import Voucher from "../models/voucher.model.js";
-import Product from "../models/product.model.js";
-import vnpayService from "./payment/vnpay.service.js";
-import momoService from "./payment/momo.service.js";
-import redisService from "./redis.service.js";
-import websocketService from "./websocket.service.js";
 import emailService from "./email.service.js";
+import momoService from "./payment/momo.service.js";
+import vnpayService from "./payment/vnpay.service.js";
+import redisService from "./redis.service.js";
 import smsService from "./sms.service.js";
-import Notification from "../models/notification.model.js";
-import { BOOKING_STATUS } from "../constants/booking.js";
+import websocketService from "./websocket.service.js";
 
 class PaymentStatusService {
   constructor() {
@@ -36,9 +36,9 @@ class PaymentStatusService {
    */
   async checkPendingPayments() {
     try {
-      // ✅ FIX #7: Find bookings waiting for payment confirmation (chỉ pending)
+      //  FIX #7: Find bookings waiting for payment confirmation (chỉ pending)
       const pendingBookings = await Booking.find({
-        status: BOOKING_STATUS.PENDING_PAYMENT, // ✅ FIX #6: Chỉ check pending bookings
+        status: BOOKING_STATUS.PENDING_PAYMENT, //  FIX #6: Chỉ check pending bookings
         "paymentDetails.transactionId": { $exists: true, $ne: null },
         createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Last 24 hours
       }).limit(50); // Process 50 at a time để tránh overload
@@ -55,10 +55,10 @@ class PaymentStatusService {
 
   /**
    * Check payment status for specific booking
-   * ✅ FIX #7: Thêm lock mechanism để tránh duplicate processing
+   *  FIX #7: Thêm lock mechanism để tránh duplicate processing
    */
   async checkBookingPaymentStatus(booking) {
-    // ✅ FIX #7: Acquire lock để tránh 2 instances cùng process 1 booking
+    //  FIX #7: Acquire lock để tránh 2 instances cùng process 1 booking
     const lockKey = `payment_check:${booking._id}`;
     const locked = await this.acquireLock(lockKey, 60); // 60s TTL
 
@@ -90,7 +90,7 @@ class PaymentStatusService {
   }
 
   /**
-   * ✅ FIX #7: Acquire Redis lock
+   *  FIX #7: Acquire Redis lock
    */
   async acquireLock(lockKey, ttlSeconds) {
     try {
@@ -113,7 +113,7 @@ class PaymentStatusService {
   }
 
   /**
-   * ✅ FIX #7: Release Redis lock
+   *  FIX #7: Release Redis lock
    */
   async releaseLock(lockKey) {
     try {
@@ -171,12 +171,12 @@ class PaymentStatusService {
 
   /**
    * Update booking status based on payment result
-   * ✅ FIX #6: Sử dụng atomic update để tránh race condition
+   *  FIX #6: Sử dụng atomic update để tránh race condition
    */
   async updateBookingStatus(booking, paymentStatus) {
     try {
       if (paymentStatus.success) {
-        // ✅ FIX #6: Atomic update - chỉ update nếu còn pending
+        //  FIX #6: Atomic update - chỉ update nếu còn pending
         const updatedBooking = await Booking.findOneAndUpdate(
           {
             _id: booking._id,
@@ -201,7 +201,7 @@ class PaymentStatusService {
 
         booking = updatedBooking;
 
-        // ✅ FIX #1, #9, #10: Wrap trong transaction và confirm seats, generate QR, loyalty points
+        //  FIX #1, #9, #10: Wrap trong transaction và confirm seats, generate QR, loyalty points
         const session = await mongoose.startSession();
 
         try {
@@ -214,7 +214,7 @@ class PaymentStatusService {
 
             booking = bookingWithSession;
 
-            // ✅ FIX #9: Generate QR code nếu chưa có
+            //  FIX #9: Generate QR code nếu chưa có
             if (!booking.qrCode) {
               try {
                 const qrData = JSON.stringify({
@@ -248,7 +248,7 @@ class PaymentStatusService {
               }
             }
 
-            // ✅ FIX #1: Confirm seats trong schedule
+            //  FIX #1: Confirm seats trong schedule
             const schedule = await Schedule.findById(booking.schedule).session(session);
             if (schedule) {
               await schedule.confirmSeats(
@@ -266,7 +266,7 @@ class PaymentStatusService {
               });
             }
 
-            // ✅ FIX #10: Cộng loyalty points cho customer
+            //  FIX #10: Cộng loyalty points cho customer
             const customer = await User.findById(booking.customer).session(session);
             if (customer) {
               const pointsEarned = Math.floor(booking.totalAmount / 10000); // 1 điểm / 10k
@@ -284,13 +284,13 @@ class PaymentStatusService {
 
               // Send notifications (không chờ, không block transaction)
               Promise.all([
-                emailService.sendBookingConfirmation(booking, customer).catch((err) =>
-                  console.error("Email error:", err)
-                ),
+                emailService
+                  .sendBookingConfirmation(booking, customer)
+                  .catch((err) => console.error("Email error:", err)),
                 customer.phoneNumber
-                  ? smsService.sendBookingConfirmation(customer.phoneNumber, booking).catch((err) =>
-                      console.error("SMS error:", err)
-                    )
+                  ? smsService
+                      .sendBookingConfirmation(customer.phoneNumber, booking)
+                      .catch((err) => console.error("SMS error:", err))
                   : null,
                 Notification.createNotification({
                   user: customer._id,
@@ -315,7 +315,7 @@ class PaymentStatusService {
           await session.endSession();
         }
 
-        console.log(`✅ Payment confirmed for booking ${booking.bookingCode}`);
+        console.log(` Payment confirmed for booking ${booking.bookingCode}`);
       } else {
         // Payment failed - release seats
         await this.handleFailedPayment(booking);
@@ -327,7 +327,7 @@ class PaymentStatusService {
 
   /**
    * Handle failed payment
-   * ✅ FIX CRITICAL: Thêm rollback voucher và product
+   *  FIX CRITICAL: Thêm rollback voucher và product
    */
   async handleFailedPayment(booking) {
     const session = await mongoose.startSession();
@@ -345,7 +345,7 @@ class PaymentStatusService {
           await schedule.save({ session });
         }
 
-        // ✅ FIX CRITICAL: Rollback voucher usage và remove from usedBy array
+        //  FIX CRITICAL: Rollback voucher usage và remove from usedBy array
         if (booking.appliedVoucher) {
           await Voucher.findByIdAndUpdate(
             booking.appliedVoucher,
@@ -361,7 +361,7 @@ class PaymentStatusService {
           );
         }
 
-        // ✅ FIX CRITICAL: Restore product stock khi payment fail
+        //  FIX CRITICAL: Restore product stock khi payment fail
         if (booking.products && booking.products.length > 0) {
           for (const item of booking.products) {
             let retries = 3;
@@ -416,7 +416,7 @@ class PaymentStatusService {
           }
         }
 
-        console.log(`❌ Payment failed for booking ${booking.bookingCode}`);
+        console.log(` Payment failed for booking ${booking.bookingCode}`);
       });
     } catch (error) {
       console.error("Handle failed payment error:", error);

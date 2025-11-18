@@ -199,7 +199,7 @@ class EmailService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>✅ Đặt vé thành công!</h1>
+                        <h1> Đặt vé thành công!</h1>
                     </div>
                     <div class="content">
                         <p>Xin chào <strong>${user.fullName}</strong>,</p>
@@ -310,7 +310,7 @@ class EmailService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>❌ Vé đã được hủy</h1>
+                        <h1> Vé đã được hủy</h1>
                     </div>
                     <div class="content">
                         <p>Xin chào <strong>${user.fullName}</strong>,</p>

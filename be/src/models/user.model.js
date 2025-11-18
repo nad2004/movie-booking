@@ -1,12 +1,12 @@
-import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const userSchema = new Schema(
   {
     username: {
       type: String,
-      required: false, // ✅ FIX: Username is optional, email is the primary identifier
+      required: false, //  FIX: Username is optional, email is the primary identifier
       unique: true,
       sparse: true,
       trim: true,
@@ -213,12 +213,12 @@ userSchema.virtual("nextMembershipLevel").get(function () {
 
 // === PRE-SAVE MIDDLEWARE ===
 userSchema.pre("save", async function (next) {
-  // ✅ FIX #2: Hash password consistently
+  //  FIX #2: Hash password consistently
   if (this.isModified("password") && this.authProvider === "local") {
     try {
-      // ✅ FIX #2: Luôn hash nếu password được modified
+      //  FIX #2: Luôn hash nếu password được modified
       // Không cần check prefix vì controller đã gửi plain password
-      const salt = await bcrypt.genSalt(12); // ✅ Consistent salt rounds
+      const salt = await bcrypt.genSalt(12); //  Consistent salt rounds
       this.password = await bcrypt.hash(this.password, salt);
       this.passwordChangedAt = new Date();
     } catch (error) {

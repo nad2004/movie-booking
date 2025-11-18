@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import User from "../models/user.model.js";
 
 dotenv.config();
@@ -7,7 +7,7 @@ dotenv.config();
 const createAllAccounts = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("✅ Connected to MongoDB\n");
+    console.log(" Connected to MongoDB\n");
 
     const accounts = [
       {
@@ -59,7 +59,7 @@ const createAllAccounts = async () => {
       const existing = await User.findOne({ email: accountData.email });
 
       if (existing) {
-        console.log(`⚠️  ${accountData.role.toUpperCase()} already exists: ${accountData.email}`);
+        console.log(`  ${accountData.role.toUpperCase()} already exists: ${accountData.email}`);
         continue;
       }
 
@@ -67,7 +67,7 @@ const createAllAccounts = async () => {
       const user = new User(accountData);
       await user.save();
 
-      console.log(`✅ ${accountData.role.toUpperCase()} created successfully!`);
+      console.log(` ${accountData.role.toUpperCase()} created successfully!`);
       console.log(`   Email: ${accountData.email}`);
       console.log(`   Password: ${accountData.password}`);
       console.log(`   Role: ${accountData.role}\n`);
@@ -103,7 +103,7 @@ const createAllAccounts = async () => {
     console.log("   Quyền: Quản lý user, thay đổi role + tất cả quyền Admin");
 
     console.log("\n" + "=".repeat(60));
-    console.log("\n💡 Đăng nhập bằng:");
+    console.log("\n Đăng nhập bằng:");
     console.log("POST /api/auth/login");
     console.log(
       JSON.stringify(
@@ -118,9 +118,9 @@ const createAllAccounts = async () => {
     console.log("\n" + "=".repeat(60));
 
     await mongoose.connection.close();
-    console.log("\n✅ Database connection closed");
+    console.log("\n Database connection closed");
   } catch (error) {
-    console.error("❌ Error creating accounts:", error);
+    console.error(" Error creating accounts:", error);
     process.exit(1);
   }
 };

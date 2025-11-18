@@ -1,6 +1,6 @@
-import Movie from "../models/movie.model.js";
 import Genre from "../models/genre.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
+import Movie from "../models/movie.model.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const movieController = {
   // Lấy danh sách phim (có phân trang, filter, search)
@@ -197,7 +197,7 @@ const movieController = {
         return errorResponse(res, "Không tìm thấy phim", 404);
       }
 
-      // ✅ FIX: Kiểm tra xem phim có lịch chiếu trong tương lai không
+      //  FIX: Kiểm tra xem phim có lịch chiếu trong tương lai không
       const Schedule = (await import("../models/schedule.model.js")).default;
       const now = new Date();
       const futureSchedules = await Schedule.countDocuments({
@@ -214,7 +214,7 @@ const movieController = {
         );
       }
 
-      // ✅ FIX: Soft delete thay vì hard delete để giữ lại dữ liệu lịch sử
+      //  FIX: Soft delete thay vì hard delete để giữ lại dữ liệu lịch sử
       movie.isDeleted = true;
       movie.status = "Ngừng chiếu";
       movie.updatedBy = req.userId;

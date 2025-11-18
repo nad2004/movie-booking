@@ -5,12 +5,12 @@ import app from "./app.js";
 import connectDB from "./config/db.js";
 
 // Import các dịch vụ
-import websocketService from "./services/websocket.service.js";
-import redisService from "./services/redis.service.js";
 import paymentStatusService from "./services/payment-status.service.js";
-// ✅ FIX #4 HIGH: Removed duplicate cleanup.service.js, only use expired-holds-cleanup.service.js
-import expiredHoldsCleanupService from "./services/expired-holds-cleanup.service.js";
+import redisService from "./services/redis.service.js";
+import websocketService from "./services/websocket.service.js";
+//  FIX #4 HIGH: Removed duplicate cleanup.service.js, only use expired-holds-cleanup.service.js
 import dataSyncService from "./services/data-sync.service.js";
+import expiredHoldsCleanupService from "./services/expired-holds-cleanup.service.js";
 
 async function startServer() {
   try {
@@ -20,18 +20,18 @@ async function startServer() {
     const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
     if (missingEnvVars.length > 0) {
-      console.error("❌ Missing required environment variables:", missingEnvVars.join(", "));
-      console.error("💡 Please check your .env file and ensure all required variables are set");
+      console.error(" Missing required environment variables:", missingEnvVars.join(", "));
+      console.error(" Please check your .env file and ensure all required variables are set");
       process.exit(1);
     }
 
     // Validate JWT_SECRET strength
     if (process.env.JWT_SECRET.length < 32) {
-      console.error("❌ JWT_SECRET must be at least 32 characters long for security");
+      console.error(" JWT_SECRET must be at least 32 characters long for security");
       process.exit(1);
     }
 
-    console.log("✅ Environment variables validated");
+    console.log(" Environment variables validated");
 
     // Kết nối đến cơ sở dữ liệu
     await connectDB();
@@ -41,13 +41,13 @@ async function startServer() {
       console.log("🔄 Connecting to Redis...");
       try {
         await redisService.connect();
-        console.log("✅ Redis connected successfully");
+        console.log(" Redis connected successfully");
       } catch (error) {
-        console.warn("⚠️  Redis connection failed, continuing without Redis:", error.message);
-        console.warn("💡 Set REDIS_ENABLED=false to disable Redis completely");
+        console.warn("  Redis connection failed, continuing without Redis:", error.message);
+        console.warn(" Set REDIS_ENABLED=false to disable Redis completely");
       }
     } else {
-      console.log("⚠️  Redis is disabled");
+      console.log("  Redis is disabled");
     }
 
     const server = http.createServer(app);
@@ -62,11 +62,11 @@ async function startServer() {
       paymentStatusService.startPolling();
     }
 
-    // ✅ FIX #4 HIGH: Chỉ dùng 1 cleanup service duy nhất
+    //  FIX #4 HIGH: Chỉ dùng 1 cleanup service duy nhất
     // Khởi tạo expired holds cleanup service (handles all cleanup tasks)
     if (process.env.CLEANUP_ENABLED !== "false") {
       expiredHoldsCleanupService.start();
-      console.log("✅ Cleanup service started (expired holds, bookings, vouchers, products)");
+      console.log(" Cleanup service started (expired holds, bookings, vouchers, products)");
     }
 
     // Khởi tạo data sync service
@@ -86,7 +86,7 @@ async function startServer() {
 
     return server;
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error(" Failed to start server:", error);
     process.exit(1);
   }
 }

@@ -1,58 +1,55 @@
 import express from "express";
 
 // Import controllers
-import authController from "../controllers/auth.controller.js";
-import movieController from "../controllers/movie.controller.js";
-import scheduleController from "../controllers/schedule.controller.js";
-import bookingController from "../controllers/booking.controller.js";
-import theaterController from "../controllers/theater.controller.js";
-import genreController from "../controllers/genre.controller.js";
-import reviewController from "../controllers/review.controller.js";
-import userController from "../controllers/user.controller.js";
-import productController from "../controllers/product.controller.js";
-import voucherController from "../controllers/voucher.controller.js";
-import paymentController from "../controllers/payment.controller.js";
-import uploadController from "../controllers/upload.controller.js";
-import statisticsController from "../controllers/statistics.controller.js";
-import staffController from "../controllers/staff.controller.js";
-import counterBookingController from "../controllers/counter-booking.controller.js";
-import ticketValidationController from "../controllers/ticket-validation.controller.js";
-import customerSupportController from "../controllers/customer-support.controller.js";
-import staffReportsController from "../controllers/staff-reports.controller.js";
-import shiftController from "../controllers/shift.controller.js";
 import analyticsController from "../controllers/analytics.controller.js";
+import authController from "../controllers/auth.controller.js";
+import bookingController from "../controllers/booking.controller.js";
+import counterBookingController from "../controllers/counter-booking.controller.js";
+import customerSupportController from "../controllers/customer-support.controller.js";
+import genreController from "../controllers/genre.controller.js";
+import movieController from "../controllers/movie.controller.js";
+import paymentController from "../controllers/payment.controller.js";
 import performanceController from "../controllers/performance.controller.js";
+import productController from "../controllers/product.controller.js";
 import qrScannerController from "../controllers/qr-scanner.controller.js";
+import reviewController from "../controllers/review.controller.js";
+import scheduleController from "../controllers/schedule.controller.js";
+import shiftController from "../controllers/shift.controller.js";
+import staffReportsController from "../controllers/staff-reports.controller.js";
+import staffController from "../controllers/staff.controller.js";
+import statisticsController from "../controllers/statistics.controller.js";
+import theaterController from "../controllers/theater.controller.js";
+import ticketValidationController from "../controllers/ticket-validation.controller.js";
+import uploadController from "../controllers/upload.controller.js";
+import userController from "../controllers/user.controller.js";
+import voucherController from "../controllers/voucher.controller.js";
 
 // Import middleware
-import { authenticateToken, authorize, optionalAuth } from "../middlewares/auth.middleware.js";
-import uploadMiddleware from "../middlewares/upload.middleware.js";
-import {
-  validateBookingInput,
-  validateRegisterInput,
-  validateLoginInput,
-  validateObjectId,
-  sanitizeInput,
-} from "../middlewares/validation.middleware.js";
+import { authenticateToken, authorize } from "../middlewares/auth.middleware.js";
 import {
   bookingRateLimiter,
-  paymentRateLimiter,
-  qrScanRateLimiter,
   passwordResetRateLimiter,
-  voucherRateLimiter,
-  reviewRateLimiter,
+  paymentRateLimiter,
 } from "../middlewares/rate-limit.middleware.js";
+import uploadMiddleware from "../middlewares/upload.middleware.js";
+import {
+  sanitizeInput,
+  validateBookingInput,
+  validateLoginInput,
+  validateObjectId,
+  validateRegisterInput,
+} from "../middlewares/validation.middleware.js";
 
 const router = express.Router();
 
-// ✅ FIX #5: Apply sanitization to all routes
+//  FIX #5: Apply sanitization to all routes
 router.use(sanitizeInput);
 
 // ============================================
 // PUBLIC ROUTES (Không cần authentication)
 // ============================================
 
-// ✅ FIX #5 & #9: Add validation and rate limiting
+//  FIX #5 & #9: Add validation and rate limiting
 router.post("/auth/register", validateRegisterInput, authController.register);
 router.post("/auth/login", validateLoginInput, authController.login);
 router.post("/auth/google-login", authController.googleLogin);
@@ -100,7 +97,7 @@ router.put("/auth/change-password", authenticateToken, authController.changePass
 router.put("/users/profile", authenticateToken, userController.updateProfile);
 router.get("/users/loyalty-points", authenticateToken, userController.getLoyaltyPoints);
 
-// ✅ FIX #5 & #9: Add validation and rate limiting for bookings
+//  FIX #5 & #9: Add validation and rate limiting for bookings
 router.post("/bookings", authenticateToken, bookingRateLimiter, validateBookingInput, bookingController.createBooking);
 router.get("/bookings/my-bookings", authenticateToken, bookingController.getMyBookings);
 router.get("/bookings/:id", authenticateToken, validateObjectId("id"), bookingController.getBookingById);

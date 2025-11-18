@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import User from "../models/user.model.js";
 
 dotenv.config();
@@ -7,7 +7,7 @@ dotenv.config();
 const createStaffAccount = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("✅ Connected to MongoDB");
+    console.log(" Connected to MongoDB");
 
     // Tạo tài khoản staff
     const staffData = {
@@ -24,7 +24,7 @@ const createStaffAccount = async () => {
     // Kiểm tra xem staff đã tồn tại chưa
     const existingStaff = await User.findOne({ email: staffData.email });
     if (existingStaff) {
-      console.log("⚠️  Staff account already exists");
+      console.log("  Staff account already exists");
       console.log("Email:", existingStaff.email);
       console.log("Role:", existingStaff.role);
       await mongoose.connection.close();
@@ -35,7 +35,7 @@ const createStaffAccount = async () => {
     const staff = new User(staffData);
     await staff.save();
 
-    console.log("\n✅ Staff account created successfully!");
+    console.log("\n Staff account created successfully!");
     console.log("==========================================");
     console.log("Email:", staffData.email);
     console.log("Password:", staffData.password);
@@ -55,9 +55,9 @@ const createStaffAccount = async () => {
     );
 
     await mongoose.connection.close();
-    console.log("\n✅ Database connection closed");
+    console.log("\n Database connection closed");
   } catch (error) {
-    console.error("❌ Error creating staff account:", error);
+    console.error(" Error creating staff account:", error);
     process.exit(1);
   }
 };

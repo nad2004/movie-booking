@@ -1,15 +1,14 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import mongoose from "mongoose";
 import connectDB from "../config/db.js";
 import Genre from "../models/genre.model.js";
-import Theater from "../models/theater.model.js";
 import Movie from "../models/movie.model.js";
 import Product from "../models/product.model.js";
-import Voucher from "../models/voucher.model.js";
 import Schedule from "../models/schedule.model.js";
+import Theater from "../models/theater.model.js";
 import User from "../models/user.model.js";
+import Voucher from "../models/voucher.model.js";
 
 const seedData = async () => {
   try {
@@ -36,7 +35,7 @@ const seedData = async () => {
         role: "admin",
         authProvider: "local",
       });
-      console.log("✅ Admin created: admin@cinema.com / admin123");
+      console.log(" Admin created: admin@cinema.com / admin123");
     }
 
     // 2. Create Genres
@@ -49,7 +48,7 @@ const seedData = async () => {
       { name: "Khoa học viễn tưởng", slug: "khoa-hoc-vien-tuong", description: "Phim sci-fi" },
       { name: "Hoạt hình", slug: "hoat-hinh", description: "Phim hoạt hình cho mọi lứa tuổi" },
     ]);
-    console.log(`✅ Created ${genres.length} genres`);
+    console.log(` Created ${genres.length} genres`);
 
     // 3. Create Theaters
     console.log("🏢 Creating theaters...");
@@ -106,7 +105,7 @@ const seedData = async () => {
     });
 
     const theaters = [theater1, theater2];
-    console.log(`✅ Created ${theaters.length} theaters`);
+    console.log(` Created ${theaters.length} theaters`);
 
     // 4. Create Movies
     console.log("🎬 Creating movies...");
@@ -161,7 +160,7 @@ const seedData = async () => {
         status: "Sắp chiếu",
       },
     ]);
-    console.log(`✅ Created ${movies.length} movies`);
+    console.log(` Created ${movies.length} movies`);
 
     // 5. Create Schedules (Skip - too complex, create via Swagger UI)
     console.log("⏭️  Skipping schedules (create via Swagger UI)");
@@ -210,7 +209,7 @@ const seedData = async () => {
     }
 
     // await Schedule.insertMany(schedules);
-    // console.log(`✅ Created ${schedules.length} schedules`);
+    // console.log(` Created ${schedules.length} schedules`);
     */
 
     // 6. Create Products
@@ -244,7 +243,7 @@ const seedData = async () => {
         imageUrl: "https://via.placeholder.com/300x300?text=Combo",
       },
     ]);
-    console.log(`✅ Created ${products.length} products`);
+    console.log(` Created ${products.length} products`);
 
     // 7. Create Vouchers
     console.log("🎟️  Creating vouchers...");
@@ -277,7 +276,7 @@ const seedData = async () => {
         isActive: true,
       },
     ]);
-    console.log(`✅ Created ${vouchers.length} vouchers`);
+    console.log(` Created ${vouchers.length} vouchers`);
 
     console.log("\n🎉 Seed data completed successfully!");
     console.log("\n📋 Summary:");
@@ -293,7 +292,7 @@ const seedData = async () => {
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Seed data error:", error);
+    console.error(" Seed data error:", error);
     process.exit(1);
   }
 };

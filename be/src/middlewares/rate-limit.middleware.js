@@ -1,7 +1,7 @@
 import rateLimit from "express-rate-limit";
 
 /**
- * ✅ FIX #9: Rate limiting cho booking operations
+ *  FIX #9: Rate limiting cho booking operations
  */
 export const bookingRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
@@ -18,7 +18,7 @@ export const bookingRateLimiter = rateLimit({
 });
 
 /**
- * ✅ FIX #9: Rate limiting cho payment confirmation
+ *  FIX #9: Rate limiting cho payment confirmation
  */
 export const paymentRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 phút
@@ -30,7 +30,7 @@ export const paymentRateLimiter = rateLimit({
 });
 
 /**
- * ✅ FIX #9: Rate limiting cho QR scanning
+ *  FIX #9: Rate limiting cho QR scanning
  */
 export const qrScanRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 phút
@@ -42,7 +42,7 @@ export const qrScanRateLimiter = rateLimit({
 });
 
 /**
- * ✅ FIX #9: Rate limiting cho password reset
+ *  FIX #9: Rate limiting cho password reset
  */
 export const passwordResetRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 giờ
@@ -54,7 +54,7 @@ export const passwordResetRateLimiter = rateLimit({
 });
 
 /**
- * ✅ FIX #9: Rate limiting cho voucher verification
+ *  FIX #9: Rate limiting cho voucher verification
  */
 export const voucherRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 phút
@@ -66,7 +66,7 @@ export const voucherRateLimiter = rateLimit({
 });
 
 /**
- * ✅ FIX #9: Rate limiting cho review creation
+ *  FIX #9: Rate limiting cho review creation
  */
 export const reviewRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 giờ
@@ -78,7 +78,7 @@ export const reviewRateLimiter = rateLimit({
 });
 
 /**
- * ✅ FIX #9: Strict rate limiting cho admin operations
+ *  FIX #9: Strict rate limiting cho admin operations
  */
 export const adminOperationRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 phút

@@ -1,8 +1,8 @@
+import crypto from "crypto";
 import QRCode from "qrcode";
 import Booking from "../models/booking.model.js";
 import EntryLog from "../models/entry-log.model.js";
 import { AppError } from "../utils/errors.js";
-import crypto from "crypto";
 
 class QRScannerService {
   // Validate QR code data
@@ -31,9 +31,9 @@ class QRScannerService {
         throw new AppError("QR code has expired", 400);
       }
 
-      // ✅ FIX #4: Sửa field names đúng với model
+      //  FIX #4: Sửa field names đúng với model
       const booking = await Booking.findById(bookingId)
-        .populate("customer", "fullName email phoneNumber") // ✅ customer không phải user
+        .populate("customer", "fullName email phoneNumber") //  customer không phải user
         .populate("schedule")
         .populate("theater", "name location");
 
@@ -41,15 +41,15 @@ class QRScannerService {
         throw new AppError("Booking not found", 404);
       }
 
-      // ✅ FIX #4: Check status đúng với enum trong model
+      //  FIX #4: Check status đúng với enum trong model
       if (booking.status !== "Hoàn tất") {
-        // ✅ "Hoàn tất" không phải "completed"
+        //  "Hoàn tất" không phải "completed"
         throw new AppError(`Booking status is ${booking.status}`, 400);
       }
 
-      // ✅ FIX #4: Check if already used
+      //  FIX #4: Check if already used
       if (booking.usedAt) {
-        // ✅ usedAt không phải isCheckedIn
+        //  usedAt không phải isCheckedIn
         const entryLog = await EntryLog.findOne({ booking: bookingId }).sort({ createdAt: -1 });
         return {
           valid: false,
@@ -102,10 +102,10 @@ class QRScannerService {
       throw new AppError("This ticket is for a different theater", 400);
     }
 
-    // ✅ FIX #4: Create entry log với field names đúng
+    //  FIX #4: Create entry log với field names đúng
     const entryLog = await EntryLog.create({
       booking: booking._id,
-      user: booking.customer, // ✅ customer không phải user
+      user: booking.customer, //  customer không phải user
       theater: theaterId,
       schedule: booking.schedule._id,
       staff: staffId,
@@ -120,9 +120,9 @@ class QRScannerService {
       verified: true,
     });
 
-    // ✅ FIX #4: Update booking với field names đúng
-    booking.usedAt = new Date(); // ✅ usedAt không phải isCheckedIn
-    booking.status = "Đã sử dụng"; // ✅ Update status
+    //  FIX #4: Update booking với field names đúng
+    booking.usedAt = new Date(); //  usedAt không phải isCheckedIn
+    booking.status = "Đã sử dụng"; //  Update status
     await booking.save();
 
     return {
@@ -247,9 +247,9 @@ class QRScannerService {
 
   // Verify booking code (alternative to QR)
   async verifyBookingCode(bookingCode, theaterId) {
-    // ✅ FIX #4: Sửa field names
+    //  FIX #4: Sửa field names
     const booking = await Booking.findOne({ bookingCode })
-      .populate("customer", "fullName email phoneNumber") // ✅ customer
+      .populate("customer", "fullName email phoneNumber") //  customer
       .populate("schedule")
       .populate("theater", "name location");
 
@@ -261,12 +261,12 @@ class QRScannerService {
       throw new AppError("This ticket is for a different theater", 400);
     }
 
-    // ✅ FIX #4: Status đúng
+    //  FIX #4: Status đúng
     if (booking.status !== "Hoàn tất") {
       throw new AppError(`Booking status is ${booking.status}`, 400);
     }
 
-    // ✅ FIX #4: Check usedAt
+    //  FIX #4: Check usedAt
     if (booking.usedAt) {
       const entryLog = await EntryLog.findOne({ booking: booking._id }).sort({ createdAt: -1 });
       return {
@@ -345,18 +345,18 @@ class QRScannerService {
         return { valid: false, reason: "Expired" };
       }
 
-      // ✅ FIX #4: Select đúng fields
+      //  FIX #4: Select đúng fields
       const booking = await Booking.findById(bookingId).select("status usedAt bookingCode");
       if (!booking) {
         return { valid: false, reason: "Booking not found" };
       }
 
-      // ✅ FIX #4: Check usedAt
+      //  FIX #4: Check usedAt
       if (booking.usedAt) {
         return { valid: false, reason: "Already checked in" };
       }
 
-      // ✅ FIX #4: Status đúng
+      //  FIX #4: Status đúng
       if (booking.status !== "Hoàn tất") {
         return { valid: false, reason: `Status: ${booking.status}` };
       }

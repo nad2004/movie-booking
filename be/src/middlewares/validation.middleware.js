@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { errorResponse } from "../utils/response.js";
 
 /**
- * ✅ FIX #5: Validation middleware cho booking
+ *  FIX #5: Validation middleware cho booking
  */
 export const validateBookingInput = (req, res, next) => {
   let { scheduleId, seats, products, voucherCode } = req.body;
@@ -101,7 +101,7 @@ export const validateBookingInput = (req, res, next) => {
 };
 
 /**
- * ✅ FIX #5: Validation cho auth
+ *  FIX #5: Validation cho auth
  */
 export const validateRegisterInput = (req, res, next) => {
   const { email, password, fullName, username, phoneNumber } = req.body;
@@ -168,7 +168,7 @@ export const validateRegisterInput = (req, res, next) => {
 };
 
 /**
- * ✅ FIX #5: Validation cho login
+ *  FIX #5: Validation cho login
  */
 export const validateLoginInput = (req, res, next) => {
   const { email, password } = req.body;
@@ -190,7 +190,7 @@ export const validateLoginInput = (req, res, next) => {
 };
 
 /**
- * ✅ FIX #5: Validate ObjectId
+ *  FIX #5: Validate ObjectId
  */
 export const validateObjectId = (paramName) => {
   return (req, res, next) => {
@@ -209,7 +209,7 @@ export const validateObjectId = (paramName) => {
 };
 
 /**
- * ✅ FIX #5: Sanitize input để prevent injection
+ *  FIX #5: Sanitize input để prevent injection
  */
 export const sanitizeInput = (req, res, next) => {
   // Remove any potential MongoDB operators from query params

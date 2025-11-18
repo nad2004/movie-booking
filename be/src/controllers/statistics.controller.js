@@ -1,10 +1,10 @@
-import Booking from "../models/booking.model.js";
-import Movie from "../models/movie.model.js";
-import User from "../models/user.model.js";
-import Schedule from "../models/schedule.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
 import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
+import Booking from "../models/booking.model.js";
+import Movie from "../models/movie.model.js";
+import Schedule from "../models/schedule.model.js";
+import User from "../models/user.model.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const statisticsController = {
   // Tổng quan hệ thống
@@ -494,9 +494,9 @@ const statisticsController = {
         data = bookings.map((b) => ({
           "Mã đặt vé": b.bookingCode,
           "Khách hàng": b.customer?.fullName || "N/A",
-          "Email": b.customer?.email || "N/A",
-          "Phim": b.movieTitle,
-          "Rạp": b.theaterName,
+          Email: b.customer?.email || "N/A",
+          Phim: b.movieTitle,
+          Rạp: b.theaterName,
           "Ngày chiếu": b.showDate?.toISOString().split("T")[0] || "N/A",
           "Số ghế": b.seats?.length || 0,
           "Tổng tiền": b.totalAmount,
@@ -523,7 +523,7 @@ const statisticsController = {
         title = "Báo cáo đặt vé";
         filename = `bookings_${start.toISOString().split("T")[0]}_${end.toISOString().split("T")[0]}`;
       } else if (type === "customers") {
-        // ✅ FIX: Extract customer stats logic directly instead of calling controller method
+        //  FIX: Extract customer stats logic directly instead of calling controller method
         const topCustomers = await Booking.aggregate([
           {
             $match: {
@@ -570,8 +570,8 @@ const statisticsController = {
         ]);
 
         data = topCustomers.map((c) => ({
-          "Tên": c.fullName || "N/A",
-          "Email": c.email || "N/A",
+          Tên: c.fullName || "N/A",
+          Email: c.email || "N/A",
           "Hạng thành viên": c.membershipLevel || "Bạc",
           "Tổng chi tiêu": c.totalSpent || 0,
           "Số đơn": c.totalBookings || 0,
@@ -582,7 +582,7 @@ const statisticsController = {
         filename = `customers_${start.toISOString().split("T")[0]}_${end.toISOString().split("T")[0]}`;
       }
 
-      // ✅ FIX: Export to Excel or PDF
+      //  FIX: Export to Excel or PDF
       if (format === "excel") {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet(title);
@@ -610,10 +610,7 @@ const statisticsController = {
         }
 
         // Set headers
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.setHeader("Content-Disposition", `attachment; filename="${filename}.xlsx"`);
 
         await workbook.xlsx.write(res);

@@ -1,5 +1,5 @@
 /**
- * ✅ FIX #14: Booking constants để thay thế magic numbers
+ *  FIX #14: Booking constants để thay thế magic numbers
  */
 export const BOOKING_CONSTANTS = {
   // Seat hold duration
