@@ -1,68 +1,98 @@
-import type { Customer } from './user'
-import type { Schedule } from './theater'
-import type { Seat } from './theater'
+import type { ApiResponse } from './apiTemplate';
+import type { Pagination } from './apiTemplate';
+import type { Schedule } from './schedule';
+import type { User } from './user';
 
-// Bảng BOOKING
+export type BookingStatus = "Chờ thanh toán" | "Hoàn tất" | "Đã hủy" | "Đã sử dụng" | "Hết hạn";
+// === Payment Details ===
+export interface PaymentDetails {
+  paymentMethod: "pending" | "VNPAY" | "MoMo" | "ZaloPay" | "Tại quầy" | "Thẻ tín dụng";
+  transactionId?: string;
+  status: "Chờ thanh toán" | "Thành công" | "Thất bại" | "Đã hoàn tiền";
+  amount: number;
+  paymentDate?: string | Date;
+  paymentInfo?: string;
+}
+
+// === Ordered Product (bắp nước, combo) ===
+export interface OrderedProduct {
+  product: string; // ObjectId
+  productName: string;
+  quantity: number;
+  priceAtBooking: number;
+  size: "S" | "M" | "L" | "N/A";
+}
+
+// === Booked Seat ===
+export interface BookedSeat {
+  seatNumber: string;
+  seatType: "Thường" | "VIP" | "Ghế đôi";
+  price: number;
+}
+
+// === Main Booking Interface ===
 export interface Booking {
-  booking_id: string // PK
-  customer_id: string // FK
-  schedule_id: string // FK (Cần thiết, để biết lịch chiếu nào được đặt)
-  booking_date: Date
-  total_amount: number
-  status: 'pending' | 'confirmed' | 'cancelled'
-  qr_code: string
-  created_at: Date
-  updated_at: Date
-  confirmed_by: number | null
-  cancelled_by: number | null
+  _id: string;
 
-  customer?: Customer
-  schedule?: Schedule
-  details?: BookingDetail[] // Mối quan hệ 1-N (Chi tiết Ghế)
-  combos?: BookingCombo[] // Mối quan hệ 1-N (Chi tiết Combo đã mua)
-  payment?: Payment // Mối quan hệ 1-1
+  // === Customer ===
+  customer: User; // ObjectId
+
+  // === Schedule ===
+  schedule: Schedule;
+
+  movieTitle: string;
+  theaterName: string;
+  roomName: string;
+  showDate: string | Date;
+  showTime: string;
+
+  // === Seats ===
+  seats: BookedSeat[];
+
+  // === Products ===
+  products?: OrderedProduct[];
+
+  // === Voucher ===
+  appliedVoucher?: string | null;
+  voucherCode?: string;
+
+  // === Price ===
+  ticketsAmount: number;
+  productsAmount: number;
+  subtotal: number;
+  discountAmount: number;
+  totalAmount: number;
+
+  // === Status ===
+  status: BookingStatus;
+
+  // === QR & Booking Code ===
+  qrCode?: string;
+  bookingCode?: string;
+
+  // === Payment ===
+  paymentDetails: PaymentDetails;
+
+  // === Cancellation ===
+  cancelledBy?: string;
+  cancelledAt?: string | Date;
+  cancellationReason?: string;
+  refundAmount?: number;
+
+  // === Others ===
+  notes?: string;
+  usedAt?: string | Date;
+
+  // === Timestamps ===
+  createdAt: string;
+  updatedAt: string;
+
+  // === Virtuals ===
+  isExpired?: boolean;
 }
-
-// Bảng BOOKING_DETAIL (Chi tiết từng vé/ghế trong Booking)
-export interface BookingDetail {
-  booking_detail_id: string // PK
-  booking_id: string // FK (Liên kết đến Booking)
-  seat_id: string // FK (Liên kết đến ghế cụ thể)
-  schedule_id: string // THỪA**
-  seat_price: number // Giá ghế tại thời điểm đặt
-
-  booking?: Booking
-  seat?: Seat
+export interface PaginatedBookingData {
+  bookings: Booking[];
+  pagination: Pagination;
 }
-
-// Bảng PAYMENT
-export interface Payment {
-  payment_id: string // PK
-  booking_id: string // FK
-  payment_date: Date
-  amount: number
-  payment_method: string
-  transaction_id: string
-  status: 'success' | 'failed' | 'refunded'
-  payment_info: string // Chi tiết khác của thanh toán (ex: bank code)
-  booking?: Booking // Mối quan hệ 1-1
-}
-export type ComboItem = {
-  combo_id: string
-  description: string
-  name: string
-  price: number
-  image_url: string
-  items: string[]
-}
-
-export interface BookingCombo {
-  booking_combo_id: string // PK
-  booking_id: string // FK - Liên kết đến Booking
-  combo_id: string // FK - Liên kết đến ComboItem gốc
-  quantity: number // Số lượng combo này đã mua
-  unit_price: number // Giá combo tại thời điểm mua (để đảm bảo tính lịch sử)
-
-  booking?: Booking
-  comboItem?: ComboItem
-}
+export type BookingResponse = ApiResponse<Booking>;
+export type BookingListResponse = ApiResponse<PaginatedBookingData>;

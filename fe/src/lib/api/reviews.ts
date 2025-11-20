@@ -2,10 +2,10 @@ import { api } from "@/lib/api/axios";
 import { useQuery } from '@tanstack/react-query';
 import type { ReviewListResponse } from '@/types/review';
 
-export async function getReviews(movieId: string) {
+export async function getReviews(id: string) {
   try {
-    const res = await api.get<ReviewListResponse>(`${process.env.NEXT_PUBLIC_API_URL}/reviews`, {
-      params: { movieId },
+    const res = await api.get<ReviewListResponse>(`${process.env.NEXT_PUBLIC_API_URL}/reviews/movie/${id}`, {
+      headers: { 'Cache-Control': 'no-store' },
     });
     return res.data.data;
   } catch (err) {
@@ -17,10 +17,10 @@ export async function getReviews(movieId: string) {
   }
 }
 
-export default function useReviews(movieId: string) {
+export function useReviews(id: string) {
   return useQuery({
-    queryKey: ['reviews', movieId],
-    queryFn: () => getReviews(movieId),
+    queryKey: ['reviews', id],
+    queryFn: () => getReviews(id),
     staleTime: 1000 * 60 * 10, // 10 phút cache
     retry: 2,
   });

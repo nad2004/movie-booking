@@ -19,12 +19,6 @@ type FilterCardProps = {
   genres: string[] // Đã được lọc trùng ở component cha
   selectedGenres: string[]
   onToggleGenre: (value: string) => void
-  versions: string[]
-  selectedVersion: string
-  onSelectVersion: (value: string) => void
-  years: string[]
-  selectedYear: string
-  onSelectYear: (value: string) => void
   customYear: string
   onSetCustomYear: (value: string) => void
   sortOptions: string[]
@@ -49,7 +43,7 @@ const FilterButtonList: React.FC<FilterButtonListProps> = ({ items, selectedItem
 
       return (
         <button
-          key={item} // Key an toàn vì mảng genres đã được lọc
+          key={item} 
           onClick={() => onSelect(item)}
           className={`px-4 py-2 rounded-lg transition-all ${
             isSelected
@@ -77,12 +71,7 @@ export default function FilterCard({
   genres,
   selectedGenres,
   onToggleGenre,
-  versions,
-  selectedVersion,
-  onSelectVersion,
-  years,
-  selectedYear,
-  onSelectYear,
+
   customYear,
   onSetCustomYear,
   sortOptions,
@@ -128,7 +117,7 @@ export default function FilterCard({
         {/* Rating Filter */}
         <div>
           <label className="text-text-primary mb-3 block" style={{ fontWeight: 600 }}>
-            Xếp hạng:
+            Độ tuổi:
           </label>
           <FilterButtonList
             items={ratings}
@@ -145,37 +134,12 @@ export default function FilterCard({
           <FilterButtonList items={genres} selectedItem={selectedGenres} onSelect={onToggleGenre} />
         </div>
 
-        {/* Version Filter */}
-        <div>
-          <label className="text-text-primary mb-3 block" style={{ fontWeight: 600 }}>
-            Phiên bản:
-          </label>
-          <FilterButtonList
-            items={versions}
-            selectedItem={selectedVersion}
-            onSelect={onSelectVersion}
-          />
-        </div>
-
         {/* Year Filter */}
         <div>
           <label className="text-text-primary mb-3 block" style={{ fontWeight: 600 }}>
-            Năm sản xuất:
+            Năm sản xuất(Nhập 0 để lọc tất cả):
           </label>
           <div className="flex flex-wrap gap-2 items-center">
-            {years.map(year => (
-              <button
-                key={year}
-                onClick={() => onSelectYear(year)}
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  selectedYear === year
-                    ? 'bg-primary text-white'
-                    : 'bg-bg-secondary text-text-primary hover:bg-bg-secondary/80'
-                }`}
-              >
-                {year}
-              </button>
-            ))}
             <Input
               type="text"
               placeholder="Nhập năm"

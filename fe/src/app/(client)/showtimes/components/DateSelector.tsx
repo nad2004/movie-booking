@@ -1,10 +1,9 @@
 'use client'
 
 import { Card } from '@/components/ui/card'
-import { ShowtimeDate } from '@/types/schedule'
 
 type DateSelectorProps = {
-  dates: ShowtimeDate[]
+  dates: string[]
   selectedDate: string
   onSelectDate: (date: string) => void
 }
@@ -15,19 +14,19 @@ export default function DateSelector({ dates, selectedDate, onSelectDate }: Date
       <div className="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-x-auto pb-2 scrollbar-hide">
         {dates.map(dateItem => (
           <button
-            key={dateItem.date}
-            onClick={() => onSelectDate(dateItem.date)}
+            key={dateItem}
+            onClick={() => onSelectDate(dateItem)}
             className={`flex-shrink-0 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 rounded-lg transition-all ${
-              selectedDate === dateItem.date
+              selectedDate === dateItem
                 ? 'bg-primary text-white'
                 : 'bg-bg-secondary text-text-primary hover:bg-bg-secondary/80'
             }`}
           >
             <div className="text-center">
               <div className="text-sm sm:text-base" style={{ fontWeight: 600 }}>
-                {dateItem.date}
+                {dateItem}
               </div>
-              <div className="text-xs sm:text-sm opacity-80">{dateItem.day}</div>
+              <div className="text-xs sm:text-sm opacity-80">{dateItem}</div>
             </div>
           </button>
         ))}

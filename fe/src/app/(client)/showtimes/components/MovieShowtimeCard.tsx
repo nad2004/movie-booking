@@ -3,8 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock } from 'lucide-react'
-import { Movie } from '@/types/schedule'
-
+import type { Movie } from '@/types/movie'
 type MovieShowtimeCardProps = {
   movie: Movie
 }
@@ -12,11 +11,11 @@ type MovieShowtimeCardProps = {
 export default function MovieShowtimeCard({ movie }: MovieShowtimeCardProps) {
   return (
     <Card
-      key={movie.id}
-      className={`bg-surface border-2 p-3 sm:p-4 md:p-6 ${movie.highlight ? 'border-accent' : 'border-border'}`}
+      key={movie._id}
+      className={`bg-surface border-2 p-3 sm:p-4 md:p-6 ${movie.metaTitle ? 'border-accent' : 'border-border'}`}
       style={{ borderRadius: '16px' }}
     >
-      {movie.highlight && (
+      {movie.metaTitle && (
         <div className="mb-3 sm:mb-4 bg-accent/10 border border-accent/30 p-2.5 sm:p-3 rounded-lg flex items-center gap-2">
           <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-accent flex-shrink-0" />
           <span className="text-text-primary text-sm sm:text-base" style={{ fontWeight: 500 }}>
@@ -29,7 +28,7 @@ export default function MovieShowtimeCard({ movie }: MovieShowtimeCardProps) {
         {/* Movie Poster */}
         <div className="flex-shrink-0 mx-auto sm:mx-0">
           <img
-            src={movie.poster}
+            src={movie.posterUrl}
             alt={movie.title}
             className="w-20 h-28 sm:w-24 sm:h-32 object-cover rounded-lg shadow-md"
           />
@@ -42,7 +41,14 @@ export default function MovieShowtimeCard({ movie }: MovieShowtimeCardProps) {
               {movie.title}
             </h4>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-text-secondary text-xs sm:text-sm mb-2">
-              <span className="line-clamp-1">{movie.genre}</span>
+              <span className="line-clamp-1"> {movie.genres.map(genre => (
+              <span
+                key={genre._id}
+                className="px-3 py-1 mx-2 text-xs border border-border rounded-full text-primary bg-secondary"
+              >
+                {genre.name}
+              </span>
+            ))}</span>
               <span className="hidden sm:inline">•</span>
               <span>{movie.duration}</span>
               <span className="hidden sm:inline">•</span>
@@ -52,13 +58,13 @@ export default function MovieShowtimeCard({ movie }: MovieShowtimeCardProps) {
               </Badge>
             </div>
             <div className="text-text-primary text-sm sm:text-base" style={{ fontWeight: 500 }}>
-              {movie.format}
+              {movie.language}
             </div>
           </div>
 
           {/* Showtimes Grid */}
           <div className="flex flex-wrap gap-2 sm:gap-2.5 md:gap-3">
-            {movie.showtimes.map((time, index) => (
+            {/* {movie.showtimes.map((time, index) => (
               <button
                 key={index}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border-2 border-border hover:border-primary hover:bg-primary/10 transition-all text-text-primary text-sm sm:text-base"
@@ -67,7 +73,7 @@ export default function MovieShowtimeCard({ movie }: MovieShowtimeCardProps) {
                 {time}
                 <div className="text-xs text-text-secondary">~360k</div>
               </button>
-            ))}
+            ))} */}
           </div>
         </div>
       </div>

@@ -1,15 +1,17 @@
 'use client'
 
 import { Card } from '@/components/ui/card'
+import type { Theater } from '@/types/theater'
+import { VIETNAM_CITIES } from '@/constants/location'
 
-import { CITIES } from '@/constants'
-// Gom tất cả props cần thiết vào đây
 type FilterSidebarProps = {
   selectedCity: string
   onSelectCity: (id: string) => void
-  currentCinemas: string[]
-  selectedCinema: string
-  onSelectCinema: (name: string) => void
+  currentCinemas: Theater[]
+  // Sửa: Nên cho phép null để tránh lỗi crash khi chưa có dữ liệu
+  selectedCinema: Theater | null 
+  onSelectCinema: (theater: Theater) => void
+  isLoading: boolean
 }
 
 export default function FilterSidebar({
@@ -18,7 +20,9 @@ export default function FilterSidebar({
   currentCinemas,
   selectedCinema,
   onSelectCinema,
+  isLoading,
 }: FilterSidebarProps) {
+
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* --- 1. City Filter --- */}
@@ -27,43 +31,56 @@ export default function FilterSidebar({
           Khu vực
         </h3>
         <div className="space-y-2 max-h-[300px] sm:max-h-[500px] overflow-y-auto">
-          {CITIES.map(city => (
+          {VIETNAM_CITIES.map(city => (
             <button
-              key={city.id}
-              onClick={() => onSelectCity(city.id)}
+              key={city}
+              onClick={() => onSelectCity(city)}
               className={`w-full flex items-center justify-between px-2.5 sm:px-3 py-2 rounded-lg transition-all text-sm sm:text-base ${
-                selectedCity === city.id
+                selectedCity === city
                   ? 'bg-primary text-white'
                   : 'hover:bg-bg-secondary text-text-primary'
               }`}
             >
-              <span>{city.name}</span>
+              <span>{city}</span>
             </button>
           ))}
         </div>
       </Card>
 
-      {/* --- 3. Cinema Filter --- */}
-      <Card className="bg-surface border-border p-3 sm:p-4" style={{ borderRadius: '16px' }}>
-        <h3 className="text-text-primary mb-3 text-sm sm:text-base" style={{ fontWeight: 600 }}>
-          Rạp
-        </h3>
-        <div className="space-y-2">
-          {currentCinemas.map(cinema => (
-            <button
-              key={cinema}
-              onClick={() => onSelectCinema(cinema)}
-              className={`w-full text-left px-2.5 sm:px-3 py-2 rounded-lg transition-all text-sm sm:text-base ${
-                selectedCinema === cinema
-                  ? 'bg-primary text-white'
-                  : 'hover:bg-bg-secondary text-text-secondary'
-              }`}
-            >
-              {cinema}
-            </button>
-          ))}
+      {/* --- 2. Cinema Filter --- */}
+      {/* SỬA LỖI Ở ĐÂY: Bỏ arrow function () => (...) đi, trả về thẻ div trực tiếp */}
+      {isLoading && (!selectedCinema || !selectedCinema._id) ? (
+        <div className="text-center text-text-secondary py-4">
+          Đang tải danh sách rạp...
         </div>
-      </Card>
+      ) : (
+        <Card className="bg-surface border-border p-3 sm:p-4" style={{ borderRadius: '16px' }}>
+          <h3 className="text-text-primary mb-3 text-sm sm:text-base" style={{ fontWeight: 600 }}>
+            Rạp
+          </h3>
+          <div className="space-y-2">
+            {currentCinemas.map(cinema => (
+              <button
+                key={cinema._id}
+                onClick={() => onSelectCinema(cinema)}
+                className={`w-full text-left px-2.5 sm:px-3 py-2 rounded-lg transition-all text-sm sm:text-base ${
+                  // Dùng optional chaining (?.) để tránh lỗi nếu selectedCinema là null
+                  selectedCinema?._id === cinema._id
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-bg-secondary text-text-secondary'
+                }`}
+              >
+                {cinema.name}
+              </button>
+            ))}
+            
+            {/* Xử lý trường hợp không có rạp nào */}
+            {currentCinemas.length === 0 && (
+               <p className="text-sm text-text-secondary px-2">Không có rạp nào tại khu vực này.</p>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

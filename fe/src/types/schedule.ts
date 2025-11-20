@@ -1,6 +1,7 @@
 import type { ApiResponse } from './apiTemplate';
 import type { Pagination } from './apiTemplate';
-
+import type { Theater } from './theater';
+import type { Movie } from './movie';
 // Ghế của suất chiếu (seatAvailability)
 export interface SeatAvailability {
   seatNumber: string;
@@ -24,10 +25,10 @@ export interface Schedule {
   _id: string;
 
   // Thông tin phim
-  movie: string;
+  movie: Movie;
 
   // Thông tin rạp & phòng
-  theater: string;
+  theater: Theater;
   room: string;
   roomName: string;
   roomType: "2D" | "3D" | "IMAX";
@@ -68,10 +69,10 @@ export interface Schedule {
 }
 
 // Dữ liệu trả về list schedule
-export interface ScheduleListData {
+export interface PaginatedScheduleData {
   schedules: Schedule[];
   pagination: Pagination;
 }
 
 // Kiểu API response
-export type ScheduleListResponse = ApiResponse<ScheduleListData>;
+export type ScheduleListResponse = ApiResponse<PaginatedScheduleData>;

@@ -1,166 +1,146 @@
 'use client'
+
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Ticket, QrCode } from 'lucide-react'
+import { Ticket, QrCode, Calendar, MapPin, MonitorPlay, CreditCard, Armchair, Hash } from 'lucide-react'
 import { Booking } from "@/types/booking";
-
-interface BookingCardProps {
-  booking: Booking;
-  onClose: (booking: Booking) => void;
+import Image from 'next/image'; 
+interface BookingDetailModalProps {
+  booking: Booking | null; // Cho phép null để xử lý đóng mở
+  onClose: () => void;
 }
-export default function BookingDetailModal({ booking, onClose }: BookingCardProps) {
+
+export default function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
+  
+  // Map status tiếng Việt sang Badge Style
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'watched':
-        return (
-          <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30">
-            Đã xem
-          </Badge>
-        )
-      case 'upcoming':
-        return <Badge className="bg-accent/20 text-accent border-accent/30">Sắp chiếu</Badge>
-      case 'cancelled':
-        return (
-          <Badge className="bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30">
-            Đã huỷ
-          </Badge>
-        )
+      case 'Hoàn tất':
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">Hoàn tất</Badge>;
+      case 'Đã sử dụng':
+        return <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Đã xem</Badge>;
+      case 'Chờ thanh toán':
+         return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100">Chờ thanh toán</Badge>;
+      case 'Đã hủy':
+        return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Đã huỷ</Badge>;
+      case 'Hết hạn':
+         return <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100">Hết hạn</Badge>;
       default:
-        return null
+        return <Badge variant="outline">{status}</Badge>;
     }
   }
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
   }
+
   return (
-    <Dialog open={!!booking} onOpenChange={onClose}>
-      <DialogContent className="rounded-xl max-w-2xl">
+    <Dialog open={!!booking} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="rounded-xl max-w-2xl bg-surface border-border p-0 overflow-hidden">
         {booking && (
           <>
-            <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">Chi tiết vé</DialogTitle>
+            <DialogHeader className="p-6 pb-2 border-b border-border">
+              <DialogTitle
+                className="text-text-primary flex items-center gap-2 text-xl md:text-2xl"
+              >
+                <Ticket className="w-6 h-6 text-primary" /> 
+                Chi tiết vé
+              </DialogTitle>
             </DialogHeader>
-            {booking && (
-              <>
-                {' '}
-                <DialogHeader>
-                  {' '}
-                  <DialogTitle
-                    className="text-text-primary flex items-center gap-2"
-                    style={{ fontSize: '24px', fontWeight: 600 }}
-                  >
-                    {' '}
-                    <Ticket className="w-6 h-6 text-primary" /> Chi tiết vé{' '}
-                  </DialogTitle>{' '}
-                </DialogHeader>{' '}
-                <div className="space-y-6 mt-4">
-                  {' '}
-                  {/* Movie Info */}{' '}
-                  <div className="flex gap-4">
-                    {' '}
-                    <img
-                      src={booking.poster}
-                      alt={booking.movieTitle}
-                      className="w-32 h-48 object-cover rounded-lg shadow-md"
-                    />{' '}
-                    <div className="flex-1">
-                      {' '}
-                      <h3
-                        className="text-text-primary mb-1"
-                        style={{ fontWeight: 600, fontSize: '20px' }}
-                      >
-                        {' '}
-                        {booking.movieTitle}{' '}
-                      </h3>{' '}
-                      <p className="text-text-secondary mb-3">{booking.movieTitleEn}</p>{' '}
-                      {getStatusBadge(booking.status)}{' '}
-                    </div>{' '}
-                    {/* QR Code */}{' '}
-                    <div className="flex-shrink-0">
-                      {' '}
-                      <div className="w-24 h-24 bg-bg-secondary rounded-lg flex items-center justify-center">
-                        {' '}
-                        <QrCode className="w-16 h-16 text-text-primary" />{' '}
-                      </div>{' '}
-                      <p className="text-xs text-text-secondary text-center mt-2">
-                        Quét mã QR
-                      </p>{' '}
-                    </div>{' '}
-                  </div>{' '}
-                  {/* Details Grid */}{' '}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-bg-secondary rounded-lg">
-                    {' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">🕒 Suất chiếu</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.time} - {booking.date}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">📍 Rạp</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.cinema}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">🎬 Phòng chiếu</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.room}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">💺 Ghế ngồi</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.seats.join(', ')}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">🎞️ Định dạng</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.format}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">💳 Thanh toán</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.paymentMethod}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">🔖 Mã vé</p>{' '}
-                      <p className="text-text-primary" style={{ fontWeight: 600 }}>
-                        {' '}
-                        {booking.id}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                    <div>
-                      {' '}
-                      <p className="text-text-secondary text-sm mb-1">💰 Tổng tiền</p>{' '}
-                      <p className="text-primary" style={{ fontWeight: 700, fontSize: '18px' }}>
-                        {' '}
-                        {formatPrice(booking.price)}{' '}
-                      </p>{' '}
-                    </div>{' '}
-                  </div>{' '}
-                </div>{' '}
-              </>
-            )}
+            
+            <div className="p-6 space-y-6">
+              {/* Movie Info Header */}
+              <div className="flex gap-4 md:gap-6">
+                <Image
+                  src={booking.schedule.movie.posterUrl || "/placeholder-movie.png"}
+                  alt={booking.movieTitle }
+                  className="w-28 h-40 md:w-32 md:h-48 object-cover rounded-lg shadow-md flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-text-primary mb-1 text-lg md:text-xl font-bold line-clamp-2">
+                    {booking.movieTitle }
+                  </h3>
+                  
+                  <div className="mb-4">
+                    {getStatusBadge(booking.status)}
+                  </div>
+
+                  <div className="text-primary font-bold text-2xl">
+                    {formatPrice(booking.totalAmount)}
+                  </div>
+                </div>
+                
+                {/* QR Code Section (Chỉ hiện nếu vé chưa hủy/hết hạn) */}
+                {booking.status !== 'Đã hủy' && booking.status !== 'Hết hạn' && (
+                    <div className="flex-shrink-0 text-center hidden sm:block">
+                    <div className="w-24 h-24 bg-white p-2 rounded-lg border border-border flex items-center justify-center mb-2">
+                        <QrCode className="w-full h-full text-black" />
+                    </div>
+                    <span className="text-xs text-text-secondary">Quét mã để vào rạp</span>
+                    </div>
+                )}
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-bg-secondary/50 p-4 rounded-xl border border-border">
+                <DetailItem 
+                    icon={<Calendar className="w-4 h-4"/>} 
+                    label="Thời gian" 
+                    value={`${booking.schedule.startTime} - ${booking.schedule.endTime}, ${new Date(booking.showDate).toLocaleDateString('vi-VN')}`} 
+                />
+                <DetailItem 
+                    icon={<MapPin className="w-4 h-4"/>} 
+                    label="Rạp chiếu" 
+                    value={booking.theaterName} 
+                />
+                <DetailItem 
+                    icon={<MonitorPlay className="w-4 h-4"/>} 
+                    label="Phòng chiếu" 
+                    value={booking.roomName || "Đang cập nhật"} 
+                />
+                 <DetailItem 
+                    icon={<Armchair className="w-4 h-4"/>} 
+                    label="Ghế ngồi" 
+                    value={booking.seats.join(', ')} 
+                    className="text-primary font-bold"
+                />
+                <DetailItem 
+                    icon={<CreditCard className="w-4 h-4"/>} 
+                    label="Thanh toán" 
+                    value={booking.paymentDetails.paymentMethod || "Ví điện tử"} 
+                />
+                <DetailItem 
+                    icon={<Hash className="w-4 h-4"/>} 
+                    label="Mã đặt vé" 
+                    value={booking.bookingCode || "Đang cập nhật"}
+                    fullWidth 
+                />
+              </div>
+            </div>
           </>
         )}
       </DialogContent>
     </Dialog>
   )
+}
+
+// Helper component nhỏ để render từng dòng chi tiết cho gọn
+interface DetailItemProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  className?: string;
+  fullWidth?: boolean;
+}
+
+function DetailItem({ icon, label, value, className = "", fullWidth = false }: DetailItemProps) {
+    return (
+        <div className={`${fullWidth ? 'sm:col-span-2' : ''} flex items-start gap-3`}>
+            <div className="mt-0.5 text-text-secondary">{icon}</div>
+            <div>
+                <p className="text-xs text-text-secondary mb-0.5">{label}</p>
+                <p className={`text-sm text-text-primary font-medium ${className}`}>{value}</p>
+            </div>
+        </div>
+    )
 }

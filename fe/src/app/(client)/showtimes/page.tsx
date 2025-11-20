@@ -1,42 +1,44 @@
 'use client'
 
-import { useState } from 'react'
-// Import các kiểu dữ liệu
-import { City, CinemaChain, Movie, ShowtimeDate } from '@/types/schedule'
-
-// Import các component con
+import { useState, useEffect } from 'react'
+import type { Movie } from '@/types/movie'
+import type { Theater } from '@/types/theater'
+import { useMovies } from '@/lib/api/movies'
+import { useTheaters } from '@/lib/api/theaters'
 import PageHeader from '@/app/(client)/showtimes/components/PageHeader'
 import FilterSidebar from '@/app/(client)/showtimes/components/FilterSidebar'
 import ShowtimeContent from '@/app/(client)/showtimes/components/ShowtimeContent'
-
-
-const movies: Movie[] = [
-  {
-    id: 1,
-    title: 'Phá Đảm Sinh Nhật Mẹ',
-    poster:
-      'https://images.unsplash.com/photo-1594908900066-3f47337549d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400',
-    genre: "Comedy, Mom's Birthday Party",
-    duration: 'T16',
-    rating: '16+',
-    format: '2D Phụ Đề Anh',
-    showtimes: ['08:45', '10:45', '12:45', '14:45', '16:45', '18:45', '22:45'],
-    highlight: true,
-  },
-  // ...
-]
-
-const dates: ShowtimeDate[] = [
-  { date: '4/11', day: 'Th 3' },
-  { date: '5/11', day: 'Th 4' },
-  // ...
-]
-// --- KẾT THÚC DỮ LIỆU MOCK ---
+import { DEFAULT_MOVIE_LIST, DEFAULT_THEATER_LIST } from '@/constants'
 
 export default function LichChieuHomNay() {
-  const [selectedCity, setSelectedCity] = useState('hanoi')
-  const [selectedCinema, setSelectedCinema] = useState('Beta Tây Sơn')
+  // 1. Dữ liệu giả lập - Ngày tháng
+  const dates = ['4/11', '5/11', '6/11', '7/11', '8/11', '9/11', '10/11']
+  const [selectedCity, setSelectedCity] = useState('')
   const [selectedDate, setSelectedDate] = useState('4/11')
+   // 2. Lấy dữ liệu từ API
+  const { data: movieData = DEFAULT_MOVIE_LIST } = useMovies({ page: 1, limit: 20 })
+  const { data: theaterData = DEFAULT_THEATER_LIST, error, isLoading } = useTheaters({city: selectedCity})
+
+  const movies: Movie[] = movieData ? movieData.movies : []
+  const theaters: Theater[] = theaterData ? theaterData.theaters : []
+    // Thay đổi quan trọng: State này chỉ lưu khi người dùng TỰ TAY chọn. 
+  // Mặc định là null.
+  const [manualCinema, setManualCinema] = useState<Theater | null>(null)
+
+  const activeCinema = manualCinema || theaters[0] || null;
+
+  // 5. Xử lý Side Effect (Chỉ dùng để log lỗi, KHÔNG set state logic ở đây)
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching theaters:", error);
+    }
+  }, [error])
+
+  // Hàm wrapper để reset rạp khi đổi thành phố (nếu cần logic này)
+  const handleSelectCity = (city: string) => {
+      setSelectedCity(city);
+      setManualCinema(null); // Reset về rạp đầu tiên của thành phố mới
+  }
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -47,21 +49,28 @@ export default function LichChieuHomNay() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6">
-          <FilterSidebar
-            selectedCity={selectedCity}
-            onSelectCity={setSelectedCity}
-            currentCinemas={[]}
-            selectedCinema={selectedCinema}
-            onSelectCinema={setSelectedCinema}
-          />
+          {/* Kiểm tra activeCinema có tồn tại không để tránh lỗi render */}
+          
+             <>
+                <FilterSidebar
+                  selectedCity={selectedCity}
+                  onSelectCity={handleSelectCity}
+                  currentCinemas={theaters}
+                  selectedCinema={activeCinema} 
+                  onSelectCinema={setManualCinema} 
+                  isLoading={isLoading}
+                />
 
-          <ShowtimeContent
-            dates={dates}
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            selectedCinema={selectedCinema}
-            movies={movies}
-          />
+                <ShowtimeContent
+                  dates={dates}
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                  selectedCinema={activeCinema} // Truyền giá trị đã tính toán
+                  movies={movies}
+                  checkCinema={activeCinema !== null}
+                />
+             </>
+         
         </div>
       </div>
     </div>

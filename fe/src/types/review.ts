@@ -15,11 +15,14 @@ export interface Review {
   updatedAt: string | Date;
 }
 
-export interface PaginatedReviewResponse {
+export interface PaginatedReviewData {
   reviews: Review[];
   pagination: Pagination;
+  statistics: {
+      avgRating: number,
+      totalReviews: number
+    }
 }
 
 export type ReviewApiResponse = ApiResponse<Review>;
-export type PaginatedReviewApiResponse = ApiResponse<PaginatedReviewResponse>;
-export type ReviewListResponse = ApiResponse<PaginatedReviewResponse>;
+export type ReviewListResponse = ApiResponse<PaginatedReviewData>;

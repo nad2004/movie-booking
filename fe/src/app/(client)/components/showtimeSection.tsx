@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { useState } from 'react'
 import type { Theater } from '@/types/theater'
-import { CITIES } from '@/constants'
+import { VIETNAM_CITIES } from '@/constants/location'
 
 const showtimes = [
   {
@@ -62,8 +62,8 @@ export function ShowtimeSection({ cinemas }: ListTheaterProps) {
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-muted-foreground" />
               <select className="bg-muted border border-border rounded-2xl px-4 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary transition">
-                 {CITIES.map(city => (
-             <option value={city.name} key={city.id}>{city.name}</option>
+                 {VIETNAM_CITIES.map(city => (
+             <option value={city} key={city}>{city}</option>
             ))}
               </select>
             </div>
@@ -89,17 +89,17 @@ export function ShowtimeSection({ cinemas }: ListTheaterProps) {
 
           {/* Brand Tabs */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
-            {CITIES.map(city => (
+            {VIETNAM_CITIES.map(city => (
               <button
-                key={city.id}
-                onClick={() => setSelectedCity(city.id)}
+                key={city}
+                onClick={() => setSelectedCity(city)}
                 className={`px-6 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
-                  selectedCity === city.id
+                  selectedCity === city
                     ? 'bg-primary text-primary-foreground shadow'
                     : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-foreground'
                 }`}
               >
-                {city.name}        
+                {city}        
               </button>
             ))}
           </div>

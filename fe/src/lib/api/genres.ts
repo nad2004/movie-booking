@@ -1,4 +1,4 @@
-import { GenreListResponse } from "@/types/genre";
+import { GenreListResponse,Genre } from "@/types/genre";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
 

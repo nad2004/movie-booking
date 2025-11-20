@@ -1,10 +1,16 @@
 import { TheaterListResponse } from "@/types/theater";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
-
-export async function getTheaters() {
+export interface GetMoviesParams {
+  page?: number
+  limit?: number
+  city?: string
+}
+export async function getTheaters(params: GetMoviesParams = {}) {
   try {
-    const res = await api.get<TheaterListResponse>("/theaters");
+    const res = await api.get<TheaterListResponse>("/theaters?", {
+      params: { ...params },
+    });
 
     return res.data.data;
 
@@ -22,10 +28,10 @@ export async function getTheaters() {
     };
   }
 }
-export function useTheaters() {
+export function useTheaters(params: GetMoviesParams) {
   return useQuery({
-    queryKey: ["theaters"],
-    queryFn: getTheaters,
+    queryKey: ["theaters", params],
+    queryFn:() => getTheaters(params),
     staleTime: 1000 * 60 * 10, // cache 10 phút
     retry: 2,
   });

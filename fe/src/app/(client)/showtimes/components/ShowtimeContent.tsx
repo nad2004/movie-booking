@@ -2,17 +2,18 @@
 
 import { Card } from '@/components/ui/card'
 import { Clock } from 'lucide-react'
-import { Movie, ShowtimeDate } from '@/types/schedule'
 import DateSelector from './DateSelector'
 import SelectedCinemaHeader from './SelectedCinemaHeader'
 import MovieShowtimeCard from './MovieShowtimeCard'
-
+import type { Movie } from '@/types/movie'
+import type { Theater } from '@/types/theater'
 type ShowtimeContentProps = {
-  dates: ShowtimeDate[]
+  dates: string[]
   selectedDate: string
   onSelectDate: (date: string) => void
-  selectedCinema: string
+  selectedCinema: Theater
   movies: Movie[]
+  checkCinema: boolean
 }
 
 export default function ShowtimeContent({
@@ -21,6 +22,7 @@ export default function ShowtimeContent({
   onSelectDate,
   selectedCinema,
   movies,
+  checkCinema,
 }: ShowtimeContentProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -35,17 +37,20 @@ export default function ShowtimeContent({
           </span>
         </div>
       </Card>
-
-      <SelectedCinemaHeader
-        cinemaName={selectedCinema}
-        // NOTE: Địa chỉ và ngày đang bị hardcode, bạn có thể truyền thêm props nếu cần
-        address="Thứ Ba, 04/11/2025 - Tầng 5, MIPEC Tower, số 229 Tây Sơn, phường Ngã Tư Sở, quận Đống Đa, Hà Nội - Bản đồ"
+      {/* Selected Cinema Header */}
+      {checkCinema && (
+         <SelectedCinemaHeader
+        cinemaName={selectedCinema.name || ''}
+        address={selectedCinema.address || '' }
       />
+      )}
+
+     
 
       {/* Movie Showtimes List */}
       <div className="space-y-3 sm:space-y-4">
         {movies.map(movie => (
-          <MovieShowtimeCard key={movie.id} movie={movie} />
+          <MovieShowtimeCard key={movie._id} movie={movie} />
         ))}
       </div>
     </div>

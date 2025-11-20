@@ -6,8 +6,8 @@ import { FeaturedReviews } from '@/app/(client)/components/featured-reviews'
 import { ShowtimeSection } from '@/app/(client)/components/showtimeSection'
 import { TopMovieCarousel } from '@/app/(client)/components/topMovieCarousel'
 import { useMovies } from '@/lib/api/movies'
-import {useTheaters} from '@/lib/api/theaters'
-import {useGenres} from '@/lib/api/genre'
+import { useTheaters } from '@/lib/api/theaters'
+import { useGenres } from '@/lib/api/genres'
 import { DEFAULT_MOVIE_LIST, DEFAULT_THEATER_LIST, DEFAULT_GENRE_LIST } from '@/constants'
 export default function HomePage() {
   const {
@@ -15,8 +15,9 @@ export default function HomePage() {
     isLoading,
     error,
   } = useMovies({ page: 1, limit: 10 })
-  const { data: listTheater = DEFAULT_THEATER_LIST } = useTheaters()
+  const { data: listTheater = DEFAULT_THEATER_LIST } = useTheaters({})
   const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres()
+
   if (isLoading) {
     return <div>Loading...</div>
   }
