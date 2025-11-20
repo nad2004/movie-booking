@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { COUNTRIES } from "../constants/location.js";
 import { generateSlug } from "../utils/slug.js";
 const { Schema } = mongoose;
 
@@ -106,6 +107,10 @@ const movieSchema = new Schema(
     country: {
       type: String,
       trim: true,
+      enum: {
+        values: COUNTRIES,
+        message: "{VALUE} không phải là quốc gia hợp lệ",
+      },
     },
     ageRestriction: {
       type: Number,

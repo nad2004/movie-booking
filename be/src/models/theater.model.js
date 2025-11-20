@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { VIETNAM_CITIES } from "../constants/location.js";
 import { generateSlug } from "../utils/slug.js";
 const { Schema } = mongoose;
 
@@ -103,6 +104,10 @@ const theaterSchema = new Schema(
       required: [true, "Thành phố là bắt buộc"],
       trim: true,
       index: true,
+      enum: {
+        values: VIETNAM_CITIES,
+        message: "{VALUE} không phải là thành phố hợp lệ",
+      },
     },
     district: {
       type: String,
