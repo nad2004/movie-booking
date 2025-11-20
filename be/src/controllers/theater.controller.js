@@ -5,20 +5,110 @@ const theaterController = {
   // Lấy danh sách rạp
   getAllTheaters: async (req, res) => {
     try {
-      const { city, page = 1, limit = 10 } = req.query;
+      const {
+        city,
+        district,
+        isActive,
+        search,
+        minRating,
+        maxRating,
+        amenities,
+        roomType,
+        longitude,
+        latitude,
+        maxDistance,
+        page = 1,
+        limit = 10,
+        sortBy = "city",
+        order = "asc",
+      } = req.query;
+
+      const pageNumber = parseInt(page, 10) || 1;
+      const limitNumber = parseInt(limit, 10) || 10;
+      const skip = (pageNumber - 1) * limitNumber;
 
       const query = {};
+
+      // Thành phố (regex để không cần match chính xác)
       if (city) {
-        query.city = city;
+        query.city = { $regex: city, $options: "i" };
       }
 
-      const skip = (page - 1) * limit;
+      // Quận / huyện
+      if (district) {
+        query.district = { $regex: district, $options: "i" };
+      }
+
+      // Trạng thái hoạt động
+      if (typeof isActive !== "undefined") {
+        query.isActive = isActive === "true";
+      }
+
+      // Rating rạp
+      if (minRating || maxRating) {
+        query.rating = {};
+        if (minRating) query.rating.$gte = Number(minRating);
+        if (maxRating) query.rating.$lte = Number(maxRating);
+      }
+
+      // Amenities (tiện ích)
+      if (amenities) {
+        const amenityArr = (Array.isArray(amenities) ? amenities : amenities.split(","))
+          .map((a) => a.trim())
+          .filter(Boolean);
+        if (amenityArr.length) {
+          // rạp phải có TẤT CẢ tiện ích truyền vào
+          query.amenities = { $all: amenityArr };
+          // nếu chỉ cần 1 trong số đó thì dùng $in
+          // query.amenities = { $in: amenityArr };
+        }
+      }
+
+      // Loại phòng chiếu (2D, 3D, IMAX, 4DX)
+      if (roomType) {
+        const roomTypes = (Array.isArray(roomType) ? roomType : roomType.split(","))
+          .map((t) => t.trim())
+          .filter(Boolean);
+        if (roomTypes.length) {
+          query["rooms.roomType"] = { $in: roomTypes };
+        }
+      }
+
+      // Tìm kiếm theo tên + địa chỉ
+      if (search) {
+        query.$or = [{ name: { $regex: search, $options: "i" } }, { address: { $regex: search, $options: "i" } }];
+      }
+
+      // Tìm rạp gần vị trí (geo)
+      if (longitude && latitude) {
+        const lng = parseFloat(longitude);
+        const lat = parseFloat(latitude);
+        const maxDist = maxDistance ? parseInt(maxDistance, 10) : 10000; // 10km
+
+        if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
+          query.location = {
+            $near: {
+              $geometry: {
+                type: "Point",
+                coordinates: [lng, lat],
+              },
+              $maxDistance: maxDist,
+            },
+          };
+        }
+      }
+
+      // Sort
+      const allowedSortFields = ["city", "name", "rating", "totalReviews", "createdAt", "updatedAt"];
+      const sortField = allowedSortFields.includes(sortBy) ? sortBy : "city";
+      const sort = { [sortField]: order === "desc" ? -1 : 1 };
+
       const [theaters, total] = await Promise.all([
         Theater.find(query)
           .select("-rooms.seatMap") // Không lấy seatMap để giảm data
-          .sort({ city: 1, name: 1 })
+          .sort(sort)
           .skip(skip)
-          .limit(parseInt(limit))
+          .limit(limitNumber)
           .lean(),
         Theater.countDocuments(query),
       ]);
@@ -26,8 +116,8 @@ const theaterController = {
       return successResponse(res, {
         theaters,
         pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
+          currentPage: pageNumber,
+          totalPages: Math.ceil(total / limitNumber),
           totalItems: total,
         },
       });

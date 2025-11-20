@@ -79,3 +79,4 @@ be/.env
 *.zip
 *.tar.gz
 *.tgz
+be/.env

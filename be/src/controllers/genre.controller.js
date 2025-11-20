@@ -1,10 +1,34 @@
 import Genre from "../models/genre.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const genreController = {
   getAllGenres: async (req, res) => {
     try {
-      const genres = await Genre.find().sort({ name: 1 }).lean();
+      const {
+        search, 
+        isActive, 
+        sortBy = "displayOrder", 
+        order = "asc",
+      } = req.query;
+
+      const query = {};
+
+      if (typeof isActive !== "undefined") {
+        query.isActive = isActive === "true";
+      }
+
+      // Tìm kiếm theo name / slug / description
+      if (search) {
+        const regex = new RegExp(search, "i");
+        query.$or = [{ name: regex }, { slug: regex }, { description: regex }];
+      }
+
+      // Sắp xếp
+      const allowedSortFields = ["displayOrder", "name", "createdAt", "updatedAt"];
+      const sortField = allowedSortFields.includes(sortBy) ? sortBy : "displayOrder";
+      const sort = { [sortField]: order === "desc" ? -1 : 1 };
+
+      const genres = await Genre.find(query).sort(sort).lean();
 
       return successResponse(res, genres);
     } catch (error) {

@@ -1,61 +1,218 @@
 import mongoose from "mongoose";
-import Schedule from "../models/schedule.model.js";
+import { BOOKING_STATUS } from "../constants/booking.js";
 import Booking from "../models/booking.model.js";
 import Movie from "../models/movie.model.js";
+import Product from "../models/product.model.js";
+import Schedule from "../models/schedule.model.js";
 import Theater from "../models/theater.model.js";
 import Voucher from "../models/voucher.model.js";
-import Product from "../models/product.model.js";
-import vnpayService from "../services/payment/vnpay.service.js";
-import momoService from "../services/payment/momo.service.js";
-import websocketService from "../services/websocket.service.js";
 import emailService from "../services/email.service.js";
-import smsService from "../services/sms.service.js";
+import momoService from "../services/payment/momo.service.js";
+import vnpayService from "../services/payment/vnpay.service.js";
 import redisService from "../services/redis.service.js";
-import { successResponse, errorResponse } from "../utils/response.js";
-import { BOOKING_STATUS } from "../constants/booking.js";
+import smsService from "../services/sms.service.js";
+import websocketService from "../services/websocket.service.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const scheduleController = {
   // Lấy danh sách lịch chiếu (có filter)
   getAllSchedules: async (req, res) => {
     try {
-      const { movieId, theaterId, date, startDate, endDate, status, page = 1, limit = 20 } = req.query;
+      const {
+        movieId,
+        theaterId,
+        date,
+        startDate,
+        endDate,
+        status,
+        country,
+        movieStatus,
+        rating,
+        genres,
+        language,
+        subtitle,
+        year,
+        minYear,
+        maxYear,
+        sortBy,
 
-      const query = {};
+        page = 1,
+        limit = 20,
+      } = req.query;
 
-      if (movieId) query.movie = movieId;
-      if (theaterId) query.theater = theaterId;
-      if (status) query.status = status;
+      const pageNumber = parseInt(page, 10) || 1;
+      const limitNumber = parseInt(limit, 10) || 20;
+      const skip = (pageNumber - 1) * limitNumber;
 
+      const scheduleMatch = {};
+
+      if (movieId && mongoose.Types.ObjectId.isValid(movieId)) {
+        scheduleMatch.movie = new mongoose.Types.ObjectId(movieId);
+      }
+
+      if (theaterId && mongoose.Types.ObjectId.isValid(theaterId)) {
+        scheduleMatch.theater = new mongoose.Types.ObjectId(theaterId);
+      }
+
+      if (status) {
+        scheduleMatch.status = status;
+      }
+
+      // Lọc theo ngày chiếu / khoảng ngày
       if (date) {
-        const searchDate = new Date(date);
-        query.showDate = {
-          $gte: new Date(searchDate.setHours(0, 0, 0)),
-          $lt: new Date(searchDate.setHours(23, 59, 59)),
+        const d = new Date(date);
+        const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+        scheduleMatch.showDate = {
+          $gte: startOfDay,
+          $lt: endOfDay,
         };
       } else if (startDate && endDate) {
-        query.showDate = {
+        scheduleMatch.showDate = {
           $gte: new Date(startDate),
           $lte: new Date(endDate),
         };
       }
 
-      const skip = (page - 1) * limit;
-      const [schedules, total] = await Promise.all([
-        Schedule.find(query)
-          .populate("movie", "title posterUrl duration rating")
-          .populate("theater", "name address city")
-          .sort({ showDate: 1, startTime: 1 })
-          .skip(skip)
-          .limit(parseInt(limit))
-          .lean(),
-        Schedule.countDocuments(query),
-      ]);
+      // Ngôn ngữ lịch chiếu
+      if (language) {
+        scheduleMatch.language = language;
+      }
+
+      // Phụ đề lịch chiếu / phiên bản
+      if (subtitle) {
+        scheduleMatch.subtitles = { $in: [subtitle] };
+      }
+
+      const movieMatch = {
+        "movie.isDeleted": { $ne: true },
+      };
+
+      // Quốc gia
+      if (country) {
+        const countries = Array.isArray(country)
+          ? country
+          : country
+              .split(",")
+              .map((c) => c.trim())
+              .filter(Boolean);
+
+        if (countries.length) {
+          movieMatch["movie.country"] = { $in: countries };
+        }
+      }
+
+      // Trạng thái phim: Đang chiếu / Sắp chiếu / Ngừng chiếu
+      if (movieStatus) {
+        movieMatch["movie.status"] = movieStatus;
+      }
+
+      // Rating: P, C13, C16, C18
+      if (rating) {
+        movieMatch["movie.rating"] = rating;
+      }
+
+      // Thể loại (genreId)
+      if (genres) {
+        const genreIds = (Array.isArray(genres) ? genres : genres.split(","))
+          .map((g) => g.trim())
+          .filter((g) => mongoose.Types.ObjectId.isValid(g))
+          .map((g) => new mongoose.Types.ObjectId(g));
+
+        if (genreIds.length) {
+          movieMatch["movie.genres"] = { $in: genreIds };
+        }
+      }
+
+      // Năm phát hành (từ releaseDate)
+      const yearNumber = year ? parseInt(year, 10) : null;
+      const minYearNumber = minYear ? parseInt(minYear, 10) : null;
+      const maxYearNumber = maxYear ? parseInt(maxYear, 10) : null;
+
+      if (yearNumber) {
+        const startOfYear = new Date(yearNumber, 0, 1);
+        const endOfYear = new Date(yearNumber + 1, 0, 1);
+        movieMatch["movie.releaseDate"] = { $gte: startOfYear, $lt: endOfYear };
+      } else if (minYearNumber || maxYearNumber) {
+        movieMatch["movie.releaseDate"] = {};
+        if (minYearNumber) {
+          movieMatch["movie.releaseDate"].$gte = new Date(minYearNumber, 0, 1);
+        }
+        if (maxYearNumber) {
+          movieMatch["movie.releaseDate"].$lt = new Date(maxYearNumber + 1, 0, 1);
+        }
+      }
+
+      let sortStage = { showDate: 1, startTime: 1 }; // mặc định
+
+      switch (sortBy) {
+        case "latest": // Mới nhất
+          sortStage = {
+            "movie.releaseDate": -1,
+            showDate: 1,
+            startTime: 1,
+          };
+          break;
+        case "updated": // Mới cập nhật
+          sortStage = { updatedAt: -1 };
+          break;
+        case "rating": // Điểm IMDB
+          sortStage = {
+            "movie.averageRating": -1,
+            "movie.totalReviews": -1,
+            showDate: 1,
+          };
+          break;
+        case "views": // Lượt xem
+          sortStage = {
+            "movie.viewCount": -1,
+            showDate: 1,
+          };
+          break;
+        default:
+          break;
+      }
+
+      const pipeline = [
+        { $match: scheduleMatch },
+        {
+          $lookup: {
+            from: "movies",
+            localField: "movie",
+            foreignField: "_id",
+            as: "movie",
+          },
+        },
+        { $unwind: "$movie" },
+        {
+          $lookup: {
+            from: "theaters",
+            localField: "theater",
+            foreignField: "_id",
+            as: "theater",
+          },
+        },
+        { $unwind: "$theater" },
+        { $match: movieMatch },
+        { $sort: sortStage },
+        {
+          $facet: {
+            data: [{ $skip: skip }, { $limit: limitNumber }],
+            totalCount: [{ $count: "count" }],
+          },
+        },
+      ];
+
+      const result = await Schedule.aggregate(pipeline);
+      const schedules = result[0]?.data || [];
+      const total = result[0]?.totalCount?.[0]?.count || 0;
 
       return successResponse(res, {
         schedules,
         pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
+          currentPage: pageNumber,
+          totalPages: Math.ceil(total / limitNumber),
           totalItems: total,
         },
       });
