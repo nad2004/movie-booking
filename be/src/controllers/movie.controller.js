@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+import { normalizeYoutubeTrailerUrl } from "../helpers/normalizeYoutubeTrailerUrl.js";
 import Genre from "../models/genre.model.js";
 import Movie from "../models/movie.model.js";
 import { errorResponse, successResponse } from "../utils/response.js";
@@ -6,21 +8,190 @@ const movieController = {
   // Lấy danh sách phim (có phân trang, filter, search)
   getAllMovies: async (req, res) => {
     try {
-      const { page = 1, limit = 12, status, genre, search, sortBy = "releaseDate", order = "desc" } = req.query;
+      const {
+        page = 1,
+        limit = 12,
+        status,
+        genre,
+        search,
+        genres,
+        country,
+        rating, // P, C13, C16, C18
+        language,
+        subtitle,
+        fromYear,
+        toYear,
+        year,
+        minDuration,
+        maxDuration,
+        minAge,
+        maxAge,
+        minAverageRating,
+        maxAverageRating,
+        minViewCount,
+        maxViewCount,
+        // sort
+        sortBy = "releaseDate",
+        order = "desc",
+      } = req.query;
 
-      // Build query
+      const pageNumber = parseInt(page, 10) || 1;
+      const limitNumber = parseInt(limit, 10) || 12;
       const query = {
-        isDeleted: { $ne: true }, // Exclude deleted movies
+        isDeleted: { $ne: true },
       };
 
       if (status) {
         query.status = status;
       }
 
+      const genreTokens = [];
+
+      // param "genre" đơn
       if (genre) {
-        query.genres = genre;
+        if (Array.isArray(genre)) {
+          genreTokens.push(...genre);
+        } else {
+          genre
+            .toString()
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
+            .forEach((g) => genreTokens.push(g));
+        }
       }
 
+      // param "genres" nhiều
+      if (genres) {
+        if (Array.isArray(genres)) {
+          genreTokens.push(...genres);
+        } else {
+          genres
+            .toString()
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
+            .forEach((g) => genreTokens.push(g));
+        }
+      }
+
+      if (genreTokens.length > 0) {
+        const idTokens = [];
+        const nameTokens = [];
+
+        genreTokens.forEach((g) => {
+          if (mongoose.Types.ObjectId.isValid(g)) {
+            idTokens.push(g);
+          } else {
+            nameTokens.push(g);
+          }
+        });
+
+        // Nếu có tên → tìm Genre theo name
+        if (nameTokens.length > 0) {
+          const genreDocs = await Genre.find({ name: { $in: nameTokens } }, "_id").lean();
+
+          genreDocs.forEach((g) => idTokens.push(g._id.toString()));
+        }
+
+        // Nếu sau khi xử lý có id hợp lệ thì mới set query.genres
+        if (idTokens.length > 0) {
+          query.genres = { $in: idTokens };
+        } else {
+          // Không tìm được thể loại nào khớp -> trả về rỗng luôn
+          return successResponse(res, {
+            movies: [],
+            pagination: {
+              currentPage: pageNumber,
+              totalPages: 0,
+              totalItems: 0,
+              itemsPerPage: limitNumber,
+            },
+          });
+        }
+      }
+
+      if (country) {
+        // có thể truyền: "Mỹ" hoặc "Mỹ,Hàn Quốc"
+        const countries = Array.isArray(country)
+          ? country
+          : country
+              .split(",")
+              .map((c) => c.trim())
+              .filter(Boolean);
+        if (countries.length) {
+          query.country = { $in: countries };
+        }
+      }
+
+      if (rating) {
+        // P,C13,C16,C18 hoặc 1 giá trị
+        const ratings = Array.isArray(rating)
+          ? rating
+          : rating
+              .split(",")
+              .map((r) => r.trim())
+              .filter(Boolean);
+        if (ratings.length === 1) {
+          query.rating = ratings[0];
+        } else if (ratings.length > 1) {
+          query.rating = { $in: ratings };
+        }
+      }
+
+      if (language) {
+        query.language = language;
+      }
+
+      if (subtitle) {
+        // subtitles là array
+        query.subtitles = { $in: [subtitle] };
+      }
+
+      // Thời lượng (phút)
+      if (minDuration || maxDuration) {
+        query.duration = {};
+        if (minDuration) query.duration.$gte = Number(minDuration);
+        if (maxDuration) query.duration.$lte = Number(maxDuration);
+      }
+
+      // Giới hạn tuổi
+      if (minAge || maxAge) {
+        query.ageRestriction = {};
+        if (minAge) query.ageRestriction.$gte = Number(minAge);
+        if (maxAge) query.ageRestriction.$lte = Number(maxAge);
+      }
+
+      // Năm phát hành từ releaseDate
+      const fromYearNum = fromYear ? parseInt(fromYear, 10) : null;
+      const toYearNum = toYear ? parseInt(toYear, 10) : null;
+      const yearNum = year ? parseInt(year, 10) : null;
+
+      if (yearNum) {
+        const start = new Date(yearNum, 0, 1);
+        const end = new Date(yearNum + 1, 0, 1);
+        query.releaseDate = { $gte: start, $lt: end };
+      } else if (fromYearNum || toYearNum) {
+        query.releaseDate = {};
+        if (fromYearNum) query.releaseDate.$gte = new Date(fromYearNum, 0, 1);
+        if (toYearNum) query.releaseDate.$lt = new Date(toYearNum + 1, 0, 1);
+      }
+
+      // averageRating
+      if (minAverageRating || maxAverageRating) {
+        query.averageRating = {};
+        if (minAverageRating) query.averageRating.$gte = Number(minAverageRating);
+        if (maxAverageRating) query.averageRating.$lte = Number(maxAverageRating);
+      }
+
+      // viewCount
+      if (minViewCount || maxViewCount) {
+        query.viewCount = {};
+        if (minViewCount) query.viewCount.$gte = Number(minViewCount);
+        if (maxViewCount) query.viewCount.$lte = Number(maxViewCount);
+      }
+
+      // Tìm kiếm full-text đơn giản
       if (search) {
         query.$or = [
           { title: { $regex: search, $options: "i" } },
@@ -29,24 +200,37 @@ const movieController = {
         ];
       }
 
-      // Build sort
-      const sort = {};
-      sort[sortBy] = order === "asc" ? 1 : -1;
+      // ===== Sort =====
+      const allowedSortFields = [
+        "releaseDate",
+        "createdAt",
+        "updatedAt",
+        "averageRating",
+        "totalReviews",
+        "viewCount",
+        "title",
+        "duration",
+        "totalRevenue",
+      ];
 
-      // Execute query
-      const skip = (page - 1) * limit;
+      const sortField = allowedSortFields.includes(sortBy) ? sortBy : "releaseDate";
+      const sort = { [sortField]: order === "asc" ? 1 : -1 };
+
+      // ===== Execute =====
+      const skip = (pageNumber - 1) * limitNumber;
+
       const [movies, total] = await Promise.all([
-        Movie.find(query).populate("genres", "name").sort(sort).skip(skip).limit(parseInt(limit)).lean(),
+        Movie.find(query).populate("genres", "name").sort(sort).skip(skip).limit(limitNumber).lean(),
         Movie.countDocuments(query),
       ]);
 
       return successResponse(res, {
         movies,
         pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(total / limit),
+          currentPage: pageNumber,
+          totalPages: Math.ceil(total / limitNumber),
           totalItems: total,
-          itemsPerPage: parseInt(limit),
+          itemsPerPage: limitNumber,
         },
       });
     } catch (error) {
@@ -93,6 +277,10 @@ const movieController = {
       }
       if (movieData.subtitles && typeof movieData.subtitles === "object" && !Array.isArray(movieData.subtitles)) {
         movieData.subtitles = Object.values(movieData.subtitles);
+      }
+
+      if (movieData.trailerUrl) {
+        movieData.trailerUrl = normalizeYoutubeTrailerUrl(movieData.trailerUrl);
       }
 
       // Validate genres
@@ -157,6 +345,10 @@ const movieController = {
         if (typeof updateData.actors[0] === "object" && updateData.actors[0].name) {
           updateData.actors = updateData.actors.map((a) => a.name);
         }
+      }
+
+      if (updateData.trailerUrl) {
+        updateData.trailerUrl = normalizeYoutubeTrailerUrl(updateData.trailerUrl);
       }
 
       // Validate genres nếu có
