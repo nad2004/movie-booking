@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ChevronRight } from 'lucide-react'
-import type { Movie } from '@/types'
-import { MovieCard } from '@/app/components/movie-card'
-import { TopMovieCard } from '@/app/components/top-movie-card'
+import type { Movie } from '@/types/movie'
+import { MovieCard } from '@/app/components/shared/movie-card'
 
 interface MovieSectionProps {
   title: string
@@ -40,13 +39,9 @@ export function MovieSection({ title, movies, viewAllHref }: MovieSectionProps) 
           }
         `}
       >
-        {movies.map((movie, index) =>
-          isTopMovies ? (
-            <TopMovieCard key={movie.id} movie={movie} index={index} />
-          ) : (
-            <MovieCard key={movie.id} movie={movie} index={index} />
-          )
-        )}
+        {movies.map((movie, index) => (
+          <MovieCard key={movie._id} movie={movie} index={index} />
+        ))}
       </div>
     </section>
   )

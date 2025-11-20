@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-
+import type { Genre } from '@/types/genre'
 const genres = [
   { name: 'Hành động', icon: '⚡', color: 'from-red-500 to-orange-500' },
   { name: 'Kinh dị', icon: '👻', color: 'from-purple-500 to-pink-500' },
@@ -11,8 +11,15 @@ const genres = [
   { name: 'Khoa học viễn tưởng', icon: '🚀', color: 'from-blue-500 to-cyan-500' },
   { name: 'Hoạt hình', icon: '🎨', color: 'from-indigo-500 to-purple-500' },
 ]
-
-export function GenreGrid() {
+interface GenresProps {
+  genres: Genre[] 
+}
+export function GenreGrid({ genres }: GenresProps) {
+  if (genres.length === 0) {
+    return <div>
+      Không có thể loại nào để hiển thị.
+    </div>
+  }
   return (
     <div className=" py-12   ">
       <div className="container">

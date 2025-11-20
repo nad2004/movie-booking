@@ -1,10 +1,8 @@
+
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import './globals.css'
-import { Providers } from './providers'
-import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
-
+import ClientProvider from './ClientProvider'
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -21,13 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <div className={`${poppins.variable}`}>
-          <Providers>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-          </Providers>
+          <ClientProvider>{children}</ClientProvider>
         </div>
       </body>
     </html>

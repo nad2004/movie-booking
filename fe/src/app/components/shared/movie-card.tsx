@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Star, Clock } from 'lucide-react'
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback'
-import type { Movie } from '@/types'
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
+import type { Movie } from '@/types/movie'
 
 interface MovieCardProps {
   movie: Movie
@@ -20,11 +20,11 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
       viewport={{ once: true }}
       className="group"
     >
-      <Link href={`/movies/${movie.id}`} className="block relative overflow-hidden rounded-2xl">
+      <Link href={`/movies/${movie._id}`} className="block relative overflow-hidden rounded-2xl">
         {/* Poster */}
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl">
           <ImageWithFallback
-            src={movie.poster}
+            src={movie.posterUrl}
             alt={movie.title}
             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
           />
@@ -51,7 +51,11 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
             </h3>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="truncate">{movie.genre}</span>
+              {/* Hiển thị danh sách thể loại */}
+              <span className="truncate">
+                {movie.genres ? movie.genres.map(mg => mg.name).join(', ') : 'Không có thể loại'}
+              </span>
+
               <span>•</span>
               <Clock className="h-3 w-3 shrink-0" />
               <span>{movie.duration} phút</span>

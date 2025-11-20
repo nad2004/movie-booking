@@ -1,6 +1,3 @@
-# ============================================================
-# 🎬 MOVIE BOOKING PROJECT (Next.js + Express)
-# ============================================================
 
 # --- Node ---
 node_modules/
@@ -62,7 +59,6 @@ stylelintcache
 fe/.next/
 fe/node_modules/
 fe/out/
-fe/.env*
 fe/.vercel
 fe/.turbo
 
@@ -70,7 +66,6 @@ fe/.turbo
 be/node_modules/
 be/dist/
 be/logs/
-be/.env
 
 # --- Misc ---
 *.bak

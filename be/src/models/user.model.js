@@ -72,7 +72,7 @@ const userSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Theater",
       },
-      position: {
+      position: { 
         type: String,
         enum: ["cashier", "usher", "supervisor", "manager"],
       },

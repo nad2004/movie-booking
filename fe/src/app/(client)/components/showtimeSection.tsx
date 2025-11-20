@@ -5,15 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { useState } from 'react'
-
-const cinemaBrands = ['CGV', 'Lotte', 'Galaxy', 'Beta', 'BHD', 'Cinestar', 'MegaGS']
-
-const cinemas = [
-  { id: 1, name: 'CGV Vincom Center', brand: 'CGV', distance: '2.5 km' },
-  { id: 2, name: 'Lotte Cinema Landmark', brand: 'Lotte', distance: '3.1 km' },
-  { id: 3, name: 'Galaxy Nguyễn Du', brand: 'Galaxy', distance: '1.8 km' },
-  { id: 4, name: 'Beta Thanh Xuân', brand: 'Beta', distance: '4.2 km' },
-]
+import type { Theater } from '@/types/theater'
+import { CITIES } from '@/constants'
 
 const showtimes = [
   {
@@ -43,11 +36,20 @@ const dates = [
   { day: 'T7', date: '09', month: '11' },
   { day: 'CN', date: '10', month: '11' },
 ]
+interface ListTheaterProps {
+  cinemas: Theater[] 
+}
+export function ShowtimeSection({ cinemas }: ListTheaterProps) {
 
-export function ShowtimeSection() {
-  const [selectedBrand, setSelectedBrand] = useState('CGV')
-  const [selectedCinema, setSelectedCinema] = useState(1)
+
+  const [selectedCity, setSelectedCity] = useState('Hà Nội')
+  const [selectedCinema, setSelectedCinema] = useState("")
   const [selectedDate, setSelectedDate] = useState(0)
+  if (cinemas.length === 0) {
+    return <div>
+      Không có thể loại nào để hiển thị.
+    </div>
+  }
 
   return (
     <section className="py-16 bg-background text-foreground">
@@ -59,16 +61,16 @@ export function ShowtimeSection() {
           <div className="flex flex-col md:flex-row flex-wrap gap-4 mb-6 pb-6 border-b border-border">
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-muted-foreground" />
-              <select className="bg-muted border border-border rounded-full px-4 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary transition">
-                <option>Hồ Chí Minh</option>
-                <option>Hà Nội</option>
-                <option>Đà Nẵng</option>
+              <select className="bg-muted border border-border rounded-2xl px-4 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary transition">
+                 {CITIES.map(city => (
+             <option value={city.name} key={city.id}>{city.name}</option>
+            ))}
               </select>
             </div>
 
             <Button
               variant="outline"
-              className="rounded-full border-border hover:bg-primary hover:text-primary-foreground transition-all"
+              className="rounded-full border-border bg-muted text-muted-foreground hover:bg-primary/10 hover:text-foreground transition-all"
             >
               Gần bạn
             </Button>
@@ -87,17 +89,17 @@ export function ShowtimeSection() {
 
           {/* Brand Tabs */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
-            {cinemaBrands.map(brand => (
+            {CITIES.map(city => (
               <button
-                key={brand}
-                onClick={() => setSelectedBrand(brand)}
+                key={city.id}
+                onClick={() => setSelectedCity(city.id)}
                 className={`px-6 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
-                  selectedBrand === brand
+                  selectedCity === city.id
                     ? 'bg-primary text-primary-foreground shadow'
                     : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-foreground'
                 }`}
               >
-                {brand}
+                {city.name}        
               </button>
             ))}
           </div>
@@ -108,21 +110,21 @@ export function ShowtimeSection() {
             <div className="space-y-3">
               {cinemas.map(cinema => (
                 <button
-                  key={cinema.id}
-                  onClick={() => setSelectedCinema(cinema.id)}
+                  key={cinema._id}
+                  onClick={() => setSelectedCinema(cinema._id)}
                   className={`w-full text-left p-4 rounded-2xl transition-all ${
-                    selectedCinema === cinema.id
+                    selectedCinema === cinema._id
                       ? 'bg-primary/10 border-l-4 border-primary'
                       : 'hover:bg-muted'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                      <span className="text-primary font-semibold">{cinema.brand.charAt(0)}</span>
+                      <span className="text-primary font-semibold">{cinema.name.charAt(0)}</span>
                     </div>
                     <div className="min-w-0">
                       <h5 className="truncate text-foreground font-medium">{cinema.name}</h5>
-                      <p className="text-sm text-muted-foreground">{cinema.distance}</p>
+                      <p className="text-sm text-muted-foreground">{cinema.city}</p>
                     </div>
                   </div>
                 </button>
@@ -175,7 +177,7 @@ export function ShowtimeSection() {
                       <Button
                         key={idx}
                         variant="outline"
-                        className="rounded-full text-sm border-border hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                        className="rounded-full text-sm border-border bg-muted text-muted-foreground hover:bg-primary/10 hover:text-foreground transition-all"
                       >
                         <Clock className="w-4 h-4 mr-1" />
                         {time}

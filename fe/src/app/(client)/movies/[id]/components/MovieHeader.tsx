@@ -3,13 +3,25 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Star, Clock, Ticket, Calendar, User, Play, Undo2 } from 'lucide-react'
-import { ImageWithFallback } from '@/components/figma/ImageWithFallback'
+import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-
+import { useRouter, useParams } from 'next/navigation'
+import { useMovieDetail } from '@/lib/api/movies'
+import { DEFAULT_MOVIE_DETAIL, MAXSTARS } from '@/constants'
+import { TrailerModal } from './TrailerModal'
 export function MovieHeader() {
+  const { id } = useParams()
+  const movieId = Array.isArray(id) ? id[0] : id
+  const { data: movie = DEFAULT_MOVIE_DETAIL, isLoading, error } = useMovieDetail(movieId ?? '')
   const [showTrailer, setShowTrailer] = useState(false)
   const router = useRouter()
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (error) {
+    return <div>Error loading movie details</div>
+  }
   return (
     <>
       <Button
@@ -29,8 +41,8 @@ export function MovieHeader() {
           className="relative rounded-2xl overflow-hidden border border-border shadow-sm group h-[480px] md:h-[520px] lg:h-[540px]"
         >
           <ImageWithFallback
-            src="https://images.unsplash.com/photo-1635805737707-575885ab0820?w=600&h=900&fit=crop"
-            alt="Spider-Man: No Way Home"
+            src={movie.posterUrl}
+            alt={movie.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
@@ -53,23 +65,35 @@ export function MovieHeader() {
           {/* Title + rating */}
           <div>
             <h1 className="text-2xl md:text-3xl font-semibold mb-2 text-text-primary">
-              Guardians of the Galaxy Vol. 3
+              {movie.title}
             </h1>
             <div className="flex items-center gap-2">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-accent text-accent" />
-              ))}
-              <span className="font-semibold text-lg md:text-xl text-text-primary">8.5</span>
-              <span className="text-sm text-text-secondary">(1,234 đánh giá)</span>
+              {[...Array(MAXSTARS)].map((_, i) => {
+                const filled = i < Math.round(movie.averageRating) // làm tròn rating
+                return (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${filled ? 'fill-accent text-accent' : 'text-text-secondary/40'}`}
+                  />
+                )
+              })}
+              <span className="font-semibold text-lg md:text-xl text-text-primary">
+                {movie.averageRating}
+              </span>
+              <span className="text-sm text-text-secondary">({movie.totalReviews})</span>
             </div>
           </div>
 
           {/* Info boxes */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: Clock, label: 'Thời lượng', value: '150 phút' },
-              { icon: Ticket, label: 'Trạng thái', value: 'Đang chiếu' },
-              { icon: Calendar, label: 'Khởi chiếu', value: '15-01-2025' },
+              { icon: Clock, label: 'Thời lượng', value: movie.duration },
+              { icon: Ticket, label: 'Trạng thái', value: movie.status },
+              {
+                icon: Calendar,
+                label: 'Ra Mắt',
+                value: new Date(movie.releaseDate).toLocaleDateString('vi-VN'),
+              },
             ].map((item, i) => (
               <div
                 key={i}
@@ -85,11 +109,7 @@ export function MovieHeader() {
           {/* Description */}
           <div>
             <h3 className="font-medium text-text-primary mb-2">Mô tả</h3>
-            <p className="text-text-secondary leading-relaxed">
-              Câu chuyện tiếp theo của nhóm Vệ binh Dải Ngân Hà khi họ đối mặt với những thử thách
-              mới và khám phá những bí mật về quá khứ của Rocket. Một cuộc phiêu lưu đầy cảm xúc với
-              hành động mãn nhãn và kỹ xảo hoành tráng.
-            </p>
+            <p className="text-text-secondary leading-relaxed">{movie.description}</p>
           </div>
 
           {/* Director & Cast */}
@@ -98,7 +118,7 @@ export function MovieHeader() {
               <User className="w-4 h-4 text-primary" />
               <span>
                 <span className="text-text-secondary">Đạo diễn:</span>{' '}
-                <span className="font-medium text-text-primary">James Gunn</span>
+                <span className="font-medium text-text-primary">{movie.director}</span>
               </span>
             </p>
             <p className="flex items-center gap-2">
@@ -106,7 +126,7 @@ export function MovieHeader() {
               <span>
                 <span className="text-text-secondary">Diễn viên:</span>{' '}
                 <span className="font-medium text-text-primary">
-                  Chris Pratt, Zoe Saldana, Dave Bautista, Karen Gillan
+                  {movie.actors && movie.actors.join(', ')}
                 </span>
               </span>
             </p>
@@ -114,12 +134,12 @@ export function MovieHeader() {
 
           {/* Genres */}
           <div className="flex flex-wrap gap-2 pt-2">
-            {['Action', 'Superhero', 'Adventure', 'Sci-Fi'].map(genre => (
+            {movie.genres.map(genre => (
               <span
-                key={genre}
+                key={genre._id}
                 className="px-3 py-1 text-xs border border-border rounded-full text-text-secondary bg-bg-secondary"
               >
-                {genre}
+                {genre.name}
               </span>
             ))}
           </div>
@@ -131,23 +151,7 @@ export function MovieHeader() {
         </div>
 
         {/* Trailer Modal */}
-        {showTrailer && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-surface rounded-xl overflow-hidden w-full max-w-3xl shadow-lg animate-fadeIn">
-              <iframe
-                src="https://www.youtube.com/embed/JfVOs4VSpmA"
-                title="Trailer"
-                className="w-full aspect-video"
-                allowFullScreen
-              />
-              <div className="p-3 flex justify-end border-t border-border bg-bg-secondary">
-                <Button variant="outline" className="text-sm" onClick={() => setShowTrailer(false)}>
-                  Đóng
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        {showTrailer && (<TrailerModal setShowTrailer={setShowTrailer} showTrailer={showTrailer} />)}
       </section>
     </>
   )

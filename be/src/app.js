@@ -41,23 +41,23 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("combined"));
 }
 
-// Giới hạn tỷ lệ request
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: "Quá nhiều request từ IP này, vui lòng thử lại sau",
-});
-app.use("/api/", limiter);
+// // Giới hạn tỷ lệ request
+// const limiter = rateLimit({
+//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+//   message: "Quá nhiều request từ IP này, vui lòng thử lại sau",
+// });
+// app.use("/api/", limiter);
 
-// Giới hạn tỷ lệ chặt chẽ hơn cho các endpoint xác thực
-// Trong development: 100 requests/15 phút, Production: 5 requests/15 phút
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === "production" ? 5 : 100,
-  message: "Quá nhiều lần đăng nhập, vui lòng thử lại sau 15 phút",
-});
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register", authLimiter);
+// // Giới hạn tỷ lệ chặt chẽ hơn cho các endpoint xác thực
+// // Trong development: 100 requests/15 phút, Production: 5 requests/15 phút
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: process.env.NODE_ENV === "production" ? 5 : 100,
+//   message: "Quá nhiều lần đăng nhập, vui lòng thử lại sau 15 phút",
+// });
+// app.use("/api/auth/login", authLimiter);
+// app.use("/api/auth/register", authLimiter);
 
 // ------SWAGGER DOCUMENTATION------
 

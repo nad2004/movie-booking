@@ -2,23 +2,32 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Moon, Sun, Bell, Search, User, Ticket, LogOut, Settings } from 'lucide-react'
+// 1. IMPORT THÊM CHEVRONDOWN
+import { Moon, Sun, Bell, Search, User, Ticket, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useUserStore } from '@/store/use-user-store'
+import { useUserStore } from '@/store/userStore'
 import { cn } from '@/lib/utils'
 
-const navLinks = [
+interface NavLink {
+  href: string
+  label: string
+  subLinks?: { href: string; label: string }[]
+}
+// 2. CẬP NHẬT CẤU TRÚC NAVLINKS
+const navLinks : NavLink[] = [
   { href: '/', label: 'Trang chủ' },
-  { href: '/showtimes', label: 'Lịch Chiếu' },
+  {
+    label: 'Lịch Chiếu',
+    href: '/showtimes', 
+  },
   { href: '/movies', label: 'Phim' },
 ]
 
@@ -61,19 +70,46 @@ export function Header() {
             <span className="text-lg font-semibold">CineBooking</span>
           </Link>
 
+          {/* 3. CẬP NHẬT LOGIC RENDER NAV */}
           <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:text-[var(--primary)]',
-                  pathname === link.href ? 'text-[var(--primary)]' : 'text-muted-foreground'
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map(link =>
+              link.subLinks ? (
+                // Nếu có link con, render DropdownMenu
+                <DropdownMenu key={link.label}>
+                  <DropdownMenuTrigger
+                    className={cn(
+                      'text-sm font-medium transition-colors hover:text-[var(--primary)] flex items-center gap-1 focus-visible:outline-none',
+                      // Check active state: nếu path hiện tại bắt đầu bằng href của link cha
+                      pathname.startsWith(link.href)
+                        ? 'text-[var(--primary)]'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {link.label}
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {link.subLinks.map(subLink => (
+                      <DropdownMenuItem key={subLink.href} asChild>
+                        <Link href={subLink.href}>{subLink.label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                // Nếu không có link con, render Link như cũ
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'text-sm font-medium transition-colors hover:text-[var(--primary)]',
+                    pathname === link.href ? 'text-[var(--primary)]' : 'text-muted-foreground'
+                  )}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </nav>
         </div>
 
@@ -102,7 +138,7 @@ export function Header() {
             asChild
             className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-xl px-4"
           >
-            <Link href="/auth/login">Đăng nhập</Link>
+            <Link href="/login">Đăng nhập</Link>
           </Button>
         </div>
       </div>

@@ -5,21 +5,27 @@ import { Button } from '@/components/ui/button'
 import { Play, Info, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { mockMovies } from '@/lib/mock-data'
-
-export function HeroSection() {
+import type { Movie } from '@/types/movie'
+interface MovieSectionProps {
+  movies: Movie[] 
+}
+export function HeroSection({ movies}: MovieSectionProps) {
+ 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const heroMovies = mockMovies.slice(0, 3)
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % heroMovies.length)
+      setCurrentIndex(prev => (prev + 1) % movies.length)
     }, 5000)
     return () => clearInterval(timer)
-  }, [heroMovies.length])
+  }, [movies.length])
 
-  const currentMovie = heroMovies[currentIndex]
-
+  const currentMovie = movies[currentIndex]
+ if (movies.length === 0) {
+    return <div>
+      Không có thể loại nào để hiển thị.
+    </div>
+  }
   return (
     <section className="relative h-[70vh] md:h-[80vh] overflow-hidden ">
       <AnimatePresence mode="wait">
@@ -35,7 +41,7 @@ export function HeroSection() {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url(${currentMovie.backdrop})`,
+              backgroundImage: `url(${currentMovie.posterUrl})`,
             }}
           >
             {/* overlay gradient */}
@@ -99,17 +105,17 @@ export function HeroSection() {
                   asChild
                   className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-xl"
                 >
-                  <Link href={`/movies/${currentMovie.id}/booking`}>
+                  <Link href={`/movies/${currentMovie._id}`}>
                     <Play className="mr-2 h-5 w-5" />
                     Đặt vé
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="rounded-xl border-border">
-                  <Link href={`/movies/${currentMovie.id}`}>
+                {/* <Button size="lg" variant="outline" asChild className="rounded-xl border-border">
+                  <Link href={`/movies/${currentMovie._id}`}>
                     <Info className="mr-2 h-5 w-5" />
                     Xem chi tiết
                   </Link>
-                </Button>
+                </Button> */}
               </motion.div>
             </div>
           </div>
@@ -121,14 +127,14 @@ export function HeroSection() {
         <Button
           size="icon"
           variant="outline"
-          onClick={() => setCurrentIndex(prev => (prev === 0 ? heroMovies.length - 1 : prev - 1))}
+          onClick={() => setCurrentIndex(prev => (prev === 0 ? movies.length - 1 : prev - 1))}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button
           size="icon"
           variant="outline"
-          onClick={() => setCurrentIndex(prev => (prev + 1) % heroMovies.length)}
+          onClick={() => setCurrentIndex(prev => (prev + 1) % movies.length)}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -136,7 +142,7 @@ export function HeroSection() {
 
       {/* Indicators */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-        {heroMovies.map((_, index) => (
+        {movies.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
