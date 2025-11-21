@@ -3,13 +3,52 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Lock, Eye, EyeOff, Film } from 'lucide-react'
+import { Lock, Eye, EyeOff, Film, User, Phone, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
+import { useRegister } from '@/hooks/useRegister'
+
+// 1. Import thư viện
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+
+// 2. Định nghĩa Schema Validate (Đã bỏ confirmPassword)
+const registerSchema = z.object({
+  fullName: z.string().min(2, { message: 'Full name must be at least 2 characters' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  phoneNumber: z.string().regex(/^[0-9]{10,11}$/, { message: 'Phone number must be 10-11 digits' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+})
+
+// Tạo type
+type RegisterFormData = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  
+  const { mutate: registerUser, isPending } = useRegister()
+
+  // 3. Khởi tạo useForm (Đã bỏ confirmPassword)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      phoneNumber: '',
+      password: '',
+    },
+  })
+
+  // 4. Xử lý Submit
+  const onSubmit = (data: RegisterFormData) => {
+    // Gửi trực tiếp data vì không còn trường thừa nào cần lọc bỏ
+    registerUser(data)
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -57,8 +96,9 @@ export default function RegisterPage() {
           {/* Google Register Button */}
           <Button
             variant="outline"
-            className="w-full h-12 border-2 hover:bg-gray-50"
+            className="w-full h-12 border-2 hover:bg-gray-50 text-gray-700"
             onClick={() => console.log('Google register')}
+            type="button"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
@@ -92,36 +132,70 @@ export default function RegisterPage() {
           </div>
 
           {/* Register Form */}
-          <form className="space-y-6" onSubmit={e => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             {/* Full Name */}
             <div className="space-y-2">
-              <label htmlFor="fullname" className="block text-sm text-gray-700">
+              <label htmlFor="fullName" className="block text-sm text-gray-700 font-medium">
                 Full Name
               </label>
-              <Input
-                id="fullname"
-                type="text"
-                placeholder="Enter your full name"
-                className="h-12 bg-input-background border-0"
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  className={`h-12 pl-10 bg-gray-50 border-gray-200 text-black placeholder:text-gray-500 focus-visible:ring-primary ${
+                    errors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  }`}
+                  {...register('fullName')}
+                />
+              </div>
+              {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName.message}</p>}
             </div>
 
             {/* Email */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm text-gray-700">
+              <label htmlFor="email" className="block text-sm text-gray-700 font-medium">
                 Email Address
               </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="h-12 bg-input-background border-0"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className={`h-12 pl-10 bg-gray-50 border-gray-200 text-black placeholder:text-gray-500 focus-visible:ring-primary ${
+                    errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  }`}
+                  {...register('email')}
+                />
+              </div>
+              {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+            </div>
+
+            {/* Phone Number */}
+            <div className="space-y-2">
+              <label htmlFor="phoneNumber" className="block text-sm text-gray-700 font-medium">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  className={`h-12 pl-10 bg-gray-50 border-gray-200 text-black placeholder:text-gray-500 focus-visible:ring-primary ${
+                    errors.phoneNumber ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  }`}
+                  {...register('phoneNumber')}
+                />
+              </div>
+              {errors.phoneNumber && <p className="text-red-500 text-xs">{errors.phoneNumber.message}</p>}
             </div>
 
             {/* Password */}
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm text-gray-700">
+              <label htmlFor="password" className="block text-sm text-gray-700 font-medium">
                 Password
               </label>
               <div className="relative">
@@ -130,7 +204,10 @@ export default function RegisterPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Create a password"
-                  className="h-12 pl-10 pr-10 bg-input-background border-0"
+                  className={`h-12 pl-10 pr-10 bg-gray-50 border-gray-200 text-black placeholder:text-gray-500 focus-visible:ring-primary ${
+                    errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  }`}
+                  {...register('password')}
                 />
                 <button
                   type="button"
@@ -140,45 +217,23 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm text-gray-700">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  className="h-12 pl-10 pr-10 bg-input-background border-0"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
+              {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
             </div>
 
             {/* Register Button */}
-            <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90">
-              Register
+            <Button 
+                type="submit" 
+                disabled={isPending}
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium text-lg mt-4"
+            >
+              {isPending ? 'Creating account...' : 'Register'}
             </Button>
           </form>
 
           {/* Login Link */}
           <div className="text-center">
             <span className="text-gray-600">Already have an account? </span>
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" className="text-primary hover:underline font-medium">
               Login
             </Link>
           </div>

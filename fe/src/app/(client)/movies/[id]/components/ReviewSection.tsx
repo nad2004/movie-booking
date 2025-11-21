@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { useReviews } from '@/lib/api/reviews'
+import { useReviews } from '@/lib/api/get/reviews'
 import { useParams } from 'next/navigation'
 import { DEFAULT_REVIEW_LIST } from '@/constants'
 
@@ -43,7 +43,9 @@ export function ReviewSection() {
           <div key={r._id} className="border-b border-border pb-3 px-3">
             <div className="flex items-center gap-2">
               <span className="font-medium">{r.customer.fullName}</span>
-              <span className="text-xs text-text-secondary">{r.createdAt.toLocaleString("vi-VN")}</span>
+              <span className="text-xs text-text-secondary">
+                {r.createdAt.toLocaleString('vi-VN')}
+              </span>
             </div>
             <div className="flex gap-1 mt-1">
               {[...Array(r.rating)].map((_, i) => (

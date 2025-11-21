@@ -6,9 +6,47 @@ import { Input } from '@/components/ui/input'
 import { Lock, Eye, EyeOff, Film } from 'lucide-react'
 import Link from 'next/link'
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
+import { useLogin } from '@/hooks/useLogin'
+// 1. Import thư viện
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+
+// 2. Định nghĩa Schema Validate với Zod
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: 'Vui lòng nhập email' })
+    .email({ message: 'Email không hợp lệ' }),
+  password: z
+    .string()
+    .min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' }),
+})
+
+// Tạo type từ schema để dùng cho TypeScript
+type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const { mutate: login, isPending } = useLogin()
+
+  // 3. Khởi tạo useForm
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  })
+
+  // 4. Hàm xử lý khi Submit (chỉ chạy khi validate thành công)
+  const onSubmit = (data: LoginFormData) => {
+    login({ email: data.email, password: data.password })
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -55,8 +93,9 @@ export default function LoginPage() {
           {/* Google Login Button */}
           <Button
             variant="outline"
-            className="w-full h-12 border-2 hover:bg-gray-50"
+            className="w-full h-12 border-2 hover:bg-gray-50 text-gray-700"
             onClick={() => console.log('Google login')}
+            type="button" // Thêm type button để tránh submit form nhầm
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
@@ -90,32 +129,45 @@ export default function LoginPage() {
           </div>
 
           {/* Login Form */}
-          <form className="space-y-6" onSubmit={e => e.preventDefault()}>
+          {/* 5. Sử dụng handleSubmit từ hook form */}
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {/* Email */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm text-gray-700">
+              <label htmlFor="email" className="block text-sm text-gray-700 font-medium">
                 Email Address
               </label>
+              {/* 6. Spread props register('email') vào Input */}
               <Input
                 id="email"
                 type="email"
                 placeholder="Enter your email"
-                className="h-12 bg-input-background border-0"
+                className={`h-12 bg-gray-50 border-gray-200 text-black placeholder:text-gray-500 focus-visible:ring-primary ${
+                  errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                {...register('email')}
               />
+              {/* Hiển thị lỗi Email */}
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+              )}
             </div>
 
             {/* Password */}
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm text-gray-700">
+              <label htmlFor="password" className="block text-sm text-gray-700 font-medium">
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                {/* 7. Spread props register('password') vào Input */}
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
-                  className="h-12 pl-10 pr-10 bg-input-background border-0"
+                  className={`h-12 pl-10 pr-10 bg-gray-50 border-gray-200 text-black placeholder:text-gray-500 focus-visible:ring-primary ${
+                    errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  }`}
+                  {...register('password')}
                 />
                 <button
                   type="button"
@@ -125,25 +177,33 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {/* Hiển thị lỗi Password */}
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+              )}
             </div>
 
             {/* Forgot Password */}
             <div className="flex justify-end">
-              <button type="button" className="text-sm text-primary hover:underline">
+              <button type="button" className="text-sm text-primary hover:underline font-medium">
                 Forgot Password?
               </button>
             </div>
 
             {/* Login Button */}
-            <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90">
-              Login
+            <Button
+              disabled={isPending}
+              type="submit"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium text-lg"
+            >
+              {isPending ? 'Login....' : 'Login'}
             </Button>
           </form>
 
           {/* Register Link */}
           <div className="text-center">
             <span className="text-gray-600">Don&apos;t have an account? </span>
-            <Link href="/register" className="text-primary hover:underline">
+            <Link href="/register" className="text-primary hover:underline font-medium">
               Register
             </Link>
           </div>

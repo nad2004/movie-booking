@@ -5,9 +5,9 @@ import { MovieSection } from '@/app/components/shared/movie-section'
 import { FeaturedReviews } from '@/app/(client)/components/featured-reviews'
 import { ShowtimeSection } from '@/app/(client)/components/showtimeSection'
 import { TopMovieCarousel } from '@/app/(client)/components/topMovieCarousel'
-import { useMovies } from '@/lib/api/movies'
-import { useTheaters } from '@/lib/api/theaters'
-import { useGenres } from '@/lib/api/genres'
+import { useMovies } from '@/lib/api/get/movies'
+import { useTheaters } from '@/lib/api/get/theaters'
+import { useGenres } from '@/lib/api/get/genres'
 import { DEFAULT_MOVIE_LIST, DEFAULT_THEATER_LIST, DEFAULT_GENRE_LIST } from '@/constants'
 export default function HomePage() {
   const {

@@ -6,7 +6,7 @@ import { Star, Clock, Ticket, Calendar, User, Play, Undo2 } from 'lucide-react'
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useMovieDetail } from '@/lib/api/movies'
+import { useMovieDetail } from '@/lib/api/get/movies'
 import { DEFAULT_MOVIE_DETAIL, MAXSTARS } from '@/constants'
 import { TrailerModal } from './TrailerModal'
 export function MovieHeader() {
@@ -151,7 +151,7 @@ export function MovieHeader() {
         </div>
 
         {/* Trailer Modal */}
-        {showTrailer && (<TrailerModal setShowTrailer={setShowTrailer} showTrailer={showTrailer} />)}
+        {showTrailer && <TrailerModal setShowTrailer={setShowTrailer} showTrailer={showTrailer} />}
       </section>
     </>
   )
