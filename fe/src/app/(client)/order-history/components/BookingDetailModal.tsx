@@ -5,13 +5,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Ticket, QrCode, Calendar, MapPin, MonitorPlay, CreditCard, Armchair, Hash } from 'lucide-react'
 import { Booking } from "@/types/booking";
 import Image from 'next/image'; 
+
 interface BookingDetailModalProps {
   booking: Booking | null; // Cho phép null để xử lý đóng mở
   onClose: () => void;
 }
 
 export default function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
-  
+    console.log("Booking Detail Modal - booking:", booking);
   // Map status tiếng Việt sang Badge Style
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -34,6 +35,14 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
   }
 
+  const formatDate = (dateString: string | Date) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   return (
     <Dialog open={!!booking} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="rounded-xl max-w-2xl bg-surface border-border p-0 overflow-hidden">
@@ -51,14 +60,19 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
             <div className="p-6 space-y-6">
               {/* Movie Info Header */}
               <div className="flex gap-4 md:gap-6">
-                <Image
-                  src={booking.schedule.movie.posterUrl || "/placeholder-movie.png"}
-                  alt={booking.movieTitle }
-                  className="w-28 h-40 md:w-32 md:h-48 object-cover rounded-lg shadow-md flex-shrink-0"
-                />
+                <div className="relative w-28 h-40 md:w-32 md:h-48 flex-shrink-0 rounded-lg shadow-md overflow-hidden bg-gray-100">
+                    <Image
+                      src={booking.schedule?.movie?.posterUrl || "/placeholder-movie.png"}
+                      alt={booking.movieTitle}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 112px, 128px"
+                    />
+                </div>
+                
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-text-primary mb-1 text-lg md:text-xl font-bold line-clamp-2">
-                    {booking.movieTitle }
+                  <h3 className="text-text-primary mb-2 text-lg md:text-xl font-bold line-clamp-2">
+                    {booking.movieTitle}
                   </h3>
                   
                   <div className="mb-4">
@@ -70,13 +84,22 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                   </div>
                 </div>
                 
-                {/* QR Code Section (Chỉ hiện nếu vé chưa hủy/hết hạn) */}
-                {booking.status !== 'Đã hủy' && booking.status !== 'Hết hạn' && (
+                {/* QR Code Section (Chỉ hiện nếu vé hợp lệ) */}
+                {(booking.status === 'Hoàn tất' || booking.status === 'Chờ thanh toán') && (
                     <div className="flex-shrink-0 text-center hidden sm:block">
-                    <div className="w-24 h-24 bg-white p-2 rounded-lg border border-border flex items-center justify-center mb-2">
-                        <QrCode className="w-full h-full text-black" />
-                    </div>
-                    <span className="text-xs text-text-secondary">Quét mã để vào rạp</span>
+                        <div className="w-24 h-24 bg-white p-1 rounded-lg border border-border flex items-center justify-center mb-2 overflow-hidden relative">
+                            {booking.qrCode ? (
+                                 <Image 
+                                    src={booking.qrCode} 
+                                    alt="QR Code" 
+                                    fill 
+                                    className="object-contain"
+                                 />
+                            ) : (
+                                 <QrCode className="w-full h-full text-black p-2" />
+                            )}
+                        </div>
+                        <span className="text-xs text-text-secondary">Quét mã để vào rạp</span>
                     </div>
                 )}
               </div>
@@ -86,7 +109,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                 <DetailItem 
                     icon={<Calendar className="w-4 h-4"/>} 
                     label="Thời gian" 
-                    value={`${booking.schedule.startTime} - ${booking.schedule.endTime}, ${new Date(booking.showDate).toLocaleDateString('vi-VN')}`} 
+                    value={`${booking.showTime || booking.schedule.startTime} - ${formatDate(booking.showDate)}`} 
                 />
                 <DetailItem 
                     icon={<MapPin className="w-4 h-4"/>} 
@@ -101,18 +124,19 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                  <DetailItem 
                     icon={<Armchair className="w-4 h-4"/>} 
                     label="Ghế ngồi" 
-                    value={booking.seats.join(', ')} 
+                    // Fix: Map mảng object ghế để lấy số ghế
+                    value={booking.seats.map(s => s.seatNumber).join(', ')} 
                     className="text-primary font-bold"
                 />
                 <DetailItem 
                     icon={<CreditCard className="w-4 h-4"/>} 
                     label="Thanh toán" 
-                    value={booking.paymentDetails.paymentMethod || "Ví điện tử"} 
+                    value={booking.paymentDetails.paymentMethod || "Chưa xác định"} 
                 />
                 <DetailItem 
                     icon={<Hash className="w-4 h-4"/>} 
                     label="Mã đặt vé" 
-                    value={booking.bookingCode || "Đang cập nhật"}
+                    value={booking.bookingCode || booking._id}
                     fullWidth 
                 />
               </div>
@@ -137,9 +161,9 @@ function DetailItem({ icon, label, value, className = "", fullWidth = false }: D
     return (
         <div className={`${fullWidth ? 'sm:col-span-2' : ''} flex items-start gap-3`}>
             <div className="mt-0.5 text-text-secondary">{icon}</div>
-            <div>
+            <div className="flex-1">
                 <p className="text-xs text-text-secondary mb-0.5">{label}</p>
-                <p className={`text-sm text-text-primary font-medium ${className}`}>{value}</p>
+                <p className={`text-sm text-text-primary font-medium break-words ${className}`}>{value}</p>
             </div>
         </div>
     )

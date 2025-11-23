@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Lock, Eye, EyeOff, Film } from 'lucide-react'
+import { Lock, Eye, EyeOff, Film, AlertCircle } from 'lucide-react' // 1. Import AlertCircle
 import Link from 'next/link'
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
 import { useLogin } from '@/hooks/useLogin'
-// 1. Import thư viện
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -23,14 +22,14 @@ const loginSchema = z.object({
     .min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' }),
 })
 
-// Tạo type từ schema để dùng cho TypeScript
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const { mutate: login, isPending } = useLogin()
+  
+  // 3. Lấy thêm `error` và `isError` từ hook
+  const { mutate: login, isPending, error, isError } = useLogin()
 
-  // 3. Khởi tạo useForm
   const {
     register,
     handleSubmit,
@@ -43,7 +42,6 @@ export default function LoginPage() {
     },
   })
 
-  // 4. Hàm xử lý khi Submit (chỉ chạy khi validate thành công)
   const onSubmit = (data: LoginFormData) => {
     login({ email: data.email, password: data.password })
   }
@@ -95,7 +93,7 @@ export default function LoginPage() {
             variant="outline"
             className="w-full h-12 border-2 hover:bg-gray-50 text-gray-700"
             onClick={() => console.log('Google login')}
-            type="button" // Thêm type button để tránh submit form nhầm
+            type="button"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
@@ -129,14 +127,12 @@ export default function LoginPage() {
           </div>
 
           {/* Login Form */}
-          {/* 5. Sử dụng handleSubmit từ hook form */}
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm text-gray-700 font-medium">
                 Email Address
               </label>
-              {/* 6. Spread props register('email') vào Input */}
               <Input
                 id="email"
                 type="email"
@@ -146,7 +142,6 @@ export default function LoginPage() {
                 }`}
                 {...register('email')}
               />
-              {/* Hiển thị lỗi Email */}
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
               )}
@@ -159,7 +154,6 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                {/* 7. Spread props register('password') vào Input */}
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -177,7 +171,6 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {/* Hiển thị lỗi Password */}
               {errors.password && (
                 <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
               )}
@@ -185,10 +178,21 @@ export default function LoginPage() {
 
             {/* Forgot Password */}
             <div className="flex justify-end">
-              <button type="button" className="text-sm text-primary hover:underline font-medium">
+              <Link href='/forgot-password' className="text-sm text-primary hover:underline font-medium">
                 Forgot Password?
-              </button>
+              </Link>
             </div>
+
+            {/* 4. THÔNG BÁO LỖI TỪ API (HIỂN THỊ KHI LOGIN THẤT BẠI) */}
+            {isError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg flex items-center gap-3 text-sm animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span>
+                  {/* Lấy message lỗi từ API hoặc hiển thị lỗi mặc định */}
+                  {(error as any)?.response?.data?.message || "Email hoặc mật khẩu không chính xác. Vui lòng thử lại!"}
+                </span>
+              </div>
+            )}
 
             {/* Login Button */}
             <Button
@@ -196,7 +200,7 @@ export default function LoginPage() {
               type="submit"
               className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium text-lg"
             >
-              {isPending ? 'Login....' : 'Login'}
+              {isPending ? 'Logging in...' : 'Login'}
             </Button>
           </form>
 

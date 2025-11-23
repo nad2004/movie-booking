@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useMovieDetail } from '@/lib/api/get/movies'
 import { DEFAULT_MOVIE_DETAIL, MAXSTARS } from '@/constants'
+import Link from 'next/link'
 import { TrailerModal } from './TrailerModal'
 export function MovieHeader() {
   const { id } = useParams()
@@ -145,8 +146,16 @@ export function MovieHeader() {
           </div>
 
           {/* Booking Button */}
-          <Button className="bg-primary text-white rounded-lg w-full py-5 hover:bg-primary/90 text-base font-medium">
-            Đặt vé ngay
+          <Button
+            asChild
+            className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg p-0"
+          >
+            <Link
+              href={`/movies/${movie._id}/booking-flow`}
+              className="flex items-center justify-center w-full py-5 text-base font-medium"
+            >
+              Đặt vé ngay
+            </Link>
           </Button>
         </div>
 

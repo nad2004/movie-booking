@@ -65,10 +65,7 @@ export interface Product {
   __v?: number;
 }
 
-export interface ProductListData {
-  products: Product[];
-  pagination: Pagination;
-}
 
-export type ProductResponse = ApiResponse<Product>;
-export type ProductListResponse = ApiResponse<ProductListData>;
+
+export type ProductsResponse = ApiResponse<Product[]>;
+

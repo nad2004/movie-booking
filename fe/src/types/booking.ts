@@ -90,6 +90,33 @@ export interface Booking {
   // === Virtuals ===
   isExpired?: boolean;
 }
+export interface CreateBookingRequest {
+  scheduleId: string;
+  seats: {
+    seatNumber: string;
+    seatType: string;
+    price: number;
+  }[];
+  products: {
+    productId: string;
+    quantity: number;
+    size: string; // "S" | "M" | "L"
+  }[];
+  voucherCode?: string; // Optional nếu không nhập
+}
+
+export interface BookingResponseData {
+    bookingId: string,
+    bookingCode: string,
+    totalAmount: number,
+    holdUntil: Date;
+  };
+
+export interface CreateBookingResponse {
+  success: boolean;
+  message: string;
+  data: BookingResponseData;
+}
 export interface PaginatedBookingData {
   bookings: Booking[];
   pagination: Pagination;

@@ -37,3 +37,40 @@ export function useBookings(params: GetBookingParams = {}) {
     retry: 2,
   });
 }
+
+export interface GetMyBookingParams {
+  page?: number;
+  limit?: number;
+  status?: string; // "Chờ thanh toán" | "Hoàn tất" | ...
+}
+
+export async function getMyBookings(params: GetMyBookingParams = {}) {
+  try {
+    const res = await api.get<BookingListResponse>("/bookings/my-bookings", {
+      params, 
+    });
+    return res.data.data; // Trả về { bookings: [], pagination: {} }
+  } catch (error) {
+    console.error("Failed to fetch bookings", error);
+    // Trả về data rỗng để không crash UI
+    return {
+      bookings: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: 10,
+      },
+    };
+  }
+}
+
+// Hook React Query
+export function useMyBookings(params: GetMyBookingParams = {}) {
+  return useQuery({
+    queryKey: ["my-bookings", params], // Key bao gồm params để auto refetch khi filter đổi
+    queryFn: () => getMyBookings(params),
+    staleTime: 1000 * 60 * 5, // Cache 5 phút
+    retry: 1,
+  });
+}
