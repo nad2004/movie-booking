@@ -187,16 +187,16 @@ class ExpiredHoldsCleanupService {
               await Schedule.updateOne(
                 { _id: booking.schedule },
                 {
-                  $set: booking.seats.reduce((update, seat) => {
-                    update[`seatAvailability.$[seat_${seat.seatNumber}].holdUntil`] = null;
-                    update[`seatAvailability.$[seat_${seat.seatNumber}].bookedBy`] = null;
-                    update[`seatAvailability.$[seat_${seat.seatNumber}].isBooked`] = false;
+                  $set: booking.seats.reduce((update, seat, index) => {
+                    update[`seatAvailability.$[seat${index}].holdUntil`] = null;
+                    update[`seatAvailability.$[seat${index}].bookedBy`] = null;
+                    update[`seatAvailability.$[seat${index}].isBooked`] = false;
                     return update;
                   }, {}),
                 },
                 {
-                  arrayFilters: booking.seats.map((seat) => ({
-                    [`seat_${seat.seatNumber}.seatNumber`]: seat.seatNumber,
+                  arrayFilters: booking.seats.map((seat, index) => ({
+                    [`seat${index}.seatNumber`]: seat.seatNumber,
                   })),
                   session,
                 }
