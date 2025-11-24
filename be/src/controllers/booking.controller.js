@@ -1,20 +1,20 @@
 import mongoose from "mongoose";
-import Booking from "../models/booking.model.js";
-import Schedule from "../models/schedule.model.js";
-import Product from "../models/product.model.js";
-import Voucher from "../models/voucher.model.js";
-import User from "../models/user.model.js";
 import QRCode from "qrcode";
+import Booking from "../models/booking.model.js";
+import Product from "../models/product.model.js";
+import Schedule from "../models/schedule.model.js";
+import User from "../models/user.model.js";
+import Voucher from "../models/voucher.model.js";
 
 // Import services
-import emailService from "../services/email.service.js";
-import smsService from "../services/sms.service.js";
-import redisService from "../services/redis.service.js";
-import websocketService from "../services/websocket.service.js";
 import Notification from "../models/notification.model.js";
+import emailService from "../services/email.service.js";
+import redisService from "../services/redis.service.js";
+import smsService from "../services/sms.service.js";
+import websocketService from "../services/websocket.service.js";
 
-import { successResponse, errorResponse } from "../utils/response.js";
 import { BOOKING_CONSTANTS, BOOKING_STATUS } from "../constants/booking.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const bookingController = {
   // Tạo đơn đặt vé mới
@@ -69,6 +69,10 @@ const bookingController = {
           .populate("movie", "title")
           .populate("theater", "name")
           .session(session);
+
+        // Lưu trước để tránh mất populate khi update
+        const scheduleMovieTitle = schedule.movie?.title;
+        const scheduleTheaterName = schedule.theater?.name;
 
         if (!schedule) {
           throw new Error("Không tìm thấy suất chiếu");
@@ -329,8 +333,8 @@ const bookingController = {
         const bookingData = {
           customer: req.userId,
           schedule: scheduleId,
-          movieTitle: schedule.movie?.title || "Unknown Movie",
-          theaterName: schedule.theater?.name || "Unknown Theater",
+          movieTitle: scheduleMovieTitle || schedule.movie?.title || "Unknown Movie",
+          theaterName: scheduleTheaterName || schedule.theater?.name || "Unknown Theater",
           roomName: schedule.roomName,
           showDate: schedule.showDate,
           showTime: `${schedule.startTime} - ${schedule.endTime}`,
@@ -434,7 +438,7 @@ const bookingController = {
       const { bookingId } = req.params;
       const { paymentMethod, transactionId } = req.body;
 
-      const booking = await Booking.findById(bookingId);
+      let booking = await Booking.findById(bookingId);
       if (!booking) {
         return errorResponse(res, "Không tìm thấy đơn đặt vé", 404);
       }
@@ -631,6 +635,8 @@ const bookingController = {
           }
 
           // Xóa cache
+          // Xoá cache danh sách booking của user
+          redisService.delPattern(`bookings:user:${booking.customer}:*`).catch(() => {});
           redisService.del(`booking:temp:${bookingId}`).catch(() => {});
           redisService.invalidateScheduleCache(booking.schedule.toString()).catch(() => {});
         });
@@ -662,12 +668,18 @@ const bookingController = {
   // Lấy danh sách booking của user
   getMyBookings: async (req, res) => {
     try {
-      const { page = 1, limit = 10, status } = req.query;
+      let { page = 1, limit = 10, status } = req.query;
+
+      // Ép kiểu chắc chắn
+      page = Math.max(parseInt(page, 10) || 1, 1);
+      limit = Math.max(parseInt(limit, 10) || 10, 1);
+
       const skip = (page - 1) * limit;
 
+      // Query filter
       const query = { customer: req.userId };
-      if (status) {
-        query.status = status;
+      if (status && typeof status === "string") {
+        query.status = status.trim();
       }
 
       // Try cache first
@@ -679,14 +691,14 @@ const bookingController = {
       }
 
       const [bookings, total] = await Promise.all([
-        Booking.find(query).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+        Booking.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
         Booking.countDocuments(query),
       ]);
 
       const result = {
         bookings,
         pagination: {
-          currentPage: parseInt(page),
+          currentPage: page,
           totalPages: Math.ceil(total / limit),
           totalItems: total,
         },
