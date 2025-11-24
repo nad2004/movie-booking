@@ -1,86 +1,27 @@
-export interface Movie {
-  id: string
-  title: string
-  originalTitle?: string
-  poster: string
-  backdrop?: string
-  rating: number
-  duration: number
-  genre: string[]
-  releaseDate: string
-  description: string
-  director?: string
-  cast?: string[]
-  trailer?: string
-  language?: string
-  ageRating?: string
+import { Product } from "@/types/product";
+import { PaymentDetails } from "@/types/booking";
+
+// UI State Types
+export type Step = {
+  number: number;
+  label: string;
+};
+
+
+// Item trong giỏ hàng
+export interface CartItem {
+  product: Product;
+  quantity: number;
 }
 
-export interface Showtime {
-  id: string
-  movieId: string
-  cinema: string
-  cinemaAddress: string
-  date: string
-  times: string[]
-  format: '2D' | '3D' | 'IMAX'
-  price: number
-}
+// Payment Method
+export type PaymentMethodType = PaymentDetails['paymentMethod'];
 
-export interface Seat {
-  id: string
-  row: string
-  number: number
-  type: 'standard' | 'vip' | 'couple'
-  status: 'available' | 'selected' | 'occupied'
-  price: number
-}
-
-export interface Combo {
-  id: string
-  name: string
-  description: string
-  image: string
-  price: number
-  items: string[]
-}
-
-export interface Ticket {
-  id: string
-  bookingId: string
-  movie: Movie
-  showtime: {
-    cinema: string
-    date: string
-    time: string
-    format: string
-  }
-  seats: { row: string; number: number }[]
-  combos?: { name: string; quantity: number }[]
-  totalPrice: number
-  qrCode: string
-  status: 'active' | 'used' | 'expired'
-  bookedAt: string
-}
-
-export interface User {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  avatar?: string
-  membershipLevel?: 'bronze' | 'silver' | 'gold' | 'platinum'
-  points?: number
-}
-
-export interface Review {
-  id: string
-  userId: string
-  userName: string
-  userAvatar?: string
-  movieId: string
-  rating: number
-  content: string
-  createdAt: string
-  likes: number
+import { User } from "@/types/user";
+export interface UserProfile extends User {
+  dateOfBirth?: string;
+  preferences?: {
+    emailNotification: boolean;
+    smsNotification: boolean;
+  };
 }

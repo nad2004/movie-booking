@@ -3,20 +3,16 @@ import { useState } from 'react'
 import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-
-const reviews = [
-  { id: 1, name: 'Nguyễn Văn A', rating: 5, comment: 'Phim hay, đáng xem!', time: '2 ngày trước' },
-  {
-    id: 2,
-    name: 'Trần Thị B',
-    rating: 4,
-    comment: 'Kịch bản tốt, âm nhạc hay.',
-    time: '5 ngày trước',
-  },
-  { id: 3, name: 'Lê Minh C', rating: 5, comment: 'Tuyệt vời, cảm động!', time: '1 tuần trước' },
-]
+import { useReviews } from '@/lib/api/get/reviews'
+import { useParams } from 'next/navigation'
+import { DEFAULT_REVIEW_LIST } from '@/constants'
 
 export function ReviewSection() {
+  const { id } = useParams()
+  const movieId = Array.isArray(id) ? id[0] : id
+
+  const { data = DEFAULT_REVIEW_LIST } = useReviews(movieId ?? '')
+  const reviews = data.reviews
   const [rating, setRating] = useState(0)
 
   return (
@@ -44,10 +40,12 @@ export function ReviewSection() {
       {/* Danh sách đánh giá */}
       <div className="space-y-4">
         {reviews.map(r => (
-          <div key={r.id} className="border-b border-border pb-3 px-3">
+          <div key={r._id} className="border-b border-border pb-3 px-3">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{r.name}</span>
-              <span className="text-xs text-text-secondary">{r.time}</span>
+              <span className="font-medium">{r.customer.fullName}</span>
+              <span className="text-xs text-text-secondary">
+                {r.createdAt.toLocaleString('vi-VN')}
+              </span>
             </div>
             <div className="flex gap-1 mt-1">
               {[...Array(r.rating)].map((_, i) => (
