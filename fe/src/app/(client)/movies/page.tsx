@@ -13,7 +13,7 @@ import { DEFAULT_GENRE_LIST } from '@/constants'
 
 // --- CONSTANTS UI ---
 const movieTypes = ['Tất cả', 'Đang chiếu', 'Sắp chiếu']
-const ratings = ['P (mọi lứa tuổi)', 'C13 (13+)', 'C16 (16+)', 'C18 (18+)']
+const ratings = ['P', 'C13', 'C16', 'C18']
 const sortOptions = ['Mới nhất', 'Mới cập nhật', 'Điểm IMDb', 'Lượt xem']
 
 export default function PhimLoc() {
@@ -21,7 +21,7 @@ export default function PhimLoc() {
   const [showFilters, setShowFilters] = useState(true)
   const [selectedCountry, setSelectedCountry] = useState('Tất cả')
   const [selectedType, setSelectedType] = useState('Tất cả')
-  const [selectedRating, setSelectedRating] = useState('Tất cả')
+  const [selectedRating, setSelectedRating] = useState('P')
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const [selectedYear, setSelectedYear] = useState('Tất cả')
   const [customYear, setCustomYear] = useState('')
@@ -57,6 +57,13 @@ export default function PhimLoc() {
     const params: GetMoviesParams = {
       page: 1,
       limit: 12,
+      sortBy: selectedSort === 'Mới nhất' ? 'releaseDate' : 'view_count' ,
+      order: 'desc',
+      rating: selectedRating === 'P' ? undefined : selectedRating,
+      status: selectedType === 'Tất cả' ? undefined : (selectedType === 'Đang chiếu' ? 'showing' : 'coming_soon'),
+      year: selectedYear === 'Tất cả' ? undefined : parseInt(selectedYear, 10),
+      country: selectedCountry === 'Tất cả' ? undefined : selectedCountry,
+      genres:  selectedGenres.length === 0 ? undefined : selectedGenres.join(','),
     }
 
     // A. Xử lý Genres
@@ -74,14 +81,14 @@ export default function PhimLoc() {
     if (selectedType === 'Sắp chiếu') params.status = 'coming_soon'
 
     // D. Xử lý Độ tuổi
-    if (selectedRating !== 'Tất cả') {
-      const ageMatch = selectedRating.match(/\d+/)
-      if (ageMatch) {
-        params.minAge = parseInt(ageMatch[0], 10)
-      } else if (selectedRating.startsWith('P')) {
-        params.minAge = 0
-      }
-    }
+    // if (selectedRating !== 'Tất cả') {
+    //   const ageMatch = selectedRating.match(/\d+/)
+    //   if (ageMatch) {
+    //     params.minAge = parseInt(ageMatch[0], 10)
+    //   } else if (selectedRating.startsWith('P')) {
+    //     params.minAge = 0
+    //   }
+    // }
 
     // E. Xử lý Năm
     if (customYear) {
@@ -148,7 +155,7 @@ export default function PhimLoc() {
           />
         )}
 
-        <TopMovieCarousel title="🔥 Top Movies" movies={topMoviesData.movies} />
+        {/* <TopMovieCarousel title="🔥 Top Movies" movies={topMoviesData.movies} /> */}
 
         <div id="movie-list-section">
             {/* Hiển thị loading overlay hoặc text */}

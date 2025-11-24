@@ -5,6 +5,7 @@ import {
   ForgotPasswordRequest, ForgotPasswordResponse,
   ResetPasswordRequest, ResetPasswordResponse,
   ChangePasswordRequest, ChangePasswordResponse,
+  GoogleLoginRequest
 } from '@/types/auth';
 
 export const loginApi = async (data: LoginRequest): Promise<LoginResponse> => {
@@ -28,5 +29,11 @@ export const resetPasswordApi = async (data: ResetPasswordRequest): Promise<Rese
 };
 export const changePasswordApi = async (data: ChangePasswordRequest): Promise<ChangePasswordResponse> => {
   const response = await api.put<ChangePasswordResponse>('/auth/change-password', data);
+  return response.data;
+};
+
+export const googleLoginApi = async (data: GoogleLoginRequest): Promise<LoginResponse> => {
+  // Gửi trực tiếp thông tin user sang Backend để lưu/đăng nhập
+  const response = await api.post<LoginResponse>('/auth/google-login', data);
   return response.data;
 };

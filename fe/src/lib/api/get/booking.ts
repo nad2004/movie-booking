@@ -5,6 +5,7 @@ import { api } from "@/lib/api/axios";
 export interface GetBookingParams {
   page?: string;      // movieId
   status?: string;    // theaterId
+  
 }
 
 export async function getBookings(params: GetBookingParams = {}) {

@@ -12,7 +12,7 @@ export interface GetMoviesParams {
   country?: string        // Quốc gia sản xuất
   rating?: string         // Rating
   language?: string       // Ngôn ngữ gốc
-  subtitle?: string       // Phụ đề hỗ trợ
+  subtitle?: string       // Trạng thái chiếu (showing, coming_soon)    
   year?: number           // Năm phát hành
   minAge?: number         // Giới hạn tuổi tối thiểu
   maxAge?: number         // Giới hạn tuổi tối đa
@@ -22,7 +22,7 @@ export interface GetMoviesParams {
   maxViewCount?: number   // Lượt xem tối đa
   search?: string         // Từ khóa tìm kiếm
   sortBy?: string         // Trường sắp xếp (vd: releaseDate)
-  order?: 'asc' | 'desc'  // Thứ tự sắp xếp (tăng dần / giảm dần)
+  order?: 'asc' | 'desc',  // Thứ tự sắp xếp (tăng dần / giảm dần)
 }
 
 export async function getMovies(params: GetMoviesParams = {}) {

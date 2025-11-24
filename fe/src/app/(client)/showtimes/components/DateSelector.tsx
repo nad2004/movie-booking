@@ -1,35 +1,64 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 
 type DateSelectorProps = {
-  dates: string[]
-  selectedDate: string
+  selectedDate: string | undefined
   onSelectDate: (date: string) => void
 }
 
-export default function DateSelector({ dates, selectedDate, onSelectDate }: DateSelectorProps) {
+export default function DateSelector({ selectedDate, onSelectDate }: DateSelectorProps) {
+  
+  // Tạo danh sách 14 ngày tới bắt đầu từ hôm nay
+  const dates = useMemo(() => {
+    const days = []
+    const today = new Date()
+    
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + i)
+      
+      // Format để hiển thị (VD: Thứ 2, 24/11)
+      const dayOfWeek = i === 0 ? 'Hôm nay' : new Intl.DateTimeFormat('vi-VN', { weekday: 'short' }).format(date)
+      const dateStr = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(date)
+      
+      // Format value để lưu state (YYYY-MM-DD) cho dễ so sánh/gọi API
+      // Lưu ý: cẩn thận múi giờ, ở đây dùng toLocaleDateString('en-CA') để lấy YYYY-MM-DD theo local time
+      const value = date.toLocaleDateString('en-CA') 
+
+      days.push({ label: dayOfWeek, date: dateStr, value })
+    }
+    return days
+  }, [])
+
   return (
-    <Card className="bg-surface border-border p-3 sm:p-4 md:p-6" style={{ borderRadius: '16px' }}>
-      <div className="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        {dates.map(dateItem => (
-          <button
-            key={dateItem}
-            onClick={() => onSelectDate(dateItem)}
-            className={`flex-shrink-0 px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 rounded-lg transition-all ${
-              selectedDate === dateItem
-                ? 'bg-primary text-white'
-                : 'bg-bg-secondary text-text-primary hover:bg-bg-secondary/80'
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-sm sm:text-base" style={{ fontWeight: 600 }}>
-                {dateItem}
+    <Card className="bg-surface border-border p-3 sm:p-4" style={{ borderRadius: '16px' }}>
+      <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {dates.map((item) => {
+          const isSelected = selectedDate === item.value
+
+          return (
+            <button
+              key={item.value}
+              onClick={() => onSelectDate(item.value)}
+              className={`flex-shrink-0 min-w-[80px] px-3 py-2 rounded-xl transition-all border border-transparent ${
+                isSelected
+                  ? 'bg-primary text-white shadow-md shadow-primary/20'
+                  : 'bg-bg-secondary text-text-primary hover:bg-primary/10 hover:text-primary hover:border-primary/20'
+              }`}
+            >
+              <div className="text-center">
+                <div className={`text-xs font-medium mb-1 capitalize ${isSelected ? 'text-white/80' : 'text-text-secondary'}`}>
+                  {item.label}
+                </div>
+                <div className="text-base font-bold">
+                  {item.date}
+                </div>
               </div>
-              <div className="text-xs sm:text-sm opacity-80">{dateItem}</div>
-            </div>
-          </button>
-        ))}
+            </button>
+          )
+        })}
       </div>
     </Card>
   )

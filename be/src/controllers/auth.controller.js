@@ -120,7 +120,7 @@ const authController = {
     }
   },
 
-  // Đăng nhập bằng Google
+  // Đăng nhập bằng   ogle
   googleLogin: async (req, res) => {
     try {
       const { googleId, email, fullName, profilePicture } = req.body;
