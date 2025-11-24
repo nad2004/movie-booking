@@ -54,3 +54,9 @@ export interface ChangePasswordResponse {
   success: boolean;
   message: string;
 }
+export interface GoogleLoginRequest {
+  googleId: string;
+  email: string;
+  fullName: string;
+  profilePicture: string;
+}

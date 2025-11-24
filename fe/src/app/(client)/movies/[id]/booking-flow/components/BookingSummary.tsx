@@ -35,7 +35,7 @@ export function BookingSummary({
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" /> {selectedSchedule.showDate}
+                  <Calendar className="w-4 h-4" /> {new Date(selectedSchedule.showDate).toLocaleDateString()}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" /> {selectedSchedule.startTime}

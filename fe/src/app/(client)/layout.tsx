@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Providers } from '../providers'
-import { Header } from '@/app/components/layout/header'
-import { Footer } from '@/app/components/layout/footer'
+import { Header } from '@/app/(client)/components/layout/header'
+import { Footer } from '@/app/(client)/components/layout/footer'
 
 
 export const metadata: Metadata = {

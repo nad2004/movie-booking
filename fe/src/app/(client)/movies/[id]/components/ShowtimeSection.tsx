@@ -4,6 +4,7 @@ import { MapPin } from 'lucide-react'
 import { useSchedules } from '@/lib/api/get/schedules'
 import { useParams } from 'next/navigation'
 import { DEFAULT_SCHEDULE_LIST } from '@/constants'
+import Link from 'next/link'
 export function ShowtimeSection() {
   const { id } = useParams()
   const movieId = Array.isArray(id) ? id[0] : id
@@ -44,7 +45,9 @@ export function ShowtimeSection() {
               size="sm"
               className="bg-primary hover:bg-primary/90 text-white rounded-lg text-sm px-5 py-2"
             >
-              Đặt vé
+              <Link href={`/movies/${movieId}/booking-flow`} className="">
+                Đặt vé
+              </Link>
             </Button>
           </div>
         ))}
