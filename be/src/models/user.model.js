@@ -27,7 +27,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: function () {
-        return this.authProvider === "local";
+        return this.authProviders.includes("local");
       },
       minlength: [6, "Mật khẩu phải có ít nhất 6 ký tự"],
     },
@@ -72,7 +72,7 @@ const userSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Theater",
       },
-      position: { 
+      position: {
         type: String,
         enum: ["cashier", "usher", "supervisor", "manager"],
       },
@@ -101,6 +101,12 @@ const userSchema = new Schema(
       enum: ["local", "google", "facebook"],
       required: true,
       default: "local",
+      validate: {
+        validator: function (arr) {
+          return arr.length > 0;
+        },
+        message: "Phải có ít nhất một phương thức đăng nhập",
+      },
     },
     googleId: {
       type: String,
@@ -213,12 +219,10 @@ userSchema.virtual("nextMembershipLevel").get(function () {
 
 // === PRE-SAVE MIDDLEWARE ===
 userSchema.pre("save", async function (next) {
-  //  FIX #2: Hash password consistently
-  if (this.isModified("password") && this.authProvider === "local") {
+  // Hash password nếu có local auth
+  if (this.isModified("password") && this.authProviders.includes("local")) {
     try {
-      //  FIX #2: Luôn hash nếu password được modified
-      // Không cần check prefix vì controller đã gửi plain password
-      const salt = await bcrypt.genSalt(12); //  Consistent salt rounds
+      const salt = await bcrypt.genSalt(12);
       this.password = await bcrypt.hash(this.password, salt);
       this.passwordChangedAt = new Date();
     } catch (error) {

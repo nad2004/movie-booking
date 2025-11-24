@@ -1,8 +1,8 @@
-import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { successResponse, errorResponse } from "../utils/response.js";
 import { generateAuthToken, generatePasswordResetToken } from "../helpers/generateToken.js";
+import User from "../models/user.model.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const authController = {
   // Đăng ký tài khoản mới
@@ -42,7 +42,7 @@ const authController = {
         password: password, // Plain password, sẽ được hash trong pre-save hook
         fullName,
         phoneNumber,
-        authProvider: "local",
+        authProviders: ["local"],
         role: "customer",
       });
 
@@ -85,12 +85,14 @@ const authController = {
         return errorResponse(res, "Email hoặc mật khẩu không đúng", 401);
       }
 
-      // Kiểm tra auth provider
-      if (user.authProvider !== "local") {
-        return errorResponse(res, `Tài khoản này đăng nhập bằng ${user.authProvider}`, 400);
+      if (!user.authProviders.includes("local")) {
+        return errorResponse(res, "Tài khoản này chỉ hỗ trợ đăng nhập bằng Google", 400);
       }
 
-      // Kiểm tra password
+      if (!user.password) {
+        return errorResponse(res, "Tài khoản chưa thiết lập mật khẩu", 400);
+      }
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return errorResponse(res, "Email hoặc mật khẩu không đúng", 401);
@@ -129,33 +131,41 @@ const authController = {
         return errorResponse(res, "Thông tin Google không hợp lệ", 400);
       }
 
-      // Tìm hoặc tạo user
-      let user = await User.findOne({
-        $or: [{ googleId }, { email: email.toLowerCase() }],
-      });
+      // Tìm user theo googleId
+      let user = await User.findOne({ googleId });
 
-      if (user) {
-        // Cập nhật googleId nếu chưa có
-        if (!user.googleId) {
+      if (!user) {
+        // Tìm theo email
+        user = await User.findOne({ email: email.toLowerCase() });
+
+        if (user) {
+          // GỘP TÀI KHOẢN: Thêm Google vào authProviders
           user.googleId = googleId;
-          user.authProvider = "google";
+          if (!user.authProviders.includes("google")) {
+            user.authProviders.push("google");
+          }
+
+          // Cập nhật avatar nếu chưa có
+          if (!user.profilePicture || user.profilePicture.includes("placeholder")) {
+            user.profilePicture = profilePicture;
+          }
+
+          await user.save();
+        } else {
+          // TẠO MỚI: Chỉ có Google
+          user = new User({
+            googleId,
+            email: email.toLowerCase(),
+            fullName,
+            profilePicture:
+              profilePicture || "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=200",
+            authProviders: ["google"], // Chỉ Google
+            role: "customer",
+          });
           await user.save();
         }
-      } else {
-        // Tạo user mới
-        user = new User({
-          googleId,
-          email: email.toLowerCase(),
-          fullName,
-          profilePicture: profilePicture || "default_avatar_url",
-          authProvider: "google",
-          role: "customer",
-        });
-        await user.save();
       }
 
-      // Tạo token
-      // const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
       const token = generateAuthToken(user);
 
       const data = {
@@ -209,8 +219,8 @@ const authController = {
 
       const user = await User.findById(req.userId);
 
-      if (user.authProvider !== "local") {
-        return errorResponse(res, "Tài khoản Google không thể đổi mật khẩu", 400);
+      if (!user.authProviders.includes("local")) {
+        return errorResponse(res, "Tài khoản này không hỗ trợ đổi mật khẩu", 400);
       }
 
       // Kiểm tra mật khẩu cũ
@@ -240,8 +250,8 @@ const authController = {
         return errorResponse(res, "Email không tồn tại trong hệ thống", 404);
       }
 
-      if (user.authProvider !== "local") {
-        return errorResponse(res, "Tài khoản Google không cần reset mật khẩu", 400);
+      if (!user.authProviders.includes("local")) {
+        return errorResponse(res, "Tài khoản này chỉ hỗ trợ đăng nhập bằng Google. Không cần reset mật khẩu.", 400);
       }
 
       // Tạo reset token
@@ -310,6 +320,34 @@ const authController = {
         return errorResponse(res, "Token không hợp lệ", 400);
       }
       console.error("Reset password error:", error);
+      return errorResponse(res, "Lỗi server không xác định");
+    }
+  },
+
+  // Thêm vào authController
+  setPassword: async (req, res) => {
+    try {
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return errorResponse(res, "Mật khẩu phải có ít nhất 6 ký tự", 400);
+      }
+
+      const user = await User.findById(req.userId);
+
+      // Nếu đã có local auth
+      if (user.authProviders.includes("local")) {
+        return errorResponse(res, "Tài khoản đã có mật khẩu. Vui lòng dùng chức năng đổi mật khẩu.", 400);
+      }
+
+      // Thêm local auth + set password
+      user.password = newPassword;
+      user.authProviders.push("local");
+      await user.save();
+
+      return successResponse(res, {}, "Thiết lập mật khẩu thành công. Bạn có thể đăng nhập bằng email/password.");
+    } catch (error) {
+      console.error("Set password error:", error);
       return errorResponse(res, "Lỗi server không xác định");
     }
   },
