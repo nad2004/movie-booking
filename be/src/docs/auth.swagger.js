@@ -214,5 +214,67 @@
  *       200:
  *         description: Đổi mật khẩu thành công
  */
+/**
+ * @swagger
+ * /auth/set-password:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Thiết lập mật khẩu cho tài khoản login bằng Google
+ *     description: |
+ *       API này cho phép người dùng đã đăng nhập bằng Google bổ sung mật khẩu để kích hoạt đăng nhập dạng email/password.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [newPassword]
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *                 example: "myNewPassword123"
+ *     responses:
+ *       200:
+ *         description: Thiết lập mật khẩu thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Thiết lập mật khẩu thành công. Bạn có thể đăng nhập bằng email/password."
+ *       400:
+ *         description: Lỗi validation hoặc tài khoản đã có mật khẩu local
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Tài khoản đã có mật khẩu. Vui lòng dùng chức năng đổi mật khẩu."
+ *       401:
+ *         description: Chưa đăng nhập hoặc token không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
+ */
 
 export default {};
