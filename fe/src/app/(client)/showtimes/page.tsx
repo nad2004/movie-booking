@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import type { Theater } from '@/types/theater'
-import { useSchedules } from '@/lib/api/get/schedules'
-import { useTheaters } from '@/lib/api/get/theaters'
+import { useSchedules } from '@/lib/api/schedules'
+import { useTheaters } from '@/lib/api/theaters'
 import PageHeader from '@/app/(client)/showtimes/components/PageHeader'
 import FilterSidebar from '@/app/(client)/showtimes/components/FilterSidebar'
 import ShowtimeContent from '@/app/(client)/showtimes/components/ShowtimeContent'
@@ -12,26 +12,22 @@ import { DEFAULT_THEATER_LIST } from '@/constants'
 export default function LichChieuHomNay() {
   const [selectedCity, setSelectedCity] = useState('Hà Nội')
   // Để mặc định là undefined (hoặc ngày hôm nay nếu bạn muốn user vào thấy luôn)
-  // const [selectedDate, setSelectedDate] = useState<string | undefined>(new Date().toLocaleDateString('en-CA')) 
+  // const [selectedDate, setSelectedDate] = useState<string | undefined>(new Date().toLocaleDateString('en-CA'))
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
   const [manualCinema, setManualCinema] = useState<Theater | null>(null)
 
-  const {
-    data: theaterData = DEFAULT_THEATER_LIST,
-    isLoading: isLoadingTheaters,
-  } = useTheaters({ city: selectedCity })
-  
+  const { data: theaterData = DEFAULT_THEATER_LIST, isLoading: isLoadingTheaters } = useTheaters({
+    city: selectedCity,
+  })
+
   const theaters: Theater[] = theaterData ? theaterData.theaters : []
   const activeCinema = manualCinema || theaters[0] || null
 
-  const { 
-    data: scheduleData, 
-    isFetching: isSchedulesLoading 
-  } = useSchedules({ 
+  const { data: scheduleData, isFetching: isSchedulesLoading } = useSchedules({
     theaterId: activeCinema?._id,
-    date: selectedDate 
+    date: selectedDate,
   })
-  
+
   const schedules = scheduleData?.schedules || []
 
   const handleSelectCity = (city: string) => {

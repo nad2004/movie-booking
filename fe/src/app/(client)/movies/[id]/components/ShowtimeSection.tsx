@@ -1,7 +1,7 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { MapPin } from 'lucide-react'
-import { useSchedules } from '@/lib/api/get/schedules'
+import { useSchedules } from '@/lib/api/schedules'
 import { useParams } from 'next/navigation'
 import { DEFAULT_SCHEDULE_LIST } from '@/constants'
 import Link from 'next/link'

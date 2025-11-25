@@ -6,7 +6,7 @@ import { topMovies } from "../constants/mockData";
 
 export function TopMoviesList() {
   return (
-    <Card className="border-none shadow-sm">
+    <Card className="border-none shadow-sm bg-gray-50">
       <CardHeader>
         <CardTitle>Top Phim Xem Nhiều</CardTitle>
         <CardDescription>Xếp hạng theo lượt xem tháng này</CardDescription>

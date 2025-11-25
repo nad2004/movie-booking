@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Filters, { type BookingStatus } from './components/Filters'
 import BookingList from './components/BookingList'
 // Import hook mới vừa tạo
-import { useMyBookings } from '@/lib/api/get/booking' 
+import { useMyBookings } from '@/lib/api/booking'
 
 export default function OrderHistoryPage() {
   // 1. State quản lý Status
@@ -65,9 +65,9 @@ export default function OrderHistoryPage() {
         {isLoading ? (
           // Skeleton Loading
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div 
-                key={i} 
+            {[1, 2, 3, 4].map(i => (
+              <div
+                key={i}
                 className="h-48 bg-surface/50 animate-pulse rounded-xl border border-border"
               />
             ))}

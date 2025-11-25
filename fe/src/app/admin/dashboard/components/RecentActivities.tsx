@@ -13,7 +13,7 @@ const getIcon = (iconName: string) => {
 
 export function RecentActivities() {
   return (
-    <Card className="border-gray-100 shadow-sm h-full">
+    <Card className="border-gray-100 shadow-sm h-full bg-gray-50">
       <CardHeader>
         <CardTitle className="text-lg font-bold text-gray-800">Hoạt Động Gần Đây</CardTitle>
         <CardDescription>Theo dõi hoạt động người dùng trên hệ thống</CardDescription>

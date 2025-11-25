@@ -5,10 +5,10 @@ import PageHeader from '@/app/(client)/movies/components/PageHeader'
 import FilterCard from '@/app/(client)/movies/components/FilterCard'
 import { TopMovieCarousel } from '@/app/(client)/components/topMovieCarousel'
 import { MovieSection } from '@/app/components/shared/movie-section'
-import { useMovies, GetMoviesParams } from '@/lib/api/get/movies'
+import { useMovies, GetMoviesParams } from '@/lib/api/movies'
 import { DEFAULT_MOVIE_LIST } from '@/constants'
 import { COUNTRIES } from '@/constants/location'
-import { useGenres } from '@/lib/api/get/genres'
+import { useGenres } from '@/lib/api/genres'
 import { DEFAULT_GENRE_LIST } from '@/constants'
 
 // --- CONSTANTS UI ---
@@ -28,7 +28,7 @@ export default function PhimLoc() {
   const [selectedSort, setSelectedSort] = useState('Mới nhất')
 
   const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres()
-  
+
   // Lấy danh sách thể loại unique
   const uniqueGenres = Array.from(new Set(listGenres.map(genre => genre.name)))
 
@@ -38,18 +38,21 @@ export default function PhimLoc() {
     page: 1,
     limit: 12,
     sortBy: 'releaseDate',
-    order: 'desc'
+    order: 'desc',
   })
 
   // --- 3. FETCH DATA (Dựa trên queryParams) ---
-  const { 
-    data: listMovies = DEFAULT_MOVIE_LIST, 
+  const {
+    data: listMovies = DEFAULT_MOVIE_LIST,
     isLoading, // Lấy trạng thái loading từ đây
-    isFetching // Lấy thêm isFetching để biết khi nào đang refetch lại
+    isFetching, // Lấy thêm isFetching để biết khi nào đang refetch lại
   } = useMovies(queryParams)
 
-  const { data: topMoviesData = DEFAULT_MOVIE_LIST } = useMovies({ 
-    page: 1, limit: 10, sortBy: 'view_count', order: 'desc' 
+  const { data: topMoviesData = DEFAULT_MOVIE_LIST } = useMovies({
+    page: 1,
+    limit: 10,
+    sortBy: 'view_count',
+    order: 'desc',
   })
 
   // --- 4. LOGIC XỬ LÝ KHI BẤM NÚT "LỌC KẾT QUẢ" ---
@@ -57,13 +60,18 @@ export default function PhimLoc() {
     const params: GetMoviesParams = {
       page: 1,
       limit: 12,
-      sortBy: selectedSort === 'Mới nhất' ? 'releaseDate' : 'view_count' ,
+      sortBy: selectedSort === 'Mới nhất' ? 'releaseDate' : 'view_count',
       order: 'desc',
       rating: selectedRating === 'P' ? undefined : selectedRating,
-      status: selectedType === 'Tất cả' ? undefined : (selectedType === 'Đang chiếu' ? 'showing' : 'coming_soon'),
+      status:
+        selectedType === 'Tất cả'
+          ? undefined
+          : selectedType === 'Đang chiếu'
+            ? 'showing'
+            : 'coming_soon',
       year: selectedYear === 'Tất cả' ? undefined : parseInt(selectedYear, 10),
       country: selectedCountry === 'Tất cả' ? undefined : selectedCountry,
-      genres:  selectedGenres.length === 0 ? undefined : selectedGenres.join(','),
+      genres: selectedGenres.length === 0 ? undefined : selectedGenres.join(','),
     }
 
     // A. Xử lý Genres
@@ -99,11 +107,25 @@ export default function PhimLoc() {
 
     // F. Xử lý Sắp xếp
     switch (selectedSort) {
-      case 'Mới nhất': params.sortBy = 'releaseDate'; params.order = 'desc'; break
-      case 'Mới cập nhật': params.sortBy = 'createdAt'; params.order = 'desc'; break
-      case 'Điểm IMDb': params.sortBy = 'vote_average'; params.order = 'desc'; break
-      case 'Lượt xem': params.sortBy = 'view_count'; params.order = 'desc'; break
-      default: params.sortBy = 'releaseDate'; params.order = 'desc'
+      case 'Mới nhất':
+        params.sortBy = 'releaseDate'
+        params.order = 'desc'
+        break
+      case 'Mới cập nhật':
+        params.sortBy = 'createdAt'
+        params.order = 'desc'
+        break
+      case 'Điểm IMDb':
+        params.sortBy = 'vote_average'
+        params.order = 'desc'
+        break
+      case 'Lượt xem':
+        params.sortBy = 'view_count'
+        params.order = 'desc'
+        break
+      default:
+        params.sortBy = 'releaseDate'
+        params.order = 'desc'
     }
 
     // CẬP NHẬT STATE -> Kích hoạt useQuery chạy lại
@@ -148,7 +170,6 @@ export default function PhimLoc() {
             selectedSort={selectedSort}
             onSelectSort={setSelectedSort}
             onClose={() => setShowFilters(false)}
-
             // THÊM PROPS MỚI
             onApplyFilter={handleApplyFilter} // Hàm xử lý khi click nút
             isLoading={isLoading || isFetching} // Trạng thái đang tải
@@ -158,22 +179,20 @@ export default function PhimLoc() {
         {/* <TopMovieCarousel title="🔥 Top Movies" movies={topMoviesData.movies} /> */}
 
         <div id="movie-list-section">
-            {/* Hiển thị loading overlay hoặc text */}
-            {(isLoading || isFetching) && (
-                 <div className="text-white py-4 text-center animate-pulse">Đang lọc phim...</div>
-            )}
+          {/* Hiển thị loading overlay hoặc text */}
+          {(isLoading || isFetching) && (
+            <div className="text-white py-4 text-center animate-pulse">Đang lọc phim...</div>
+          )}
 
-            <MovieSection
-              title={`📽️ Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
-              movies={listMovies.movies}
-              viewAllHref="#"
-            />
-            
-            {!isLoading && !isFetching && listMovies.movies.length === 0 && (
-                <div className="text-center py-10 text-gray-400">
-                    Không tìm thấy phim nào phù hợp.
-                </div>
-            )}
+          <MovieSection
+            title={`📽️ Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
+            movies={listMovies.movies}
+            viewAllHref="#"
+          />
+
+          {!isLoading && !isFetching && listMovies.movies.length === 0 && (
+            <div className="text-center py-10 text-gray-400">Không tìm thấy phim nào phù hợp.</div>
+          )}
         </div>
       </div>
     </div>

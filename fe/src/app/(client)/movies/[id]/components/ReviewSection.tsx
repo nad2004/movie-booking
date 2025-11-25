@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { useReviews } from '@/lib/api/get/reviews'
+import { useReviews } from '@/lib/api/reviews'
 import { useParams } from 'next/navigation'
 import { DEFAULT_REVIEW_LIST } from '@/constants'
 

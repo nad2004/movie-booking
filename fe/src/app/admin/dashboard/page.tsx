@@ -1,6 +1,5 @@
 'use client'
 
-// Import các components (đảm bảo đường dẫn đúng với cấu trúc thư mục bạn đã tạo)
 import { DashboardHeader } from "./components/DashboardHeader";
 import { KpiStats } from "./components/KpiStats";
 import { HorizontalChart } from "./components/HorizontalChart";
@@ -14,15 +13,9 @@ import { topMovies, topTheaters } from "./constants/mockData";
 export default function AdminDashboard() {
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto bg-gray-50/30 min-h-screen">
-      {/* 1. Header Section */}
       <DashboardHeader />
-
-      {/* 2. KPI Cards Section */}
       <KpiStats />
-
-      {/* 3. Charts Section (2 Cột Biểu đồ ngang) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Biểu đồ Top Phim */}
         <HorizontalChart 
             title="Top 5 Phim Xem Nhiều Nhất"
             description="Xếp hạng theo lượt xem"

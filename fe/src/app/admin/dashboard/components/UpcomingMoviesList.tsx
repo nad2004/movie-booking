@@ -5,7 +5,7 @@ import { upcomingMovies } from "../constants/mockData";
 
 export function UpcomingMoviesList() {
   return (
-    <Card className="border-none shadow-sm h-full">
+    <Card className="border-none shadow-sm h-full bg-gray-50">
       <CardHeader>
         <CardTitle>Phim Sắp Chiếu</CardTitle>
       </CardHeader>

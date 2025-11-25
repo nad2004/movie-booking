@@ -1,10 +1,11 @@
 import type { ApiResponse } from './apiTemplate';
 import type { Pagination } from './apiTemplate';
 import { User } from './user';
+import type { Movie } from './movie';
 export interface Review {
   _id: string;
   customer: User;
-  movie: string;
+  movie: Movie;
   rating: number;
   comment?: string;
   status: "Chờ duyệt" | "Đã duyệt" | "Bị từ chối";
