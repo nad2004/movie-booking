@@ -30,12 +30,12 @@ export function KpiStats() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">{item.value}</div>
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                   <Badge variant="secondary" className="text-green-600 bg-green-50 font-normal">
                     {item.change}
                   </Badge>
                   so với tháng trước
-                </p>
+                </span>
               </CardContent>
             </Card>
           </motion.div>

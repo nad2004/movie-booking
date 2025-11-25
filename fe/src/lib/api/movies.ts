@@ -1,8 +1,31 @@
 "use client"
-import { Movie, MovieListResponse, MovieDetailResponse } from '@/types/movie'
+import { Movie, MovieListResponse, MovieDetailResponse} from '@/types/movie'
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
+export interface MovieCreateDTO {
+  title: string;
+  director?: string;
+  actors?: string[];
+  duration: number;
+  description?: string;
+  posterUrl?: string;
+  trailerUrl?: string;
+  rating: "P" | "C13" | "C16" | "C18";
+  releaseDate: string | Date;
+  status?: "Sắp chiếu" | "Đang chiếu" | "Ngừng chiếu";
+  genres: string[];
+  language?: string;
+  subtitles?: string[];
+  country?: string;
+  ageRestriction?: number;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+}
 
+export interface MovieUpdateDTO extends Partial<MovieCreateDTO> {
+  isDeleted?: boolean;
+}
 // Cập nhật interface dựa trên hình ảnh Swagger
 export interface GetMoviesParams {
   page?: number
@@ -78,4 +101,23 @@ export function useMovieDetail(id: string) {
     retry: 2,
     enabled: !!id,
   });
+}
+
+export async function createMovie(data: MovieCreateDTO) {
+  // Lưu ý: Endpoint admin thường có prefix /admin hoặc dùng chung /movies nhưng check quyền
+  // Dựa vào ảnh Swagger: POST /admin/movies
+  const res = await api.post("/admin/movies", data);
+  return res.data;
+}
+
+export async function updateMovie(id: string, data: MovieUpdateDTO) {
+  // Dựa vào ảnh Swagger: PUT /admin/movies/{id}
+  const res = await api.put(`/admin/movies/${id}`, data);
+  return res.data;
+}
+
+export async function deleteMovie(id: string) {
+  // Dựa vào ảnh Swagger: DELETE /admin/movies/{id}
+  const res = await api.delete(`/admin/movies/${id}`);
+  return res.data;
 }

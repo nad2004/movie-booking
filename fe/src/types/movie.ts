@@ -67,39 +67,6 @@ export interface MovieWithGenres extends Omit<Movie, "genres"> {
 }
 
 
-// ======================
-// CREATE / UPDATE DTO
-// ======================
-export interface MovieCreateDTO {
-  title: string;
-  director?: string;
-  actors?: string[];
-  duration: number;
-  description?: string;
-  posterUrl?: string;
-  trailerUrl?: string;
-  rating: "P" | "C13" | "C16" | "C18";
-  releaseDate: string | Date;
-  status?: "Sắp chiếu" | "Đang chiếu" | "Ngừng chiếu";
-  genres: string[];
-  language?: string;
-  subtitles?: string[];
-  country?: string;
-  ageRestriction?: number;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string[];
-}
-
-export interface MovieUpdateDTO extends Partial<MovieCreateDTO> {
-  isDeleted?: boolean;
-}
-
-
-// ======================
-// GENERIC API RESPONSE
-// ======================
-
 export interface MovieListData {
   movies: Movie[];
   pagination: Pagination;

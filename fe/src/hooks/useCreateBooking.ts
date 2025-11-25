@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation } from '@tanstack/react-query';
-import { createBookingApi } from '@/lib/api/post/booking';
+import { createBookingApi } from '@/lib/api/booking';
 import { CreateBookingRequest } from '@/types/booking';
 import { toast } from 'sonner';
 

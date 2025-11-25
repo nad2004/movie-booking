@@ -53,3 +53,4 @@ export function useUsers(page = 1, limit = 10, role?: string) {
     staleTime: 1000 * 60 * 10,
   });
 }
+

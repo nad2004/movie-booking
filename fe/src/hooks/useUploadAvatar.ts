@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { uploadAvatarApi } from '@/lib/api/post/user';
+import { uploadAvatarApi } from '@/lib/api/userMe';
 import { toast } from 'sonner';
 
 export function useUploadAvatar() {

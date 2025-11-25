@@ -11,7 +11,7 @@ export function HorizontalChart({ title, description, data }: ChartProps) {
   const maxValue = Math.max(...data.map(d => d.value));
 
   return (
-    <Card className="border-gray-100 shadow-sm h-full">
+    <Card className="border-gray-100 shadow-sm h-full bg-gray-50">
       <CardHeader>
         <CardTitle className="text-lg font-bold text-gray-800">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
