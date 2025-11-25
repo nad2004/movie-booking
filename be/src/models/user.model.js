@@ -96,14 +96,14 @@ const userSchema = new Schema(
         default: [],
       },
     },
-    authProvider: {
-      type: String,
+    authProviders: {
+      type: [String],
       enum: ["local", "google", "facebook"],
       required: true,
-      default: "local",
+      default: ["local"],
       validate: {
         validator: function (arr) {
-          return arr.length > 0;
+          return Array.isArray(arr) && arr.length > 0;
         },
         message: "Phải có ít nhất một phương thức đăng nhập",
       },
@@ -190,7 +190,7 @@ const userSchema = new Schema(
 );
 
 // === INDEXES ===
-userSchema.index({ email: 1, authProvider: 1 });
+userSchema.index({ email: 1, authProviders: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 userSchema.index({ loyaltyPoints: -1 });
 
