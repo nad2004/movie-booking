@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { BookedSeat } from '@/types/booking'
 import { Schedule, SeatAvailability } from '@/types/schedule'
-import { SeatMaps } from '@/app/(client)/components/seatsmap'
+import { SeatMaps } from '@/app/components/shared/seatsmap'
 interface StepSeatSelectionProps {
   selectedSeats: BookedSeat[]
   schedule: Schedule | null

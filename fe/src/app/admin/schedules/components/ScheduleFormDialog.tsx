@@ -97,7 +97,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-gray-50 text-gray-900">
         <DialogHeader>
           <DialogTitle>{scheduleToEdit ? "Cập Nhật Lịch Chiếu" : "Thêm Lịch Chiếu Mới"}</DialogTitle>
         </DialogHeader>
@@ -111,7 +111,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
               <SelectTrigger>
                 <SelectValue placeholder="Chọn phim..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-100 text-gray-900/90">
                 {moviesData?.movies.map(m => (
                   <SelectItem key={m._id} value={m._id}>{m.title}</SelectItem>
                 ))}
@@ -126,7 +126,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
               <SelectTrigger>
                 <SelectValue placeholder="Chọn rạp..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-100 text-gray-900/90">
                 {theatersData?.theaters.map(t => (
                   <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
                 ))}
@@ -141,7 +141,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
               <SelectTrigger>
                 <SelectValue placeholder="Chọn phòng..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-100 text-gray-900/90">
                 {rooms.length > 0 ? rooms.map((r: any) => (
                   <SelectItem key={r._id} value={r._id}>{r.roomName} ({r.roomType})</SelectItem>
                 )) : (
@@ -159,17 +159,17 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
             </div>
             <div className="space-y-2">
                <Label>Giờ Bắt Đầu</Label>
-               <Input type="time" {...register("startTime")} />
+               <Input className="bg-gray-100 text-gray-900/90" type="time" {...register("startTime")} />
             </div>
           </div>
           
            <div className="space-y-2">
                <Label>Giờ Kết Thúc (Dự kiến)</Label>
-               <Input type="time" {...register("endTime")} />
+               <Input className="!bg-gray-100 !text-gray-900" type="time" {...register("endTime")} />
             </div>
 
           {/* Giá Vé */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 bg-gray-100 text-gray-900/90">
             <div className="space-y-2">
                <Label>Giá Thường</Label>
                <Input type="number" {...register("standardPrice")} />
@@ -178,9 +178,9 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
                <Label>Giá VIP</Label>
                <Input type="number" {...register("vipPrice")} />
             </div>
-             <div className="space-y-2">
+             <div className="space-y-2 ">
                <Label>Giá Couple</Label>
-               <Input type="number" {...register("couplePrice")} />
+               <Input className="" type="number" {...register("couplePrice")} />
             </div>
           </div>
 

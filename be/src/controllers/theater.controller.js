@@ -105,7 +105,7 @@ const theaterController = {
 
       const [theaters, total] = await Promise.all([
         Theater.find(query)
-          .select("-rooms.seatMap") // Không lấy seatMap để giảm data
+        
           .sort(sort)
           .skip(skip)
           .limit(limitNumber)

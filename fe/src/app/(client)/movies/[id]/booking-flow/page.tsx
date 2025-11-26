@@ -120,7 +120,7 @@ export default function BookingPage() {
                   disabled={
                     (currentStep === 1 && !selectedSchedule) ||
                     (currentStep === 2 && selectedSeats.length === 0) || 
-                    isProcessing
+                    isProcessing || (currentStep === 4)
                   }
                   className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white h-12 gap-2 shadow-lg shadow-primary/20 flex items-center"
                 >
@@ -132,7 +132,7 @@ export default function BookingPage() {
                   ) : (
                     <>
                       {/* Ở bước 4 nút sẽ đổi text để xác nhận hoàn tất */}
-                      {currentStep === 4 ? 'Tôi đã thanh toán xong' : 'Tiếp tục'} 
+                      { 'Tiếp tục'} 
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   )} 

@@ -96,10 +96,9 @@ export function GenreFormDialog({ open, onOpenChange, genreToEdit }: GenreFormDi
                  </div>
                  <div className="space-y-2">
                     <Label>Màu sắc</Label>
-                    <div className="flex gap-2">
+                    
                         <Input type="color" {...register("color")} className="w-12 p-1 h-10 cursor-pointer" />
-                        <Input {...register("color")} placeholder="#HexCode" />
-                    </div>
+                    
                  </div>
             </div>
           </div>

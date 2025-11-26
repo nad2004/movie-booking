@@ -16,7 +16,7 @@ export default function HomePage() {
     error,
   } = useMovies({ page: 1, limit: 10 })
   const { data: listTheater = DEFAULT_THEATER_LIST } = useTheaters({})
-  const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres()
+  const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres({})
 
   if (isLoading) {
     return <div>Loading...</div>
@@ -49,7 +49,7 @@ export default function HomePage() {
           viewAllHref="/movies?filter=coming-soon"
         />
 
-        <GenreGrid genres={listGenres.slice(0, 6)} />
+        <GenreGrid genres={listGenres} />
         <ShowtimeSection cinemas={listTheater.theaters} />
         <FeaturedReviews />
       </main>

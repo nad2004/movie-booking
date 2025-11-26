@@ -27,7 +27,7 @@ export const DEFAULT_THEATER_LIST: PaginatedTheaterResponse = {
   theaters: [],
   pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
 }
-export const DEFAULT_GENRE_LIST: Genre[] = []
+export const DEFAULT_GENRE_LIST: Genre[] = [] as Genre[]
 export const DEFAULT_REVIEW_LIST: PaginatedReviewData = {
   reviews: [],
   pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },

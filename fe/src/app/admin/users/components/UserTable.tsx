@@ -32,7 +32,7 @@ export function UserTable({ users, isLoading, onViewDetail, onEditRole, onDelete
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user._id} className="hover:bg-gray-50/50">
+            <TableRow key={user._id} className="hover:bg-gray-50/50 ">
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="w-9 h-9 border border-gray-100">
@@ -47,7 +47,7 @@ export function UserTable({ users, isLoading, onViewDetail, onEditRole, onDelete
               <TableCell className="text-gray-600">{user.email}</TableCell>
               <TableCell className="text-gray-600">{user.phoneNumber || '-'}</TableCell>
               <TableCell>
-                <Badge variant={user.role === 'admin' ? 'destructive' : 'outline'} className="capitalize">
+                <Badge variant={user.role === 'admin' ? 'destructive' : 'outline'} className="capitalize text-gray-950">
                     {user.role}
                 </Badge>
               </TableCell>

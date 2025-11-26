@@ -1,7 +1,7 @@
 // src/middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { decodeJwt } from 'jose' // <--- Import từ jose
+import { decodeJwt } from 'jose'
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -32,24 +32,23 @@ export function middleware(request: NextRequest) {
     // --- CASE 3: Check Role (Phân quyền) ---
     if (token) {
         try {
-            // Dùng jose để decode payload (nhanh, không verify chữ ký)
             const payload = decodeJwt(token)
-            
-            // Ép kiểu về string để an toàn và lowercase
             const role = (payload.role as string)?.toLowerCase() || 'user'
 
-            // Vào /admin mà không phải admin -> Chặn
+            // --- LOGIC MỚI: Rewrite sang 404 để ẩn route Admin ---
+            
+            // User thường vào /admin -> Hiện 404
             if (pathname.startsWith('/admin') && role !== 'admin') {
-                return NextResponse.redirect(new URL('/', request.url)) 
+                // Rewrite: Giữ nguyên URL nhưng render trang Not Found
+                return NextResponse.rewrite(new URL('/404', request.url)) 
             }
 
-            // Vào /staff mà không phải admin hoặc staff -> Chặn
+            // User thường vào /staff -> Hiện 404
             if (pathname.startsWith('/staff') && role !== 'admin' && role !== 'staff') {
-                return NextResponse.redirect(new URL('/', request.url))
+                return NextResponse.rewrite(new URL('/404', request.url))
             }
             
         } catch (error) {
-            // Nếu token lỗi (không decode được) -> Xóa cookie và đá về login
             const response = NextResponse.redirect(new URL('/login', request.url))
             response.cookies.delete('authToken')
             return response

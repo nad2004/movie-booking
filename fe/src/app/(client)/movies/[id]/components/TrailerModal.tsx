@@ -15,7 +15,7 @@ export function TrailerModal({ setShowTrailer, showTrailer }: TrailerModalProps)
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <div className="bg-surface rounded-xl overflow-hidden w-full max-w-3xl shadow-lg animate-fadeIn">
               <iframe
-                src="https://www.youtube.com/embed/h9Q4zZS2v1k"
+                src="https://www.youtube.com/embed/7xPa5_dEiBo"
                 title="Trailer"
                 className="w-full aspect-video"
                 allowFullScreen

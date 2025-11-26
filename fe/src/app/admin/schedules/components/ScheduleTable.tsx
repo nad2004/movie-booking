@@ -16,16 +16,16 @@ export function ScheduleTable({ schedules, isLoading, onEdit, onDelete }: Schedu
   if (schedules.length === 0) return <div className="text-center py-10 text-gray-500">Chưa có lịch chiếu nào trong ngày này.</div>;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-gray-200 text-gray-950 rounded-xl overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50/50">
-          <TableRow>
-            <TableHead>Phim</TableHead>
-            <TableHead>Rạp / Phòng</TableHead>
-            <TableHead>Ngày / Giờ</TableHead>
-            <TableHead>Giá Vé</TableHead>
-            <TableHead>Ghế Trống</TableHead>
-            <TableHead className="text-right">Thao Tác</TableHead>
+        <TableHeader >
+          <TableRow className="bg-gray-50 hover:bg-gray-50/50 ">
+            <TableHead className='text-gray-800'>Phim</TableHead>
+            <TableHead className='text-gray-800'>Rạp / Phòng</TableHead>
+            <TableHead className='text-gray-800'>Ngày / Giờ</TableHead>
+            <TableHead className='text-gray-800'>Giá Vé</TableHead>
+            <TableHead className='text-gray-800'>Ghế Trống</TableHead>
+            <TableHead className="text-right text-gray-800">Thao Tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

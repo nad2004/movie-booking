@@ -75,7 +75,7 @@ export default function ScheduleManagementPage() {
               mode="single"
               selected={date}
               onSelect={setDate}
-              className="rounded-md border border-gray-100 w-full"
+              className="rounded-md border border-gray-100 w-full bg-gray-50 text-gray-950"
             />
           </Card>
 

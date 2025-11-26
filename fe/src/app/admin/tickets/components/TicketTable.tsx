@@ -30,7 +30,7 @@ export function TicketTable({ bookings, isLoading, onEditStatus, onDelete }: Tic
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50/50">
+        <TableHeader className="bg-gray-50/50 text-gray-950">
           <TableRow>
             <TableHead>Mã Vé</TableHead>
             <TableHead>Thông tin Phim</TableHead>
@@ -44,7 +44,7 @@ export function TicketTable({ bookings, isLoading, onEditStatus, onDelete }: Tic
         </TableHeader>
         <TableBody>
           {bookings.map((ticket) => (
-            <TableRow key={ticket._id} className="hover:bg-gray-50/50">
+            <TableRow key={ticket._id} className="hover:bg-gray-200/50 text-gray-950">
               <TableCell className="font-mono font-medium">{ticket.bookingCode || ticket._id.slice(-6).toUpperCase()}</TableCell>
               <TableCell>
                 <div className="font-medium">{ticket.movieTitle}</div>

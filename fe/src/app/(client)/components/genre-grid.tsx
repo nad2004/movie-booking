@@ -12,13 +12,12 @@ const genres = [
   { name: 'Hoạt hình', icon: '🎨', color: 'from-indigo-500 to-purple-500' },
 ]
 interface GenresProps {
-  genres: Genre[] 
+  genres: Genre[]
 }
 export function GenreGrid({ genres }: GenresProps) {
+  console.log(genres)
   if (genres.length === 0) {
-    return <div>
-      Không có thể loại nào để hiển thị.
-    </div>
+    return <div>Không có thể loại nào để hiển thị.</div>
   }
   return (
     <div className=" py-12   ">
@@ -41,12 +40,20 @@ export function GenreGrid({ genres }: GenresProps) {
                 <div
                   className={`
                     relative flex items-center justify-center gap-3
-                    h-28 md:h-32 rounded-2xl border border-border 
-                    bg-card transition-all duration-300
-                    hover:text-white hover:border-transparent 
-                    hover:bg-gradient-to-br ${genre.color}
-                    group-hover:shadow-lg hover:-translate-y-1
+                    h-28 md:h-32 rounded-2xl border border-border
+                    bg-bg-primary transition-all duration-300
+                    hover:border-transparent group-hover:shadow-lg
+                    hover:-translate-y-1
+                    hover:bg-gradient-to-br
+                    hover:from-[var(--bg-primary)] 
+                    hover:to-[var(--genre-color)]
                   `}
+                  style={
+                    {
+                      '--bg-primary': 'var(--bg-primary)',
+                      '--genre-color': genre.color,
+                    } as React.CSSProperties
+                  }
                 >
                   <span
                     className="
@@ -60,7 +67,7 @@ export function GenreGrid({ genres }: GenresProps) {
                   <span
                     className="
                       text-sm md:text-base font-medium 
-                      text-foreground group-hover:text-white
+                      text-foreground group-hover:text-text-primary
                     "
                   >
                     {genre.name}

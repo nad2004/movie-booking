@@ -103,11 +103,11 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
                 }`}
               >
                 {/* Product Image */}
-                <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100 flex-shrink-0 overflow-hidden relative">
+                <div className="w-20 h-20 bg-bg-primary rounded-xl flex items-center justify-center shadow-sm border border-gray-100 flex-shrink-0 overflow-hidden relative">
                   {renderProductImage(product)}
                   {isOutOfStock && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-white text-[10px] font-bold px-1 py-0.5 bg-red-500 rounded">
+                      <span className="text-text-primary text-[10px] font-bold px-1 py-0.5 bg-red-500 rounded">
                         HẾT HÀNG
                       </span>
                     </div>
@@ -140,11 +140,11 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
 
                 {/* Counter Controls */}
                 <div
-                  className={`flex items-center gap-1 bg-white rounded-lg p-1 border border-border shadow-sm ${isOutOfStock ? 'pointer-events-none opacity-50' : ''}`}
+                  className={`flex items-center gap-1 bg-bg-primary rounded-lg p-1 border border-border shadow-sm ${isOutOfStock ? 'pointer-events-none opacity-50' : ''}`}
                 >
                   <button
                     onClick={() => updateCartItem(product, Math.max(0, quantity - 1))}
-                    className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-text-secondary font-bold transition-colors disabled:opacity-30 active:scale-95"
+                    className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-bg-primary/50 text-text-secondary font-bold transition-colors disabled:opacity-30 active:scale-95"
                     disabled={quantity === 0}
                   >
                     -
@@ -154,7 +154,7 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
                   </span>
                   <button
                     onClick={() => updateCartItem(product, quantity + 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-md bg-primary text-white hover:bg-primary/90 font-bold transition-colors shadow-sm active:scale-95"
+                    className="w-8 h-8 flex items-center justify-center rounded-md bg-primary text-text-primary hover:bg-primary/90 font-bold transition-colors shadow-sm active:scale-95"
                   >
                     +
                   </button>

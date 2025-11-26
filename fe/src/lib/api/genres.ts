@@ -32,7 +32,7 @@ export async function getGenres(params: GetGenresParams = {}) {
     return res.data.data;
   } catch (error) {
     console.error("Fetch genres failed", error);
-    return { genres: [] };
+    return [] as Genre[];
   }
 }
 
