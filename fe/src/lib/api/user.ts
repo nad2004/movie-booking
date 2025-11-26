@@ -1,56 +1,72 @@
+import { User, UserListResponse } from "@/types/user";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
-import { User } from "@/types/user"; // Đảm bảo bạn đã có type User
-import { ApiResponse } from "@/types/apiTemplate"; // Hoặc type response chung của bạn
+import { ApiResponse } from "@/types/apiTemplate";
 
-// Định nghĩa response cho /auth/me
-type MeResponse = ApiResponse<User>;
+// --- Params ---
+export interface GetUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string; // "customer" | "staff" | "admin"
+}
 
-// --- 1. API lấy thông tin user hiện tại ---
-export async function getMe() {
+export interface UpdateRoleDTO {
+  role: "customer" | "staff" | "admin";
+}
+
+// --- API Functions ---
+
+// 1. Get List
+export async function getUsers(params: GetUsersParams = {}) {
   try {
-    // Gọi API /auth/me
-    // Header Authorization đã được tự động gắn ở file axios.ts
-    const res = await api.get<MeResponse>("/auth/me");
+    const res = await api.get<UserListResponse>("/admin/users", { params });
     return res.data.data;
   } catch (error) {
-    // Không log lỗi 401 để tránh rác console (vì interceptor đã xử lý)
-    throw error;
-  }
-}
-
-// --- 2. Hook useMe ---
-export function useMe() {
-  return useQuery({
-    queryKey: ["me"], // Key định danh cho user hiện tại
-    queryFn: getMe,
-    staleTime: 1000 * 60 * 5, // Cache 5 phút
-    retry: 1, // Thử lại 1 lần nếu lỗi
-    refetchOnWindowFocus: false, // Không fetch lại khi switch tab để đỡ lag
-  });
-}
-
-// --- (Giữ lại logic getUsers cũ nếu cần cho Admin) ---
-export async function getUsers(page = 1, limit = 10, role?: string) {
-  try {
-    const res = await api.get(`/users`, {
-      params: { page, limit, role },
-    });
-    return res.data.data;
-  } catch (err) {
-    console.error("Failed to fetch users", err);
-    return {
-      users: [],
-      pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
+    console.error("Fetch users failed", error);
+    return { 
+        users: [], 
+        pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } 
     };
   }
 }
 
-export function useUsers(page = 1, limit = 10, role?: string) {
+// 2. Get Detail
+export async function getUserDetail(id: string) {
+  // Dựa theo ảnh: GET /admin/users/{id}
+  const res = await api.get<ApiResponse<User>>(`/admin/users/${id}`);
+  return res.data.data;
+}
+
+// 3. Update Role
+export async function updateUserRole(id: string, data: UpdateRoleDTO) {
+  // Dựa theo ảnh: PUT /admin/users/{id}/role
+  const res = await api.put(`/admin/users/${id}/role`, data);
+  return res.data;
+}
+
+// 4. Delete User
+export async function deleteUser(id: string) {
+  // Dựa theo ảnh: DELETE /admin/users/{id}
+  const res = await api.delete(`/admin/users/${id}`);
+  return res.data;
+}
+
+// --- Hooks ---
+
+export function useUsers(params: GetUsersParams) {
   return useQuery({
-    queryKey: ["users", page, limit, role],
-    queryFn: () => getUsers(page, limit, role),
-    staleTime: 1000 * 60 * 10,
+    queryKey: ["users", params],
+    queryFn: () => getUsers(params),
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (previousData) => previousData,
   });
 }
 
+export function useUserDetail(id: string | null) {
+  return useQuery({
+    queryKey: ["user-detail", id],
+    queryFn: () => getUserDetail(id!),
+    enabled: !!id, // Chỉ fetch khi có ID
+  });
+}

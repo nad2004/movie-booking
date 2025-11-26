@@ -33,11 +33,8 @@ export default function ShowtimeContent({
   isLoading = false,
 }: ShowtimeContentProps) {
 
-  // 1. Lọc schedule theo ngày đã chọn trước khi gom nhóm
   const filteredSchedules = useMemo(() => {
     if (!selectedDate) return [];
-    // So sánh chuỗi ngày (YYYY-MM-DD)
-    // Cần đảm bảo schedule.showDate trong DB cũng format tương tự hoặc dùng new Date() để so sánh
     return schedules.filter(s => s.showDate.startsWith(selectedDate)); 
   }, [schedules, selectedDate]);
 

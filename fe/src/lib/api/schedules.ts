@@ -38,3 +38,54 @@ export function useSchedules(params: GetScheduleParams = {}) {
     retry: 2,
   });
 }
+
+
+// --- DTO Types (Theo ảnh Swagger) ---
+export interface TicketPriceDTO {
+  standard: number;
+  vip: number;
+  couple: number;
+}
+
+export interface ScheduleCreateDTO {
+  movieId: string;
+  theaterId: string;
+  roomId: string;
+  roomName: string; // Backend yêu cầu gửi cả tên
+  roomType: "2D" | "3D" | "IMAX";
+  showDate: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string;   // HH:mm
+  ticketPrices: TicketPriceDTO;
+  language: string;
+  subtitles: string[];
+  status?: string;
+}
+
+export interface ScheduleUpdateDTO extends Partial<ScheduleCreateDTO> {
+  isActive?: boolean;
+}
+
+export interface GetScheduleParams {
+  movieId?: string;
+  theaterId?: string;
+  date?: string; // YYYY-MM-DD
+  page?: number;
+  limit?: number;
+}
+
+
+export async function createSchedule(data: ScheduleCreateDTO) {
+  const res = await api.post("/admin/schedules", data);
+  return res.data;
+}
+
+export async function updateSchedule(id: string, data: ScheduleUpdateDTO) {
+  const res = await api.put(`/admin/schedules/${id}`, data);
+  return res.data;
+}
+
+export async function deleteSchedule(id: string) {
+  const res = await api.delete(`/admin/schedules/${id}`);
+  return res.data;
+}

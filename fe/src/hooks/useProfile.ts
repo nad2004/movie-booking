@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { UserProfile } from '../types'
-import { useMe } from '@/lib/api/user' // Import thêm
+import { useMe } from '@/lib/api/userMe' // Import thêm
 import { updateProfileApi, UpdateProfileDTO } from '@/lib/api/userMe' // Import API cập nhật
 import { useMutation, useQueryClient } from '@tanstack/react-query' // Import React Query
 import { toast } from 'sonner'
