@@ -66,7 +66,7 @@
  *                 example: "https://www.youtube.com/watch?v=TcMBFSGVi1c"
  *               status:
  *                 type: string
- *                 enum: [Sắp chiếu, Đang chiếu, Ngừng chiếu]
+ *                 enum: ["Sắp chiếu", "Đang chiếu", "Ngừng chiếu"]
  *                 example: "Đang chiếu"
  *     responses:
  *       201:
@@ -189,7 +189,6 @@
  *         description: Lỗi server
  */
 
-
 /**
  * @swagger
  * /admin/movies/{id}:
@@ -245,7 +244,7 @@
  *                 type: string
  *               status:
  *                 type: string
- *                 enum: [Sắp chiếu, Đang chiếu, Ngừng chiếu]
+ *                 enum: ["Sắp chiếu", "Đang chiếu", "Ngừng chiếu"]
  *     responses:
  *       200:
  *         description: Cập nhật thành công
@@ -381,7 +380,7 @@
  *                   type: string
  *               status:
  *                 type: string
- *                 enum: [Sắp chiếu, Đang chiếu, Đã chiếu, Đã hủy]
+ *                 enum: ["Sắp chiếu", "Đang chiếu", "Đã chiếu", "Đã hủy"]
  *     responses:
  *       200:
  *         description: Cập nhật thành công
@@ -488,10 +487,10 @@
  *     summary: Hủy lịch chiếu (Admin)
  *     description: >
  *       Hủy lịch chiếu và xử lý các booking liên quan:
- *       - Cập nhật trạng thái booking → CANCELLED  
- *       - Tự động hoàn tiền (nếu đã thanh toán thành công)  
- *       - Trả ghế, rollback voucher, trả lại stock sản phẩm  
- *       - Gửi email & SMS thông báo  
+ *       - Cập nhật trạng thái booking → CANCELLED
+ *       - Tự động hoàn tiền (nếu đã thanh toán thành công)
+ *       - Trả ghế, rollback voucher, trả lại stock sản phẩm
+ *       - Gửi email & SMS thông báo
  *       - Cập nhật lịch chiếu thành "Đã hủy"
  *     security:
  *       - bearerAuth: []
@@ -553,7 +552,6 @@
  *       500:
  *         description: Lỗi server
  */
-
 
 /**
  * @swagger
@@ -640,7 +638,7 @@
  *                 example: "Phòng 1"
  *               roomType:
  *                 type: string
- *                 enum: [2D, 3D, IMAX, 4DX]
+ *                 enum: ["2D", "3D", "IMAX", "4DX"]
  *                 example: "2D"
  *               totalSeats:
  *                 type: number
@@ -695,11 +693,13 @@
  *       - in: path
  *         name: theaterId
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: roomId
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -712,11 +712,40 @@
  *               roomType:
  *                 type: string
  *                 enum: [2D, 3D, IMAX, 4DX]
+ *               totalSeats:
+ *                 type: number
+ *               rows:
+ *                 type: number
+ *               seatsPerRow:
+ *                 type: number
+ *               seatMap:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     seatNumber:
+ *                       type: string
+ *                       example: "A10"
+ *                     seatType:
+ *                       type: string
+ *                       enum: ["Thường", "VIP", "Ghế đôi"]
+ *                     isAvailable:
+ *                       type: boolean
+ *                       example: true
+ *                     row:
+ *                       type: string
+ *                       example: "A"
+ *                     column:
+ *                       type: number
+ *               screenType:
+ *                 type: string
+ *                 enum: [Standard, IMAX, Dolby Atmos]
  *               isActive:
  *                 type: boolean
  *     responses:
  *       200:
  *         description: Cập nhật phòng chiếu thành công
+ *
  *   delete:
  *     tags: [Admin]
  *     summary: Xóa phòng chiếu (Admin)
@@ -726,15 +755,18 @@
  *       - in: path
  *         name: theaterId
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: roomId
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Xóa phòng chiếu thành công
  */
+
 /**
  * @swagger
  * /admin/theaters/{id}:
@@ -819,9 +851,9 @@
  *     summary: Xóa rạp chiếu (Admin)
  *     description: >
  *       Thực hiện **soft delete** rạp:
- *       - Không cho phép xóa nếu rạp còn lịch chiếu tương lai  
- *       - Không cho phép xóa nếu rạp còn phòng chiếu  
- *       - Đặt isActive = false thay vì xóa vĩnh viễn  
+ *       - Không cho phép xóa nếu rạp còn lịch chiếu tương lai
+ *       - Không cho phép xóa nếu rạp còn phòng chiếu
+ *       - Đặt isActive = false thay vì xóa vĩnh viễn
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -842,6 +874,108 @@
  *         description: Lỗi server
  */
 
+/**
+ * @swagger
+ * /admin/theaters/{theaterId}/rooms/{roomId}/seats:
+ *   put:
+ *     tags:
+ *       - Admin
+ *     summary: Cập nhật nhiều ghế trong một phòng chiếu (Admin)
+ *     description: |
+ *       Cập nhật nhiều ghế cùng lúc bằng cách truyền danh sách seatNumber và các trường cần thay đổi.
+ *       - Không cần gửi toàn bộ seatMap
+ *       - Không bị ảnh hưởng bởi validator totalSeats
+ *       - Chỉ sửa các key được truyền vào
+ *
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: path
+ *         name: theaterId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của rạp chiếu
+ *
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của phòng chiếu
+ *
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - seats
+ *             properties:
+ *               seats:
+ *                 type: array
+ *                 description: Danh sách ghế cần cập nhật
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - seatNumber
+ *                   properties:
+ *                     seatNumber:
+ *                       type: string
+ *                       example: "A3"
+ *                       description: Mã ghế — dùng để xác định ghế trong seatMap
+ *
+ *                     seatType:
+ *                       type: string
+ *                       enum: ["Thường", "VIP", "Ghế đôi"]
+ *                       example: "VIP"
+ *                       description: Loại ghế mới
+ *
+ *                     isAvailable:
+ *                       type: boolean
+ *                       example: true
+ *                       description: Trạng thái ghế (còn trống hay không)
+ *
+ *                     row:
+ *                       type: string
+ *                       example: "A"
+ *                       description: Hàng ghế (tùy chọn)
+ *
+ *                     column:
+ *                       type: number
+ *                       example: 3
+ *                       description: Số cột (tùy chọn)
+ *
+ *     responses:
+ *       200:
+ *         description: Cập nhật nhiều ghế thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Cập nhật nhiều ghế thành công"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *
+ *       400:
+ *         description: Dữ liệu ghế không hợp lệ
+ *
+ *       404:
+ *         description: Không tìm thấy rạp hoặc phòng chiếu
+ *
+ *       500:
+ *         description: Lỗi server
+ */
 
 /**
  * @swagger
@@ -1191,7 +1325,6 @@
  *         description: Lỗi server
  */
 
-
 /**
  * @swagger
  * /admin/statistics/overview:
@@ -1317,8 +1450,6 @@
  *       500:
  *         description: Lỗi server
  */
-
-
 
 /**
  * @swagger
