@@ -1,4 +1,5 @@
 // app/admin/layout.tsx
+'use client'
 import { Sidebar } from './components/Sidebar'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

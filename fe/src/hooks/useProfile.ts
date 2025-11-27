@@ -4,9 +4,11 @@ import { useMe } from '@/lib/api/userMe' // Import thêm
 import { updateProfileApi, UpdateProfileDTO } from '@/lib/api/userMe' // Import API cập nhật
 import { useMutation, useQueryClient } from '@tanstack/react-query' // Import React Query
 import { toast } from 'sonner'
+import { useNotification } from '@/providers/NotificationProvider'
 
 export function useProfile() {
   const queryClient = useQueryClient() // Dùng để refresh data
+  const { showSuccess, showError } = useNotification()
 
   // 1. Lấy dữ liệu từ API (Server State)
   const { data: userData, isLoading, error, refetch } = useMe()
@@ -38,7 +40,7 @@ export function useProfile() {
     mutationFn: (data: UpdateProfileDTO) => updateProfileApi(data),
 
     onSuccess: () => {
-      toast.success('Cập nhật hồ sơ thành công!')
+      showSuccess('Cập nhập hồ sơ thành công!')
       setIsEditing(false)
       setLocalUpdates({}) // Reset local updates vì data mới đã được fetch
       queryClient.invalidateQueries({ queryKey: ['me'] }) // Fetch lại dữ liệu mới nhất từ server
@@ -46,7 +48,7 @@ export function useProfile() {
 
     onError: (err: any) => {
       const msg = err?.response?.data?.message || 'Cập nhật thất bại'
-      toast.error(msg)
+      showError('Lỗi!', msg)
     },
   })
 

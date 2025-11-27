@@ -17,7 +17,7 @@ export function UserDetailSheet({ open, onOpenChange, userId }: UserDetailSheetP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-gray-50 text-gray-900">
         <SheetHeader>
           <SheetTitle>Thông Tin Người Dùng</SheetTitle>
         </SheetHeader>

@@ -14,7 +14,6 @@ export const STEPS = [
   { number: 2, label: 'Chọn ghế' },
   { number: 3, label: 'Bắp nước' },
   { number: 4, label: 'Thanh toán' }, // Bước này sẽ hiện QR
-  { number: 5, label: 'Vé điện tử' },
 ]
 
 export const RESERVED_SEATS = ['A5', 'B3', 'C6', 'D1', 'E8']

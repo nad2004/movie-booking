@@ -67,7 +67,7 @@ export function MovieFormDialog({ open, onOpenChange, movieToEdit }: MovieFormDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-50 text-gray-900">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Cập nhật phim" : "Thêm phim mới"}</DialogTitle>
         </DialogHeader>

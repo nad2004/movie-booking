@@ -1,31 +1,31 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateBookingStatus, deleteBooking } from "@/lib/api/booking";
-import { BookingStatus } from "@/types/booking";
-import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { updateBookingStatus, deleteBooking } from '@/lib/api/booking'
+import { BookingStatus } from '@/types/booking'
+import { useNotification } from '@/providers/NotificationProvider'
 
 export function useTicketMutations() {
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient()
+  const { showSuccess, showError } = useNotification()
   // Cập nhật trạng thái
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: BookingStatus }) => 
+    mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
       updateBookingStatus(id, status),
     onSuccess: () => {
-      toast.success("Cập nhật trạng thái vé thành công!");
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      showSuccess('Tạo thành công!')
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
     },
-    onError: (error: any) => toast.error("Cập nhật thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   // Xóa vé
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteBooking(id),
     onSuccess: () => {
-      toast.success("Xóa vé thành công!");
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      showSuccess('Xoá thành công!')
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] })
     },
-    onError: (error: any) => toast.error("Xóa thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
-  return { updateStatusMutation, deleteMutation };
+  return { updateStatusMutation, deleteMutation }
 }

@@ -9,10 +9,13 @@ import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import axios from 'axios'; // Dùng axios thường để gọi Google API
 import { GoogleLoginRequest } from '@/types/auth';
+import { useNotification } from '@/providers/NotificationProvider'
 
 export const useGoogleAuth = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+    const { showSuccess, showError } = useNotification()
+  
   const setUser = useUserStore((state) => state.setUser);
 
   // 1. Mutation gọi API Backend (Bước cuối)
@@ -69,15 +72,16 @@ export const useGoogleAuth = () => {
 
         // Gửi về Backend
         loginWithBackend(payload);
+        showSuccess('Đăng nhập thành công', 'Chào mừng bạn quay trở lại!')
 
       } catch (error) {
         console.error('Error fetching Google user info:', error);
-        toast.error('Không thể lấy thông tin từ Google');
+      showError('Lỗi đăng nhập', "")
       }
     },
     onError: (error) => {
       console.error('Google Login Failed:', error);
-      toast.error('Kết nối Google thất bại');
+      showError('Lỗi đăng nhập', "")
     }
     // Lưu ý: KHÔNG dùng flow: 'auth-code' nữa, mặc định là 'implicit' để lấy access_token
   });

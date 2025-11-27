@@ -1,7 +1,7 @@
-import { BookingListResponse, BookingStatus } from "@/types/booking";
+import { BookingListResponse, BookingStatus, Booking } from "@/types/booking";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
-
+import { ApiResponse } from "@/types/apiTemplate";
 import { CreateBookingRequest, CreateBookingResponse } from '@/types/booking';
 export interface GetBookingParams {
   page?: string;      // movieId
@@ -126,5 +126,22 @@ export function useAdminBookings(params: GetAdminBookingsParams) {
     queryFn: () => getAdminBookings(params),
     staleTime: 1000 * 60 * 2, // 2 phút
     placeholderData: (previousData) => previousData,
+  });
+}
+export async function getBookingDetail(id: string) {
+  try {
+    const res = await api.get<ApiResponse<Booking>>(`/bookings/${id}`);
+    return res.data.data;
+  } catch (error) {
+    console.error("Failed to fetch booking detail", error);
+    return null;
+  }
+}
+
+export function useBookingDetail(id: string) {
+  return useQuery({
+    queryKey: ["booking-detail", id],
+    queryFn: () => getBookingDetail(id),
+    enabled: !!id, // Chỉ gọi khi có ID
   });
 }

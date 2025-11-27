@@ -1,6 +1,6 @@
+'use client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-
 interface ChartProps {
   title: string;
   description: string;
@@ -8,6 +8,7 @@ interface ChartProps {
 }
 
 export function HorizontalChart({ title, description, data }: ChartProps) {
+
   const maxValue = Math.max(...data.map(d => d.value));
 
   return (
@@ -33,6 +34,7 @@ export function HorizontalChart({ title, description, data }: ChartProps) {
                 whileInView={{ width: `${(item.value / maxValue) * 100}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
                 className={`h-full ${item.color} rounded-r-md flex items-center justify-end pr-3`}
+                suppressHydrationWarning
               >
                 {/* Chỉ hiện số nếu thanh đủ dài */}
                 {(item.value / maxValue) > 0.15 && (

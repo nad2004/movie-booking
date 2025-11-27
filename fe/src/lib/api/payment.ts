@@ -1,6 +1,7 @@
 import { api } from '@/lib/api/axios';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useNotification } from '@/providers/NotificationProvider'
 
 // Type Response
 export interface PaymentResponse {
@@ -16,10 +17,12 @@ export const createPaymentUrlApi = async (bookingId: string): Promise<PaymentRes
 
 // Hook
 export const useCreatePaymentUrl = () => {
+  const { showSuccess, showError } = useNotification()
+
   return useMutation({
     mutationFn: (bookingId: string) => createPaymentUrlApi(bookingId),
     onError: (error: any) => {
-      toast.error("Không thể tạo link thanh toán. Vui lòng thử lại.");
+      showError('Không thể tạo link thanh toán', 'Vui lòng thử lại!')
     }
   });
 };

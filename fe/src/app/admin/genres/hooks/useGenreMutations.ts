@@ -1,39 +1,45 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createGenre, updateGenre, deleteGenre, GenreCreateDTO, GenreUpdateDTO } from "@/lib/api/genres";
-import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  createGenre,
+  updateGenre,
+  deleteGenre,
+  GenreCreateDTO,
+  GenreUpdateDTO,
+} from '@/lib/api/genres'
+import { useNotification } from '@/providers/NotificationProvider'
 
 export function useGenreMutations() {
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient()
+  const { showSuccess, showError } = useNotification()
   // Thêm mới
   const createMutation = useMutation({
     mutationFn: (data: GenreCreateDTO) => createGenre(data),
     onSuccess: () => {
-      toast.success("Thêm thể loại thành công!");
-      queryClient.invalidateQueries({ queryKey: ["genres"] });
+      showSuccess('Tạo thành công!')
+      queryClient.invalidateQueries({ queryKey: ['genres'] })
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Thêm thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   // Cập nhật
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: GenreUpdateDTO }) => updateGenre(id, data),
     onSuccess: () => {
-      toast.success("Cập nhật thành công!");
-      queryClient.invalidateQueries({ queryKey: ["genres"] });
+      showSuccess('Cập nhập thành công!')
+      queryClient.invalidateQueries({ queryKey: ['genres'] })
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Cập nhật thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   // Xóa
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteGenre(id),
     onSuccess: () => {
-      toast.success("Xóa thể loại thành công!");
-      queryClient.invalidateQueries({ queryKey: ["genres"] });
+      showSuccess('Xoá thành công!')
+      queryClient.invalidateQueries({ queryKey: ['genres'] })
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Xóa thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
-  return { createMutation, updateMutation, deleteMutation };
+  return { createMutation, updateMutation, deleteMutation }
 }

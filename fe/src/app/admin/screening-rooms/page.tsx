@@ -161,14 +161,14 @@ export default function ScreeningRoomPage() {
       />
 
       <AlertDialog open={!!deleteInfo} onOpenChange={() => setDeleteInfo(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-gray-50 text-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa phòng?</AlertDialogTitle>
             <AlertDialogDescription>Hành động này không thể hoàn tác.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600">Xóa</AlertDialogAction>
+            <AlertDialogCancel className="hover:bg-gray-300! hover:text-gray-800!">Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}  className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

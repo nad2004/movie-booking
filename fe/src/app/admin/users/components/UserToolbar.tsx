@@ -36,7 +36,7 @@ export function UserToolbar({ search, onSearchChange, currentTab, onTabChange }:
       {/* Search Bar */}
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5  " />
           <Input
             placeholder="Tìm kiếm theo tên, email, số điện thoại..."
             className="pl-10 bg-gray-50 border-gray-200 rounded-xl"

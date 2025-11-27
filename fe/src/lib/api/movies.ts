@@ -1,31 +1,8 @@
 "use client"
-import { Movie, MovieListResponse, MovieDetailResponse} from '@/types/movie'
+import { Movie, MovieListResponse, MovieDetailResponse, MovieCreateDTO, MovieUpdateDTO} from '@/types/movie'
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
-export interface MovieCreateDTO {
-  title: string;
-  director?: string;
-  actors?: string[];
-  duration: number;
-  description?: string;
-  posterUrl?: string;
-  trailerUrl?: string;
-  rating: "P" | "C13" | "C16" | "C18";
-  releaseDate: string | Date;
-  status?: "Sắp chiếu" | "Đang chiếu" | "Ngừng chiếu";
-  genres: string[];
-  language?: string;
-  subtitles?: string[];
-  country?: string;
-  ageRestriction?: number;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string[];
-}
 
-export interface MovieUpdateDTO extends Partial<MovieCreateDTO> {
-  isDeleted?: boolean;
-}
 // Cập nhật interface dựa trên hình ảnh Swagger
 export interface GetMoviesParams {
   page?: number

@@ -1,4 +1,4 @@
-'use client' // 1. Bắt buộc phải có dòng này vì dùng hook usePathname
+'use client'
 
 import {
   LayoutDashboard,
@@ -12,26 +12,29 @@ import {
   Calendar,
   Ticket,
   Settings,
+  Clock,
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation' // 2. Import hook lấy đường dẫn
-
+import { usePathname } from 'next/navigation'
+ 
 export function Sidebar() {
-  const pathname = usePathname() // 3. Lấy đường dẫn hiện tại
-
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Tổng Quan', path: '/admin' }, // Thêm prefix /admin nếu cần
+  const pathname = usePathname()
+ const menuItems = [
+    { icon: LayoutDashboard, label: 'Tổng Quan', path: '/admin' },
     { icon: BarChart3, label: 'Báo Cáo Thống Kê', path: '/admin/reports' },
     { icon: Film, label: 'Quản Lý Phim', path: '/admin/movies' },
     { icon: Users, label: 'Quản Lý Người Dùng', path: '/admin/users' },
     { icon: MapPin, label: 'Quản Lý Rạp', path: '/admin/theaters' },
     { icon: Armchair, label: 'Quản Lý Phòng Chiếu', path: '/admin/screening-rooms' },
-    { icon: Calendar, label: 'Quản Lý Lịch Chiếu', path: '/admin/schedules' },
+    { icon: Calendar, label: 'Quản Lý Lịch Chiếu', path: '/admin/schedules' }, 
+    { icon: Clock, label: 'Quản Lý Ca Làm Việc', path: '/admin/shift' }, 
     { icon: Ticket, label: 'Quản Lý Vé', path: '/admin/tickets' },
     { icon: Tag, label: 'Quản Lý Thể Loại', path: '/admin/genres' },
     { icon: Star, label: 'Danh Sách Đánh Giá', path: '/admin/reviews' },
     { icon: Settings, label: 'Cấu Hình Hệ Thống', path: '/admin/settings' },
   ]
+  // Danh sách menu: Đảm bảo 'path' là duy nhất cho mỗi mục
+
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-50">
@@ -52,17 +55,15 @@ export function Sidebar() {
         <ul className="space-y-1">
           {menuItems.map(item => {
             const Icon = item.icon
-
-            // 4. Logic check active chuẩn xác hơn
-            // Nếu path là root '/admin' thì so sánh bằng tuyệt đối
-            // Các path con thì dùng startsWith để active cả khi vào trang chi tiết
             const isActive =
-              item.path === '/admin' ? pathname === item.path : pathname.startsWith(item.path)
+              item.path === '/admin' ? pathname === '/admin' : pathname?.startsWith(item.path)
 
             return (
+              // Key phải là duy nhất trong mảng map
               <li key={item.path}>
                 <Link
                   href={item.path}
+                  suppressHydrationWarning
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
                     isActive
                       ? 'bg-[#6C63FF] text-white shadow-md shadow-[#6c63ff]/20'
@@ -70,7 +71,9 @@ export function Sidebar() {
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
-                  <span className="text-sm">{item.label}</span>
+                  <span suppressHydrationWarning className="text-sm">
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             )

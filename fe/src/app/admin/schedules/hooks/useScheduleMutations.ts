@@ -1,36 +1,43 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createSchedule, updateSchedule, deleteSchedule, ScheduleCreateDTO, ScheduleUpdateDTO } from "@/lib/api/schedules";
-import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  ScheduleCreateDTO,
+  ScheduleUpdateDTO,
+} from '@/lib/api/schedules'
+import { toast } from 'sonner'
+import { useNotification } from '@/providers/NotificationProvider'
 
 export function useScheduleMutations() {
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient()
+  const { showSuccess, showError } = useNotification()
   const createMutation = useMutation({
     mutationFn: (data: ScheduleCreateDTO) => createSchedule(data),
     onSuccess: () => {
-      toast.success("Tạo lịch chiếu thành công!");
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+      showSuccess('Tạo thành công!')
+      queryClient.invalidateQueries({ queryKey: ['schedules'] })
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Tạo thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ScheduleUpdateDTO }) => updateSchedule(id, data),
     onSuccess: () => {
-      toast.success("Cập nhật lịch chiếu thành công!");
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+      showSuccess('Cập nhập thành công!')
+      queryClient.invalidateQueries({ queryKey: ['schedules'] })
     },
-    onError: (error: any) => toast.error("Cập nhật thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteSchedule(id),
     onSuccess: () => {
-      toast.success("Xóa lịch chiếu thành công!");
-      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+      showSuccess('Xoá thành công!')
+      queryClient.invalidateQueries({ queryKey: ['schedules'] })
     },
-    onError: (error: any) => toast.error("Xóa thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
-  return { createMutation, updateMutation, deleteMutation };
+  return { createMutation, updateMutation, deleteMutation }
 }

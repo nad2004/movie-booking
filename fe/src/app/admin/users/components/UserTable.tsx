@@ -20,8 +20,8 @@ export function UserTable({ users, isLoading, onViewDetail, onEditRole, onDelete
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50/50">
-          <TableRow>
+        <TableHeader className="bg-gray-50/50 ">
+          <TableRow className='hover:bg-gray-100/50!'>
             <TableHead>Người Dùng</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>SĐT</TableHead>
@@ -32,7 +32,7 @@ export function UserTable({ users, isLoading, onViewDetail, onEditRole, onDelete
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user._id} className="hover:bg-gray-50/50 ">
+            <TableRow key={user._id} className="hover:bg-gray-100/50!">
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="w-9 h-9 border border-gray-100">

@@ -1,5 +1,5 @@
 import GoogleAuthProvider from './components/GoogleAuthProvider'
-
+import { NotificationProvider } from '@/providers/NotificationProvider';
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import NextTopLoader from 'nextjs-toploader'
@@ -33,7 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             zIndex={9999} // 2. Set z-index thật cao để đè lên Header
           />
           <div className={`${poppins.variable}`}>
+            <NotificationProvider>
             <ClientProvider>{children}</ClientProvider>
+            </NotificationProvider>
           </div>
         </body>
       </GoogleAuthProvider>
