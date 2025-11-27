@@ -564,6 +564,13 @@ router.post(
   theaterController.addRoom
 );
 router.put(
+  "/admin/theaters/:theaterId/rooms/:roomId/seats",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  theaterController.updateMultipleSeats
+);
+
+router.put(
   "/admin/theaters/:theaterId/rooms/:roomId",
   authenticateToken,
   authorize("admin", "super-admin"),

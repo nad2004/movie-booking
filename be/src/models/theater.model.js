@@ -61,14 +61,22 @@ const roomSchema = new Schema({
   },
   seatMap: {
     type: [seatSchema],
-    required: true,
+    required: [true, "Sơ đồ ghế là bắt buộc"],
     validate: {
       validator: function (seatMap) {
+        // Không phải array => fail luôn
+        if (!Array.isArray(seatMap)) return false;
+
+        // Nếu vì lý do gì đó totalSeats chưa có, bỏ qua validate để không crash
+        if (typeof this.totalSeats !== "number") return true;
+
+        // Check chính
         return seatMap.length === this.totalSeats;
       },
       message: "Số ghế trong seatMap phải khớp với totalSeats",
     },
   },
+
   screenType: {
     type: String,
     enum: ["Standard", "IMAX", "Dolby Atmos"],

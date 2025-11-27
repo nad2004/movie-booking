@@ -105,7 +105,7 @@ const theaterController = {
 
       const [theaters, total] = await Promise.all([
         Theater.find(query)
-        
+
           .sort(sort)
           .skip(skip)
           .limit(limitNumber)
@@ -152,6 +152,7 @@ const theaterController = {
 
       const theaters = await Theater.find({
         city: { $regex: city, $options: "i" },
+        isActive: true,
       })
         .select("-rooms.seatMap")
         .sort({ name: 1 })
@@ -215,7 +216,19 @@ const theaterController = {
   updateTheater: async (req, res) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      const updateData = { ...req.body };
+
+      if (updateData.location && updateData.location.coordinates) {
+        if (typeof updateData.location.coordinates === "object" && !Array.isArray(updateData.location.coordinates)) {
+          updateData.location.coordinates = Object.values(updateData.location.coordinates);
+        }
+      }
+
+      // Không cho update rooms qua endpoint này
+      if (updateData.rooms) {
+        delete updateData.rooms;
+      }
+
       updateData.updatedBy = req.userId;
 
       const updatedTheater = await Theater.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
@@ -327,7 +340,13 @@ const theaterController = {
       }
 
       // Update room fields
-      Object.assign(room, updateData);
+      // Object.assign(room, updateData);
+      Object.keys(updateData).forEach((key) => {
+        if (updateData[key] !== undefined) {
+          room[key] = updateData[key];
+        }
+      });
+
       theater.updatedBy = req.userId;
       await theater.save();
 
@@ -358,6 +377,57 @@ const theaterController = {
     } catch (error) {
       console.error("Delete room error:", error);
       return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // Cập nhật nhiều ghế cùng lúc
+  updateMultipleSeats: async (req, res) => {
+    try {
+      console.log("BODY:", req.body);
+
+      let { seats, seatMap } = req.body;
+
+      // Convert object {0:{},1:{}} -> array
+      if (seats && !Array.isArray(seats)) {
+        seats = Object.values(seats);
+      }
+
+      if (seatMap && !Array.isArray(seatMap)) {
+        seatMap = Object.values(seatMap);
+      }
+
+      const list = seats || seatMap;
+
+      if (!Array.isArray(list) || list.length === 0) {
+        return errorResponse(res, "Danh sách ghế không hợp lệ", 400);
+      }
+
+      const { theaterId, roomId } = req.params;
+
+      const theater = await Theater.findById(theaterId);
+      if (!theater) return errorResponse(res, "Không tìm thấy rạp", 404);
+
+      const room = theater.rooms.id(roomId);
+      if (!room) return errorResponse(res, "Không tìm thấy phòng chiếu", 404);
+
+      list.forEach((s) => {
+        const seat = room.seatMap.find((item) => item.seatNumber === s.seatNumber);
+        if (!seat) return;
+
+        Object.keys(s).forEach((key) => {
+          if (key !== "seatNumber" && s[key] !== undefined) {
+            seat[key] = s[key];
+          }
+        });
+      });
+
+      theater.updatedBy = req.userId;
+      await theater.save();
+
+      return successResponse(res, list, "Cập nhật nhiều ghế thành công");
+    } catch (error) {
+      console.error("Update multiple seats error:", error);
+      return errorResponse(res, error.message || "Lỗi server", 500);
     }
   },
 };
