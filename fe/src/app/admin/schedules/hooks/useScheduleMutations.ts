@@ -6,7 +6,6 @@ import {
   ScheduleCreateDTO,
   ScheduleUpdateDTO,
 } from '@/lib/api/schedules'
-import { toast } from 'sonner'
 import { useNotification } from '@/providers/NotificationProvider'
 
 export function useScheduleMutations() {

@@ -63,7 +63,7 @@ export default function ScheduleManagementPage() {
         </div>
 
         {/* Stats */}
-        <ScheduleStats />
+        {/* <ScheduleStats /> */}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

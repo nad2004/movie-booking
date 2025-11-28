@@ -1,61 +1,102 @@
-import { ReviewListResponse } from '@/types/review';
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api/axios";
+import { ReviewListResponse } from '@/types/review'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api/axios'
+import { useNotification } from '@/providers/NotificationProvider'
 
 // --- Params ---
 export interface GetReviewsParams {
-  page?: number;
-  limit?: number;
-  search?: string; // Tìm theo tên phim hoặc tên user
-  rating?: number; // 1-5
-  status?: "Chờ duyệt" | "Đã duyệt" | "Bị từ chối";
+  page?: number
+  limit?: number
+  search?: string // Tìm theo tên phim hoặc tên user
+  rating?: number // 1-5
+  status?: 'Chờ duyệt' | 'Đã duyệt' | 'Bị từ chối'
 }
-
+export interface CreateReviewDTO {
+  movie: string | undefined
+  rating: number
+  comment: string
+}
 export interface RejectReviewDTO {
-  reason: string;
+  reason: string
 }
 
-
+export async function getMovieReviews(movieId: string) {
+  try {
+    const res = await api.get<ReviewListResponse>(`/reviews/movie/${movieId}`)
+    return res.data.data
+  } catch (error) {
+    console.error('Fetch reviews failed', error)
+    return {
+      reviews: [],
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 },
+      statistics: { avgRating: 0, totalReviews: 0 },
+    }
+  }
+}
 // 1. Get List
 export async function getReviews(params: GetReviewsParams = {}) {
   try {
-    const res = await api.get<ReviewListResponse>("/admin/reviews", { params });
-    return res.data.data;
+    const res = await api.get<ReviewListResponse>('/admin/reviews', { params })
+    return res.data.data
   } catch (error) {
-    console.error("Fetch reviews failed", error);
-    return { 
-        reviews: [], 
-        pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 },
-        statistics: { avgRating: 0, totalReviews: 0 }
-    };
+    console.error('Fetch reviews failed', error)
+    return {
+      reviews: [],
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 },
+      statistics: { avgRating: 0, totalReviews: 0 },
+    }
   }
 }
-
+export async function createReview(data: CreateReviewDTO) {
+  const res = await api.post(`/reviews`, data)
+  return res.data
+}
 // 2. Approve Review
 export async function approveReview(id: string) {
-  const res = await api.put(`/admin/reviews/${id}/approve`);
-  return res.data;
+  const res = await api.put(`/admin/reviews/${id}/approve`)
+  return res.data
 }
 
 // 3. Reject Review (Có lý do)
 export async function rejectReview(id: string, data: RejectReviewDTO) {
-  const res = await api.put(`/admin/reviews/${id}/reject`, data);
-  return res.data;
+  const res = await api.put(`/admin/reviews/${id}/reject`, data)
+  return res.data
 }
 
 // 4. Delete Review
 export async function deleteReview(id: string) {
-  const res = await api.delete(`/admin/reviews/${id}`);
-  return res.data;
+  const res = await api.delete(`/admin/reviews/${id}`)
+  return res.data
 }
 
 // --- Hooks ---
 
 export function useReviews(params: GetReviewsParams) {
   return useQuery({
-    queryKey: ["reviews", params],
+    queryKey: ['reviews', params],
     queryFn: () => getReviews(params),
     staleTime: 1000 * 60 * 5, // 5 phút
-    placeholderData: (previousData) => previousData,
-  });
+    placeholderData: previousData => previousData,
+  })
+}
+export function useMovieReviews(movieId: string) {
+  return useQuery({
+    queryKey: ['reviews', movieId],
+    queryFn: () => getMovieReviews(movieId),
+    staleTime: 1000 * 60 * 5, // 5 phút
+    placeholderData: previousData => previousData,
+  })
+}
+export function useCreateReview() {
+  const { showSuccess, showError } = useNotification()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CreateReviewDTO) => createReview(data),
+    onSuccess: () => {
+      showSuccess('Đã gửi yêu cầu đánh gái')
+      queryClient.invalidateQueries({ queryKey: ['reviews'] })
+    },
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
+   
 }

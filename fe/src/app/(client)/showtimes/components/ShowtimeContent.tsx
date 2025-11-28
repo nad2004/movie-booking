@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { Card } from '@/components/ui/card'
-import { Clock, Loader2, MapPin, CalendarDays } from 'lucide-react'
+import { Clock, Loader2, MapPin } from 'lucide-react'
 import DateSelector from './DateSelector'
 import SelectedCinemaHeader from './SelectedCinemaHeader'
 import MovieShowtimeCard from './MovieShowtimeCard'
@@ -12,14 +12,17 @@ import type { Movie } from '@/types/movie'
 
 type ShowtimeContentProps = {
   selectedDate: string | undefined
-  onSelectDate: (date: string) => void
+  onSelectDate: (date: string | undefined) => void
   selectedCinema: Theater | null
   schedules: Schedule[]
   checkCinema: boolean
   isLoading?: boolean
 }
 
-type GroupedMovie = {
+// Định nghĩa lại kiểu dữ liệu cho nhóm để bao gồm cả thông tin ngày
+type GroupedMovieSchedule = {
+  uniqueKey: string;
+  date: string; // Ngày chiếu (YYYY-MM-DD)
   movie: Movie;
   schedules: Schedule[];
 }
@@ -33,32 +36,50 @@ export default function ShowtimeContent({
   isLoading = false,
 }: ShowtimeContentProps) {
 
-  const filteredSchedules = useMemo(() => {
-    if (!selectedDate) return [];
-    return schedules.filter(s => s.showDate.startsWith(selectedDate)); 
-  }, [schedules, selectedDate]);
+  // Logic gom nhóm: Mỗi Card đại diện cho 1 Phim vào 1 Ngày cụ thể
+  const groupedData = useMemo(() => {
+    // 1. Lọc theo ngày (nếu người dùng có chọn ngày trên DateSelector)
+    let filtered = schedules;
+    if (selectedDate) {
+      filtered = schedules.filter(s => s.showDate.startsWith(selectedDate));
+    }
 
-  // 2. Gom nhóm theo phim
-  const groupedMovies = useMemo(() => {
-    const groups: Record<string, GroupedMovie> = {};
+    // 2. Gom nhóm theo: MOVIE_ID + DATE
+    const groups: Record<string, GroupedMovieSchedule> = {};
 
-    filteredSchedules.forEach(schedule => {
+    filtered.forEach(schedule => {
+      // Lấy phần ngày (bỏ giờ). Giả sử showDate là ISO string "2024-11-28T10:00..."
+      const dateKey = schedule.showDate.split('T')[0]; 
       const movieId = schedule.movie._id;
-      if (!groups[movieId]) {
-        groups[movieId] = {
+      
+      // Tạo key duy nhất kết hợp giữa phim và ngày
+      const uniqueKey = `${movieId}_${dateKey}`;
+
+      if (!groups[uniqueKey]) {
+        groups[uniqueKey] = {
+          uniqueKey,
+          date: dateKey,
           movie: schedule.movie,
           schedules: []
         };
       }
-      groups[movieId].schedules.push(schedule);
+      groups[uniqueKey].schedules.push(schedule);
     });
 
-    return Object.values(groups);
-  }, [filteredSchedules]);
+    // 3. Chuyển thành mảng và Sắp xếp
+    return Object.values(groups).sort((a, b) => {
+      // Ưu tiên sắp xếp theo ngày trước (tăng dần)
+      if (a.date !== b.date) {
+        return a.date.localeCompare(b.date);
+      }
+      // Nếu cùng ngày thì sắp xếp theo tên phim
+      return a.movie.title.localeCompare(b.movie.title);
+    });
+  }, [schedules, selectedDate]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Date Selector không cần truyền dates cứng nữa */}
+      {/* Date Selector */}
       <DateSelector selectedDate={selectedDate} onSelectDate={onSelectDate} />
 
       <Card className="bg-accent/10 border-accent/30 p-3 sm:p-4 rounded-2xl">
@@ -84,19 +105,6 @@ export default function ShowtimeContent({
           </div>
         </div>
       ) : 
-      /* 2. Đã chọn Rạp nhưng Chưa chọn Ngày */
-      (!selectedDate) ? (
-        <div className="text-center py-16 bg-surface border border-border rounded-2xl flex flex-col items-center justify-center gap-4 animate-in fade-in zoom-in duration-300">
-           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-             <CalendarDays className="w-8 h-8 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-text-primary">Vui lòng chọn ngày chiếu</h3>
-            <p className="text-text-secondary">Chọn một ngày ở trên để xem các suất chiếu có sẵn.</p>
-          </div>
-        </div>
-      ) :
-      /* 3. Đã chọn đủ -> Hiển thị list */
       (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-4">
           <SelectedCinemaHeader
@@ -108,14 +116,22 @@ export default function ShowtimeContent({
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          ) : groupedMovies.length > 0 ? (
+          ) : groupedData.length > 0 ? (
             <div className="space-y-4">
-              {groupedMovies.map(({ movie, schedules }) => (
-                <MovieShowtimeCard 
-                  key={movie._id} 
-                  movie={movie} 
-                  schedules={schedules} 
-                />
+              {groupedData.map(({ uniqueKey, movie, schedules, date }) => (
+                <div key={uniqueKey} className="flex flex-col gap-2">
+                  {/* Tùy chọn: Nếu không chọn ngày cụ thể, có thể hiển thị thêm Header ngày ở đây để phân biệt */}
+                  {!selectedDate && (
+                    <span className="text-sm font-bold text-text-secondary ml-1 ">
+                      Ngày: {new Date(date).toLocaleDateString('vi-VN')}
+                    </span>
+                  )}
+                  
+                  <MovieShowtimeCard 
+                    movie={movie} 
+                    schedules={schedules} 
+                  />
+                </div>
               ))}
             </div>
           ) : (

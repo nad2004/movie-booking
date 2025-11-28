@@ -58,7 +58,7 @@ export default function ScreeningRoomPage() {
     });
   }, [allRooms, search, selectedTheater]);
 
-  const { deleteMutation, updateMutation } = useRoomMutations();
+  const { deleteMutation, updateMutation, updateSeatMutation } = useRoomMutations();
 
   // Handlers
   const handleAdd = () => {
@@ -84,22 +84,18 @@ export default function ScreeningRoomPage() {
   const handleSaveSeatMap = (updatedSeats: Seat[]) => {
     if (!viewingRoom) return;
 
-    // Chỉ gửi seatMap để update
-    const payload = {
-        seatMap: updatedSeats
-    };
-
-    updateMutation.mutate(
+    updateSeatMutation.mutate(
         { 
           theaterId: viewingRoom.theater._id, 
           roomId: viewingRoom._id, 
-          data: payload 
+          data: {
+            seats: updatedSeats
+          } 
         },
         { 
           onSuccess: () => {
              toast.success("Cập nhật sơ đồ ghế thành công!");
-             // Có thể đóng map hoặc giữ nguyên, ở đây ta giữ nguyên để user thấy kết quả
-             // Cần update lại viewingRoom để state local đồng bộ nếu muốn edit tiếp
+
              setViewingRoom({ ...viewingRoom, seatMap: updatedSeats });
           },
           onError: () => {
