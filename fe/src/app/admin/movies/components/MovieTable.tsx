@@ -24,8 +24,8 @@ export function MovieTable({ movies, isLoading, onEdit, onDelete }: MovieTablePr
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50/50">
-          <TableRow>
+        <TableHeader className="bg-gray-50/50 ">
+          <TableRow className='hover:bg-gray-100/50!'>
             <TableHead className="w-[80px]">Poster</TableHead>
             <TableHead>Thông tin phim</TableHead>
             <TableHead>Thể loại</TableHead>

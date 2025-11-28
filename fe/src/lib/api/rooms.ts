@@ -33,7 +33,10 @@ export async function updateRoom(theaterId: string, roomId: string, data: RoomUp
   const res = await api.put(`/admin/theaters/${theaterId}/rooms/${roomId}`, data);
   return res.data;
 }
-
+export async function updateSeat(theaterId: string, roomId: string, data: Seat[]) {
+  const res = await api.put(`/admin/theaters/${theaterId}/rooms/${roomId}/seats`, data);
+  return res.data;
+}
 // DELETE: DELETE /admin/theaters/{theaterId}/rooms/{roomId}
 export async function deleteRoom(theaterId: string, roomId: string) {
   const res = await api.delete(`/admin/theaters/${theaterId}/rooms/${roomId}`);

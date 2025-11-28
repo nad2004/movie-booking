@@ -104,7 +104,7 @@ export function AdminSeatMap({ room, onClose, onSave, isSaving }: AdminSeatMapPr
     <Card className="mt-4 border-2 border-blue-50/50 shadow-lg animate-in fade-in slide-in-from-top-2 bg-gray-50">
       <CardHeader className="flex flex-row items-center justify-between pb-4 border-b bg-gray-50/50">
         <div>
-          <CardTitle className="text-lg text-blue-950 flex items-center gap-2">
+          <CardTitle className="text-lg text-blue-950 flex items-center gap-2 ">
             <MousePointer2 className="w-5 h-5" />
             Thiết lập sơ đồ ghế: {room.roomName}
           </CardTitle>
@@ -113,7 +113,7 @@ export function AdminSeatMap({ room, onClose, onSave, isSaving }: AdminSeatMapPr
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 bg-gray-50 text-gray-900">
           <div className="text-sm font-medium mr-2">
             Đang chọn:{' '}
             <Badge variant="secondary" className="ml-1">
@@ -121,7 +121,7 @@ export function AdminSeatMap({ room, onClose, onSave, isSaving }: AdminSeatMapPr
             </Badge>{' '}
             ghế
           </div>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button className='bg-gray-50 text-gray-900 hover:bg-gray-300!' size="sm" onClick={onClose}>
             <X className="w-4 h-4 mr-2" /> Đóng
           </Button>
           <Button

@@ -143,10 +143,10 @@ export function MovieFormDialog({ open, onOpenChange, movieToEdit }: MovieFormDi
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} variant='default'>
               {isLoading ? "Đang lưu..." : isEditMode ? "Cập nhật" : "Thêm mới"}
             </Button>
           </div>
