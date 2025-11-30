@@ -2,7 +2,7 @@ import type { ApiResponse } from './apiTemplate';
 import type { Pagination } from './apiTemplate';
 import type { Schedule } from './schedule';
 import type { User } from './user';
-
+import type { Seat } from './theater';
 export type BookingStatus = "Chờ thanh toán" | "Hoàn tất" | "Đã hủy" | "Đã sử dụng" | "Hết hạn";
 // === Payment Details ===
 export interface PaymentDetails {
@@ -24,11 +24,7 @@ export interface OrderedProduct {
 }
 
 // === Booked Seat ===
-export interface BookedSeat {
-  seatNumber: string;
-  seatType: "Thường" | "VIP" | "Ghế đôi";
-  price: number;
-}
+export type BookedSeat = Seat;
 
 // === Main Booking Interface ===
 export interface Booking {

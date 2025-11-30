@@ -7,10 +7,11 @@ import { useUserStore } from '@/store/userStore'
 import { LoginRequest, LoginResponse } from '@/types/auth'
 import { toast } from 'sonner'
 import Cookies from 'js-cookie'
-
+import { useNotification } from '@/providers/NotificationProvider'
 export const useLogin = () => {
   const router = useRouter()
   const searchParams = useSearchParams() // Lấy params để check callbackUrl
+  const { showSuccess, showError } = useNotification()
   const setUser = useUserStore(state => state.setUser)
 
   return useMutation({
@@ -55,10 +56,12 @@ export const useLogin = () => {
           router.push('/')
           break
       }
+      showSuccess('Đăng nhập thành công', 'Chào mừng bạn quay trở lại!')
     },
 
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Đăng nhập thất bại'
+      showError('Lỗi đăng nhập', message)
       toast.error(message)
     },
   })

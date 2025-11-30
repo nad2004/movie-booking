@@ -1,16 +1,16 @@
-import type { Schedule } from '@/types/schedule'
+import type { Schedule, SeatAvailability } from '@/types/schedule'
 import type { BookedSeat } from '@/types/booking'
+import type { Seat } from '@/types/theater'
 import { useMemo } from 'react'
-import { SeatAvailability } from '@/types/schedule'
-interface StepSeatSelectionProps {
+
+interface SeatMapsProps {
   selectedSeats: BookedSeat[]
   schedule: Schedule | null
-  onSeatClick: (seatNumber: string, price: number, type: 'Thường' | 'VIP' | 'Ghế đôi') => void
+  onSeatClick: (seat: Seat) => void
 }
-export function SeatMaps({selectedSeats, schedule, onSeatClick}: StepSeatSelectionProps) {
-     // 1. Xử lý dữ liệu: Gom nhóm ghế theo Hàng (Row)
-  // Input: [ {seatNumber: "A1"}, {seatNumber: "A2"}, {seatNumber: "B1"} ... ]
-  // Output: { "A": [seat1, seat2], "B": [seat3] ... }
+
+export function SeatMaps({ selectedSeats, schedule, onSeatClick }: SeatMapsProps) {
+  // 1. Xử lý dữ liệu: Gom nhóm ghế theo Hàng (Row)
   const rows = useMemo(() => {
     if (!schedule?.seatAvailability) return []
 
@@ -38,7 +38,7 @@ export function SeatMaps({selectedSeats, schedule, onSeatClick}: StepSeatSelecti
       }))
   }, [schedule])
 
-  // 2. Hàm lấy giá vé dựa trên loại ghế
+  // 2. Hàm lấy giá vé (chỉ để hiển thị tooltip, logic tính tiền chính nằm ở useBooking)
   const getSeatPrice = (seatType: string) => {
     if (!schedule?.ticketPrices) return 0
     switch (seatType) {
@@ -54,46 +54,35 @@ export function SeatMaps({selectedSeats, schedule, onSeatClick}: StepSeatSelecti
 
   // 3. Xác định trạng thái hiển thị của ghế
   const getSeatStatus = (seat: SeatAvailability) => {
-    // Nếu ghế đã bị đặt từ server
     if (seat.isBooked) return 'booked'
-
-    // Nếu ghế đang được chọn bởi người dùng hiện tại
     if (selectedSeats.some(s => s.seatNumber === seat.seatNumber)) return 'selected'
-
-    // Trả về loại ghế để style màu sắc
     return seat.seatType === 'VIP' ? 'vip' : seat.seatType === 'Ghế đôi' ? 'couple' : 'standard'
   }
-  return  (
+
+  return (
     <>
-    <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm overflow-x-auto">
+      <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm overflow-x-auto">
         <div className="flex flex-col items-center min-w-max gap-3">
           {rows.map(({ rowLabel, seats }) => (
             <div key={rowLabel} className="flex items-center gap-2 sm:gap-4">
-              {/* Tên hàng (A, B, C...) */}
+              {/* Tên hàng */}
               <span className="w-6 text-text-secondary text-center font-bold text-sm">
                 {rowLabel}
               </span>
 
-              {/* Danh sách ghế trong hàng */}
+              {/* Danh sách ghế */}
               <div className="flex items-center gap-2">
                 {seats.map(seat => {
                   const status = getSeatStatus(seat)
                   const price = getSeatPrice(seat.seatType)
-
-                  // Xử lý riêng cho ghế đôi (thường to gấp đôi)
                   const isCouple = seat.seatType === 'Ghế đôi'
 
                   return (
                     <button
                       key={seat.seatNumber}
                       disabled={status === 'booked'}
-                      onClick={() =>
-                        onSeatClick(
-                          seat.seatNumber,
-                          price,
-                          seat.seatType as 'Thường' | 'VIP' | 'Ghế đôi'
-                        )
-                      }
+                      // Ép kiểu SeatAvailability -> Seat (giả định SeatAvailability có đủ trường cần thiết hoặc tương thích)
+                      onClick={() => onSeatClick(seat as unknown as Seat)}
                       className={`
                         relative group transition-all duration-200 flex items-center justify-center border
                         ${isCouple ? 'w-20 sm:w-24 h-8 sm:h-10 rounded-xl' : 'w-8 h-8 sm:w-10 sm:h-10 rounded-lg'}
@@ -112,15 +101,14 @@ export function SeatMaps({selectedSeats, schedule, onSeatClick}: StepSeatSelecti
                       `}
                     >
                       <span className="text-[10px] sm:text-xs font-medium">
-                        {seat.seatNumber.slice(1)} {/* Chỉ hiện số, bỏ chữ cái đầu */}
+                        {seat.seatNumber.slice(1)}
                       </span>
 
-                      {/* Tooltip hiển thị giá và loại ghế */}
+                      {/* Tooltip */}
                       {status !== 'booked' && (
                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1.5 px-3 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-xl">
                           <div className="font-bold">{seat.seatType}</div>
                           <div>{price.toLocaleString()}đ</div>
-                          {/* Mũi tên tooltip */}
                           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                         </div>
                       )}
@@ -131,7 +119,8 @@ export function SeatMaps({selectedSeats, schedule, onSeatClick}: StepSeatSelecti
             </div>
           ))}
         </div>
-        ;{/* Chú thích (Legend) */}
+
+        {/* Legend */}
         <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mt-10 pt-6 border-t border-border">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded bg-bg-secondary border border-border"></div>
@@ -157,5 +146,4 @@ export function SeatMaps({selectedSeats, schedule, onSeatClick}: StepSeatSelecti
       </div>
     </>
   )
-  
 }

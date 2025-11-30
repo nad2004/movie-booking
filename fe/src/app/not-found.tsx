@@ -1,3 +1,4 @@
+'use client'
 import Link from "next/link";
 import { Button } from "@/components/ui/button"; // Nếu bạn dùng Shadcn UI
 import { Home, MoveLeft } from "lucide-react";

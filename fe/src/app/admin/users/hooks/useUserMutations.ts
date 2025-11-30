@@ -1,28 +1,28 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateUserRole, deleteUser, UpdateRoleDTO } from "@/lib/api/user";
-import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { updateUserRole, deleteUser, UpdateRoleDTO } from '@/lib/api/user'
+import { useNotification } from '@/providers/NotificationProvider'
 
 export function useUserMutations() {
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient()
+  const { showSuccess, showError } = useNotification()
   const updateRoleMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateRoleDTO }) => updateUserRole(id, data),
     onSuccess: () => {
-      toast.success("Cập nhật quyền thành công!");
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["user-detail"] });
+      showSuccess('Cập nhập thành công!')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['user-detail'] })
     },
-    onError: (error: any) => toast.error("Cập nhật thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteUser(id),
     onSuccess: () => {
-      toast.success("Xóa người dùng thành công!");
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      showSuccess('Xoá thành công!')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
     },
-    onError: (error: any) => toast.error("Xóa thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
-  return { updateRoleMutation, deleteMutation };
+  return { updateRoleMutation, deleteMutation }
 }

@@ -14,7 +14,7 @@ export default function LichChieuHomNay() {
   // Để mặc định là undefined (hoặc ngày hôm nay nếu bạn muốn user vào thấy luôn)
   // const [selectedDate, setSelectedDate] = useState<string | undefined>(new Date().toLocaleDateString('en-CA'))
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
-  const [manualCinema, setManualCinema] = useState<Theater | null>(null)
+  const [manualCinema, setManualCinema] = useState<Theater | undefined>(undefined)
 
   const { data: theaterData = DEFAULT_THEATER_LIST, isLoading: isLoadingTheaters } = useTheaters({
     city: selectedCity,
@@ -29,10 +29,9 @@ export default function LichChieuHomNay() {
   })
 
   const schedules = scheduleData?.schedules || []
-
   const handleSelectCity = (city: string) => {
     setSelectedCity(city)
-    setManualCinema(null)
+    setManualCinema(undefined)
   }
 
   return (

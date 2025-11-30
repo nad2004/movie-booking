@@ -42,9 +42,9 @@ export function BookingProgress({ currentStep }: BookingProgressProps) {
                 <div
                   className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-surface ${
                     isCurrent
-                      ? 'bg-primary text-white border-primary shadow-[0_0_20px_rgba(108,99,255,0.4)] scale-110'
+                      ? 'bg-primary text-text-primary border-primary shadow-[0_0_20px_rgba(108,99,255,0.4)] scale-110'
                       : isActive
-                      ? 'bg-primary text-white border-primary'
+                      ? 'bg-primary text-text-primary border-primary'
                       : 'text-text-secondary border-border'
                   }`}
                 >

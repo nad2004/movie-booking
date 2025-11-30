@@ -12,7 +12,7 @@ interface MovieToolbarProps {
 
 export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps) {
   return (
-    <div className="flex flex-col md:flex-row justify-between gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+    <div className="flex flex-col md:flex-row justify-between gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-gray-900">
       {/* Left: Search & Filters */}
       <div className="flex flex-1 flex-col md:flex-row gap-3 overflow-x-auto pb-2 md:pb-0">
         <div className="relative min-w-[250px]">
@@ -29,10 +29,10 @@ export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps
           value={params.status || "all"}
           onValueChange={(val) => setParams({ ...params, status: val === "all" ? undefined : val, page: 1 })}
         >
-          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200">
+          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200 ">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-gray-50 text-gray-900 border-gray-200">
             <SelectItem value="all">Tất cả trạng thái</SelectItem>
             <SelectItem value="Đang chiếu">Đang chiếu</SelectItem>
             <SelectItem value="Sắp chiếu">Sắp chiếu</SelectItem>
@@ -47,7 +47,7 @@ export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps
           <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200">
             <SelectValue placeholder="Sắp xếp" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-gray-50 text-gray-900 border-gray-200">
             <SelectItem value="createdAt">Mới nhất</SelectItem>
             <SelectItem value="viewCount">Lượt xem</SelectItem>
             <SelectItem value="averageRating">Đánh giá</SelectItem>

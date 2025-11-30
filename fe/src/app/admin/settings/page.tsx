@@ -12,7 +12,7 @@ import { CreditCard, Image, Bell, Palette, Shield } from 'lucide-react';
 export default function SystemSettingsPage() {
   return (
     <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+      {/* <div className="max-w-7xl mx-auto">
         <h1 className="text-gray-900 text-3xl mb-8">Cấu Hình Hệ Thống</h1>
 
         <Tabs defaultValue="payment" className="w-full">
@@ -39,7 +39,6 @@ export default function SystemSettingsPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Payment Settings */}
           <TabsContent value="payment" className="mt-6">
             <Card className="bg-white border-gray-200 p-6">
               <h3 className="text-gray-900 mb-6">Cài Đặt Thanh Toán</h3>
@@ -94,7 +93,6 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Banner & Media Settings */}
           <TabsContent value="banners" className="mt-6">
             <Card className="bg-white border-gray-200 p-6">
               <h3 className="text-gray-900 mb-6">Cài Đặt Banner & Media</h3>
@@ -142,7 +140,6 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Notification Settings */}
           <TabsContent value="notifications" className="mt-6">
             <Card className="bg-white border-gray-200 p-6">
               <h3 className="text-gray-900 mb-6">Cài Đặt Thông Báo</h3>
@@ -188,7 +185,6 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Theme Settings */}
           <TabsContent value="theme" className="mt-6">
             <Card className="bg-white border-gray-200 p-6">
               <h3 className="text-gray-900 mb-6">Cài Đặt Giao Diện</h3>
@@ -258,7 +254,6 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Security Settings */}
           <TabsContent value="security" className="mt-6">
             <Card className="bg-white border-gray-200 p-6">
               <h3 className="text-gray-900 mb-6">Cài Đặt Bảo Mật</h3>
@@ -313,7 +308,8 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </div> */}
+      Chức năng đang phát triển
     </main>
   );
 }

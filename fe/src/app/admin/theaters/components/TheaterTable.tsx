@@ -19,7 +19,7 @@ export function TheaterTable({ theaters, isLoading, onEdit, onDelete }: TheaterT
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       <Table>
         <TableHeader className="bg-gray-50/50">
-          <TableRow>
+          <TableRow >
             <TableHead>Tên Rạp</TableHead>
             <TableHead>Địa Chỉ</TableHead>
             <TableHead>Thành Phố</TableHead>
@@ -31,7 +31,7 @@ export function TheaterTable({ theaters, isLoading, onEdit, onDelete }: TheaterT
         </TableHeader>
         <TableBody>
           {theaters.map((theater) => (
-            <TableRow key={theater._id} className="hover:bg-gray-50/50">
+            <TableRow key={theater._id} className="hover:bg-gray-100/50">
               <TableCell className="font-medium text-gray-900">{theater.name}</TableCell>
               <TableCell className="max-w-[200px]">
                 <div className="flex items-start gap-2 text-sm text-gray-600">

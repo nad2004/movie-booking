@@ -1,39 +1,68 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createRoom, updateRoom, deleteRoom, RoomCreateDTO, RoomUpdateDTO } from "@/lib/api/rooms";
-import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Seat } from '@/types/theater'
+import { createRoom, updateRoom, deleteRoom, RoomCreateDTO, RoomUpdateDTO, updateSeat } from '@/lib/api/rooms'
+import { toast } from 'sonner'
+import { useNotification } from '@/providers/NotificationProvider'
 
 export function useRoomMutations() {
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient()
+  const { showSuccess, showError } = useNotification()
   const createMutation = useMutation({
-    mutationFn: ({ theaterId, data }: { theaterId: string; data: RoomCreateDTO }) => 
+    mutationFn: ({ theaterId, data }: { theaterId: string; data: RoomCreateDTO }) =>
       createRoom(theaterId, data),
     onSuccess: () => {
-      toast.success("Thêm phòng chiếu thành công!");
-      queryClient.invalidateQueries({ queryKey: ["theaters"] }); // Refresh lại theaters để lấy rooms mới
+      showSuccess('Tạo thành công!')
+      queryClient.invalidateQueries({ queryKey: ['theaters'] }) // Refresh lại theaters để lấy rooms mới
     },
-    onError: (error: any) => toast.error("Thêm thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
   const updateMutation = useMutation({
-    mutationFn: ({ theaterId, roomId, data }: { theaterId: string; roomId: string; data: RoomUpdateDTO }) => 
-      updateRoom(theaterId, roomId, data),
+    mutationFn: ({
+      theaterId,
+      roomId,
+      data,
+    }: {
+      theaterId: string
+      roomId: string
+      data: RoomUpdateDTO
+    }) => updateRoom(theaterId, roomId, data),
     onSuccess: () => {
-      toast.success("Cập nhật phòng chiếu thành công!");
-      queryClient.invalidateQueries({ queryKey: ["theaters"] });
+      showSuccess('Cập nhập thành công!')
+      queryClient.invalidateQueries({ queryKey: ['theaters'] })
     },
-    onError: (error: any) => toast.error("Cập nhật thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
+
+  const updateSeatMutation = useMutation({
+    mutationFn: ({
+      theaterId,
+      roomId,
+      data,
+    }: {
+      theaterId: string
+      roomId: string
+      data:{
+        seats: Seat[]
+      }
+    }) => updateSeat(theaterId, roomId, data),
+    onSuccess: () => {
+      showSuccess('Cập nhập thành công!')
+      queryClient.invalidateQueries({ queryKey: ['theaters'] })
+    },
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
+
 
   const deleteMutation = useMutation({
-    mutationFn: ({ theaterId, roomId }: { theaterId: string; roomId: string }) => 
+    mutationFn: ({ theaterId, roomId }: { theaterId: string; roomId: string }) =>
       deleteRoom(theaterId, roomId),
     onSuccess: () => {
-      toast.success("Xóa phòng chiếu thành công!");
-      queryClient.invalidateQueries({ queryKey: ["theaters"] });
+      showSuccess('Xoá thành công!')
+      queryClient.invalidateQueries({ queryKey: ['theaters'] })
     },
-    onError: (error: any) => toast.error("Xóa thất bại"),
-  });
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  })
 
-  return { createMutation, updateMutation, deleteMutation };
+  return { createMutation, updateMutation, deleteMutation, updateSeatMutation }
 }

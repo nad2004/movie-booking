@@ -63,14 +63,17 @@ export default function ScheduleManagementPage() {
         </div>
 
         {/* Stats */}
-        <ScheduleStats />
+        {/* <ScheduleStats /> */}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
           {/* Cột Trái: Chọn Ngày */}
           <Card className="bg-white border-gray-200 p-4 h-fit shadow-sm">
-            <h3 className="text-gray-900 font-semibold mb-4 px-2">Chọn Ngày Chiếu</h3>
+            <div className='flex mb-2'>
+              <h3 className="text-gray-900 font-semibold mb-4 px-2 flex-1">Chọn Ngày Chiếu</h3>
+              <Button className=' bg-gray-50 text-gray-900 hover:bg-gray-200 ' onClick={()=>{setDate(undefined)}}>Tất cả</Button>
+            </div>
             <Calendar
               mode="single"
               selected={date}
@@ -106,14 +109,14 @@ export default function ScheduleManagementPage() {
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-gray-50 text-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle>
             <AlertDialogDescription>Hành động này không thể hoàn tác.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600">Xóa</AlertDialogAction>
+            <AlertDialogCancel className="hover:bg-gray-300! hover:text-gray-800!">Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

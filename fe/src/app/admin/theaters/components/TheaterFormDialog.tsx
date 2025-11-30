@@ -89,7 +89,7 @@ export function TheaterFormDialog({ open, onOpenChange, theaterToEdit }: Theater
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-gray-50 text-gray-900">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Cập Nhật Thông Tin Rạp" : "Thêm Rạp Mới"}</DialogTitle>
         </DialogHeader>
@@ -168,7 +168,7 @@ export function TheaterFormDialog({ open, onOpenChange, theaterToEdit }: Theater
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
             <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">

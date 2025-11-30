@@ -159,7 +159,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
             </div>
             <div className="space-y-2">
                <Label>Giờ Bắt Đầu</Label>
-               <Input className="bg-gray-100 text-gray-900/90" type="time" {...register("startTime")} />
+               <Input className="bg-gray-100 text-gray-900! [color-scheme:light]" type="time" {...register("startTime")} />
             </div>
           </div>
           

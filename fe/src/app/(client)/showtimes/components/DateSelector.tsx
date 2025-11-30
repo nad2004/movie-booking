@@ -5,17 +5,16 @@ import { Card } from '@/components/ui/card'
 
 type DateSelectorProps = {
   selectedDate: string | undefined
-  onSelectDate: (date: string) => void
+  onSelectDate: (date: string | undefined) => void
 }
 
 export default function DateSelector({ selectedDate, onSelectDate }: DateSelectorProps) {
-  
-  // Tạo danh sách 14 ngày tới bắt đầu từ hôm nay
+ 
   const dates = useMemo(() => {
     const days = []
     const today = new Date()
-    
-    for (let i = 0; i < 14; i++) {
+    days.push({label: "Tất cả", date: "All", value: undefined})
+    for (let i = 0; i < 10; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
       
@@ -35,6 +34,7 @@ export default function DateSelector({ selectedDate, onSelectDate }: DateSelecto
   return (
     <Card className="bg-surface border-border p-3 sm:p-4" style={{ borderRadius: '16px' }}>
       <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+         
         {dates.map((item) => {
           const isSelected = selectedDate === item.value
 
@@ -42,7 +42,7 @@ export default function DateSelector({ selectedDate, onSelectDate }: DateSelecto
             <button
               key={item.value}
               onClick={() => onSelectDate(item.value)}
-              className={`flex-shrink-0 min-w-[80px] px-3 py-2 rounded-xl transition-all border border-transparent ${
+              className={`shrink-0 min-w-20 px-3 py-2 rounded-xl transition-all border border-transparent ${
                 isSelected
                   ? 'bg-primary text-white shadow-md shadow-primary/20'
                   : 'bg-bg-secondary text-text-primary hover:bg-primary/10 hover:text-primary hover:border-primary/20'

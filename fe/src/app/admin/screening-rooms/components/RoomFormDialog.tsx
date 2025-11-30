@@ -95,7 +95,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-gray-50 text-gray-900">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Cập Nhật Phòng Chiếu" : "Thêm Phòng Mới"}</DialogTitle>
         </DialogHeader>
@@ -117,7 +117,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
               <SelectTrigger>
                 <SelectValue placeholder="Chọn rạp..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-50 text-gray-900">
                 {theaters.map(t => (
                     <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
                 ))}
@@ -130,7 +130,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
                 <Label>Loại Phòng</Label>
                 <Select onValueChange={(val) => setValue("roomType", val)} defaultValue={watch("roomType")}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-gray-50 text-gray-900">
                         <SelectItem value="2D">2D</SelectItem>
                         <SelectItem value="3D">3D</SelectItem>
                         <SelectItem value="IMAX">IMAX</SelectItem>
@@ -142,7 +142,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
                 <Label>Công Nghệ Màn Hình</Label>
                 <Select onValueChange={(val) => setValue("screenType", val)} defaultValue={watch("screenType")}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-gray-50 text-gray-900">
                         <SelectItem value="Standard">Standard</SelectItem>
                         <SelectItem value="IMAX">IMAX</SelectItem>
                         <SelectItem value="Dolby Atmos">Dolby Atmos</SelectItem>
@@ -170,7 +170,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
              <Label>Trạng Thái</Label>
              <Select onValueChange={(val) => setValue("isActive", val)} defaultValue={watch("isActive")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-50 text-gray-900">
                     <SelectItem value="true">Hoạt động</SelectItem>
                     <SelectItem value="false">Bảo trì</SelectItem>
                 </SelectContent>
@@ -178,7 +178,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
+            <Button type="button" variant="default" onClick={() => onOpenChange(false)}>Hủy</Button>
             <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
                {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Lưu"}
             </Button>

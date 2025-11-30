@@ -17,7 +17,7 @@ export function UserDetailSheet({ open, onOpenChange, userId }: UserDetailSheetP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto bg-gray-50 text-gray-900">
         <SheetHeader>
           <SheetTitle>Thông Tin Người Dùng</SheetTitle>
         </SheetHeader>
@@ -47,7 +47,6 @@ export function UserDetailSheet({ open, onOpenChange, userId }: UserDetailSheetP
               <InfoItem icon={Calendar} label="Ngày Tham Gia" value={user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '-'} />
             </div>
 
-            {/* Statistics */}
             <div className="pt-4 border-t border-gray-100">
               <h4 className="font-semibold mb-4 text-gray-900">Thống Kê</h4>
               <div className="grid grid-cols-2 gap-4">
@@ -55,8 +54,6 @@ export function UserDetailSheet({ open, onOpenChange, userId }: UserDetailSheetP
                 <StatCard label="Đã Chi Tiêu" value={`${(0).toLocaleString()} đ`} /> {/* Cần trường totalSpent từ BE */}
               </div>
             </div>
-
-            {/* Recent Transactions (Mock data or fetch separate API) */}
             <div className="pt-4 border-t border-gray-100">
                 <h4 className="font-semibold mb-4 text-gray-900">Lịch Sử Giao Dịch</h4>
                 <p className="text-sm text-gray-500 italic">Chưa có giao dịch nào gần đây.</p>

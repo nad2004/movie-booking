@@ -1,6 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { Calendar as CalendarIcon, Clock, Film, MapPin } from 'lucide-react';
-
+interface ScheduleStatsProp{
+  total: number,
+  today: number,
+  current: number,
+  thearter: number,
+}
 export function ScheduleStats() {
   // Mock data hoặc nhận props từ API thống kê nếu có
   return (

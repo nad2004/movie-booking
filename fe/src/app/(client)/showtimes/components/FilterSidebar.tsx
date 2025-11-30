@@ -8,9 +8,8 @@ type FilterSidebarProps = {
   selectedCity: string
   onSelectCity: (id: string) => void
   currentCinemas: Theater[]
-  // Sửa: Nên cho phép null để tránh lỗi crash khi chưa có dữ liệu
-  selectedCinema: Theater | null 
-  onSelectCinema: (theater: Theater) => void
+  selectedCinema: Theater | undefined 
+  onSelectCinema: (theater: Theater | undefined) => void
   isLoading: boolean
 }
 
@@ -48,8 +47,7 @@ export default function FilterSidebar({
       </Card>
 
       {/* --- 2. Cinema Filter --- */}
-      {/* SỬA LỖI Ở ĐÂY: Bỏ arrow function () => (...) đi, trả về thẻ div trực tiếp */}
-      {isLoading && (!selectedCinema || !selectedCinema._id) ? (
+      {isLoading && (!currentCinemas || currentCinemas.length === 0) ? (
         <div className="text-center text-text-secondary py-4">
           Đang tải danh sách rạp...
         </div>
@@ -59,12 +57,26 @@ export default function FilterSidebar({
             Rạp
           </h3>
           <div className="space-y-2">
+             {/* Nút Tất cả */}
+             {/* <button
+                key={'all'}
+                onClick={() => {onSelectCinema(undefined)}}
+                className={`w-full text-left px-2.5 sm:px-3 py-2 rounded-lg transition-all text-sm sm:text-base ${
+                  // SỬA: Check chính xác null để active
+                  selectedCinema === null
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-bg-secondary text-text-secondary'
+                }`}
+              >
+                Tất cả
+              </button> */}
+
             {currentCinemas.map(cinema => (
               <button
                 key={cinema._id}
                 onClick={() => onSelectCinema(cinema)}
                 className={`w-full text-left px-2.5 sm:px-3 py-2 rounded-lg transition-all text-sm sm:text-base ${
-                  // Dùng optional chaining (?.) để tránh lỗi nếu selectedCinema là null
+                  // Check ID trùng khớp
                   selectedCinema?._id === cinema._id
                     ? 'bg-primary text-white'
                     : 'hover:bg-bg-secondary text-text-secondary'
@@ -74,7 +86,6 @@ export default function FilterSidebar({
               </button>
             ))}
             
-            {/* Xử lý trường hợp không có rạp nào */}
             {currentCinemas.length === 0 && (
                <p className="text-sm text-text-secondary px-2">Không có rạp nào tại khu vực này.</p>
             )}
