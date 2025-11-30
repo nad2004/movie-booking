@@ -307,6 +307,10 @@ const theaterController = {
         return errorResponse(res, "Không tìm thấy rạp", 404);
       }
 
+      if (roomData.seatMap && !Array.isArray(roomData.seatMap)) {
+        roomData.seatMap = Object.values(roomData.seatMap);
+      }
+
       // Validate seat map
       if (!roomData.seatMap || roomData.seatMap.length === 0) {
         return errorResponse(res, "Sơ đồ ghế không hợp lệ", 400);
@@ -332,6 +336,10 @@ const theaterController = {
       const theater = await Theater.findById(theaterId);
       if (!theater) {
         return errorResponse(res, "Không tìm thấy rạp", 404);
+      }
+
+      if (updateData.seatMap && !Array.isArray(updateData.seatMap)) {
+        updateData.seatMap = Object.values(updateData.seatMap);
       }
 
       const room = theater.rooms.id(roomId);
