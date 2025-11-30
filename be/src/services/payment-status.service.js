@@ -253,9 +253,9 @@ class PaymentStatusService {
             if (schedule) {
               await schedule.confirmSeats(
                 booking.seats.map((s) => s.seatNumber),
-                booking._id
+                booking._id,
+                session
               );
-              await schedule.save({ session });
 
               // Broadcast qua WebSocket
               websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
@@ -341,8 +341,10 @@ class PaymentStatusService {
         // Release seats
         const schedule = await Schedule.findById(booking.schedule).session(session);
         if (schedule) {
-          await schedule.releaseSeats(booking.seats.map((s) => s.seatNumber));
-          await schedule.save({ session });
+          await schedule.releaseSeats(
+            booking.seats.map((s) => s.seatNumber),
+            session
+          );
         }
 
         //  FIX CRITICAL: Rollback voucher usage và remove from usedBy array

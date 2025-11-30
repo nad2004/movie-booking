@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import DailyReport from "../models/daily-report.model.js";
 import CounterTransaction from "../models/counter-transaction.model.js";
 import EntryLog from "../models/entry-log.model.js";
@@ -20,6 +21,11 @@ const staffReportsController = {
         throw new AuthorizationError("Chỉ nhân viên mới có thể tạo báo cáo");
       }
 
+      // Populate theater if assigned
+      if (staff.staffInfo?.assignedTheater) {
+        await staff.populate("staffInfo.assignedTheater");
+      }
+
       const { date, shift } = req.query;
       const reportDate = date ? new Date(date) : new Date();
       reportDate.setHours(0, 0, 0, 0);
@@ -28,7 +34,7 @@ const staffReportsController = {
       let report = await DailyReport.findOne({
         staff: staff._id,
         reportDate,
-        shift: shift || staff.staffInfo?.shift,
+        shift: shift || staff.staffInfo?.shift || "morning",
         status: "draft",
       });
 
@@ -36,11 +42,11 @@ const staffReportsController = {
       if (!report) {
         report = new DailyReport({
           reportDate,
-          shift: shift || staff.staffInfo?.shift,
+          shift: shift || staff.staffInfo?.shift || "morning",
           staff: staff._id,
           staffName: staff.fullName,
-          position: staff.staffInfo?.position,
-          theater: staff.staffInfo?.assignedTheater,
+          position: staff.staffInfo?.position || "staff",
+          theater: staff.staffInfo?.assignedTheater?._id,
           theaterName: staff.staffInfo?.assignedTheater?.name || "Unknown",
           status: "draft",
         });
@@ -236,18 +242,26 @@ const staffReportsController = {
     try {
       const staff = await User.findById(req.userId);
 
-      if (!["supervisor", "manager"].includes(staff.staffInfo?.position)) {
+      if (!staff || !["supervisor", "manager"].includes(staff.staffInfo?.position)) {
         throw new AuthorizationError("Chỉ supervisor/manager mới có thể xem báo cáo rạp");
+      }
+
+      if (!staff.staffInfo?.assignedTheater) {
+        throw new NotFoundError("Chưa được phân công rạp");
       }
 
       const { date, status } = req.query;
       const queryDate = date ? new Date(date) : new Date();
+      const startOfDay = new Date(queryDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(queryDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       const query = {
         theater: staff.staffInfo.assignedTheater,
         reportDate: {
-          $gte: new Date(queryDate.setHours(0, 0, 0, 0)),
-          $lte: new Date(queryDate.setHours(23, 59, 59, 999)),
+          $gte: startOfDay,
+          $lte: endOfDay,
         },
       };
 
@@ -300,7 +314,7 @@ const staffReportsController = {
       const stats = await DailyReport.aggregate([
         {
           $match: {
-            staff: staff._id,
+            staff: new mongoose.Types.ObjectId(staff._id),
             reportDate: {
               $gte: start,
               $lte: end,

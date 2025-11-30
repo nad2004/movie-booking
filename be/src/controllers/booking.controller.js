@@ -435,7 +435,7 @@ const bookingController = {
   // Xác nhận thanh toán
   confirmPayment: async (req, res) => {
     try {
-      const { bookingId } = req.params;
+      const bookingId = req.params.bookingId || req.params.id;
       const { paymentMethod, transactionId } = req.body;
 
       let booking = await Booking.findById(bookingId);
@@ -575,14 +575,14 @@ const bookingController = {
             await booking.save({ session });
           }
 
-          // Confirm ghế trong schedule
+          // Confirm ghế trong schedule (use session-aware method)
           const schedule = await Schedule.findById(booking.schedule).session(session);
           if (schedule) {
             await schedule.confirmSeats(
               booking.seats.map((s) => s.seatNumber),
-              booking._id
+              booking._id,
+              session
             );
-            await schedule.save({ session });
 
             // Broadcast qua WebSocket
             websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
@@ -1052,7 +1052,7 @@ const bookingController = {
   // Regenerate QR code cho booking (nếu bị lỗi lúc tạo)
   regenerateQRCode: async (req, res) => {
     try {
-      const { bookingId } = req.params;
+      const bookingId = req.params.bookingId || req.params.id;
 
       const booking = await Booking.findById(bookingId);
       if (!booking) {

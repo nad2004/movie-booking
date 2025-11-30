@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
+import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const userController = {
   // Cập nhật profile
@@ -36,6 +38,51 @@ const userController = {
       });
     } catch (error) {
       console.error("Get loyalty points error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // Lấy thống kê chi tiêu của chính user (Customer)
+  getSpendingStats: async (req, res) => {
+    try {
+      const userId = req.userId;
+
+      // Calculate total spending from bookings
+      const bookingStats = await Booking.aggregate([
+        {
+          $match: {
+            customer: new mongoose.Types.ObjectId(userId),
+            status: { $in: ["completed", "confirmed", "cancelled"] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalSpent: { $sum: "$finalPrice" },
+            completedBookings: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+            },
+            cancelledBookings: {
+              $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
+            },
+            totalBookings: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const spending =
+        bookingStats.length > 0
+          ? bookingStats[0]
+          : { totalSpent: 0, completedBookings: 0, cancelledBookings: 0, totalBookings: 0 };
+
+      return successResponse(res, {
+        totalSpent: spending.totalSpent || 0,
+        totalBookings: spending.totalBookings || 0,
+        completedBookings: spending.completedBookings || 0,
+        cancelledBookings: spending.cancelledBookings || 0,
+      });
+    } catch (error) {
+      console.error("Get spending stats error:", error);
       return errorResponse(res, "Lỗi server", 500);
     }
   },
@@ -81,7 +128,43 @@ const userController = {
         return errorResponse(res, "Không tìm thấy người dùng", 404);
       }
 
-      return successResponse(res, user);
+      // Calculate total spending from bookings
+      const bookingStats = await Booking.aggregate([
+        {
+          $match: {
+            customer: new mongoose.Types.ObjectId(id),
+            status: { $in: ["completed", "confirmed", "cancelled"] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalSpent: { $sum: "$finalPrice" },
+            completedBookings: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+            },
+            cancelledBookings: {
+              $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
+            },
+            totalBookings: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const spending =
+        bookingStats.length > 0
+          ? bookingStats[0]
+          : { totalSpent: 0, completedBookings: 0, cancelledBookings: 0, totalBookings: 0 };
+
+      return successResponse(res, {
+        ...user,
+        spending: {
+          totalSpent: spending.totalSpent || 0,
+          totalBookings: spending.totalBookings || 0,
+          completedBookings: spending.completedBookings || 0,
+          cancelledBookings: spending.cancelledBookings || 0,
+        },
+      });
     } catch (error) {
       console.error("Get user by id error:", error);
       return errorResponse(res, "Lỗi server", 500);

@@ -13,12 +13,15 @@ const staffController = {
   // Get staff profile
   getProfile: async (req, res) => {
     try {
-      const staff = await User.findById(req.userId)
-        .select("-password")
-        .populate("staffInfo.assignedTheater", "name address city");
+      const staff = await User.findById(req.userId).select("-password");
 
       if (!staff || staff.role !== "staff") {
         throw new AuthorizationError("Chỉ nhân viên mới có thể truy cập");
+      }
+
+      // Populate theater if assigned
+      if (staff.staffInfo?.assignedTheater) {
+        await staff.populate("staffInfo.assignedTheater", "name address city");
       }
 
       return successResponse(res, { staff }, "Lấy thông tin nhân viên thành công");
@@ -54,7 +57,7 @@ const staffController = {
   // Get assigned theater info
   getAssignedTheater: async (req, res) => {
     try {
-      const staff = await User.findById(req.userId).populate("staffInfo.assignedTheater");
+      const staff = await User.findById(req.userId);
 
       if (!staff || staff.role !== "staff") {
         throw new AuthorizationError("Chỉ nhân viên mới có thể truy cập");
@@ -63,6 +66,9 @@ const staffController = {
       if (!staff.staffInfo?.assignedTheater) {
         throw new NotFoundError("Chưa được phân công rạp");
       }
+
+      // Populate theater
+      await staff.populate("staffInfo.assignedTheater");
 
       return successResponse(res, { theater: staff.staffInfo.assignedTheater }, "Lấy thông tin rạp thành công");
     } catch (error) {
@@ -78,58 +84,75 @@ const staffController = {
   // Get staff dashboard data
   getDashboard: async (req, res) => {
     try {
-      const staff = await User.findById(req.userId).populate("staffInfo.assignedTheater");
+      const staff = await User.findById(req.userId);
 
       if (!staff || staff.role !== "staff") {
         throw new AuthorizationError("Chỉ nhân viên mới có thể truy cập");
       }
 
+      // Populate theater if assigned
+      if (staff.staffInfo?.assignedTheater) {
+        await staff.populate("staffInfo.assignedTheater");
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+      const theaterName = staff.staffInfo?.assignedTheater?.name;
+      const theaterId = staff.staffInfo?.assignedTheater?._id;
 
       // Get today's bookings at assigned theater
-      const todayBookings = await Booking.countDocuments({
-        theaterName: staff.staffInfo?.assignedTheater?.name,
-        createdAt: { $gte: today },
-        status: { $in: ["Hoàn tất", "Chờ thanh toán"] },
-      });
+      const todayBookings = theaterName
+        ? await Booking.countDocuments({
+            theaterName: theaterName,
+            createdAt: { $gte: today },
+            status: { $in: ["Hoàn tất", "Chờ thanh toán"] },
+          })
+        : 0;
 
       // Get today's revenue
-      const todayRevenue = await Booking.aggregate([
-        {
-          $match: {
-            theaterName: staff.staffInfo?.assignedTheater?.name,
-            createdAt: { $gte: today },
-            status: "Hoàn tất",
+      let todayRevenue = 0;
+      if (theaterName) {
+        const revenueResult = await Booking.aggregate([
+          {
+            $match: {
+              theaterName: theaterName,
+              createdAt: { $gte: today },
+              status: "Hoàn tất",
+            },
           },
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: "$totalAmount" },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$totalAmount" },
+            },
           },
-        },
-      ]);
+        ]);
+        todayRevenue = revenueResult[0]?.total || 0;
+      }
 
       // Get today's schedules
-      const todaySchedules = await Schedule.countDocuments({
-        theater: staff.staffInfo?.assignedTheater?._id,
-        showDate: {
-          $gte: today,
-          $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-        },
-      });
+      const todaySchedules = theaterId
+        ? await Schedule.countDocuments({
+            theater: theaterId,
+            showDate: {
+              $gte: today,
+              $lt: tomorrow,
+            },
+          })
+        : 0;
 
       const dashboardData = {
         staff: {
           name: staff.fullName,
-          position: staff.staffInfo?.position,
-          shift: staff.staffInfo?.shift,
-          theater: staff.staffInfo?.assignedTheater?.name,
+          position: staff.staffInfo?.position || "N/A",
+          shift: staff.staffInfo?.shift || "N/A",
+          theater: theaterName || "Chưa phân công",
         },
         today: {
           bookings: todayBookings,
-          revenue: todayRevenue[0]?.total || 0,
+          revenue: todayRevenue,
           schedules: todaySchedules,
         },
       };

@@ -124,51 +124,6 @@
 
 /**
  * @swagger
- * /admin/reviews/{id}/approve:
- *   put:
- *     tags: [Admin]
- *     summary: Duyệt đánh giá
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Duyệt thành công
- */
-
-/**
- * @swagger
- * /admin/reviews/{id}/reject:
- *   put:
- *     tags: [Admin]
- *     summary: Từ chối đánh giá
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               reason:
- *                 type: string
- *                 example: "Nội dung không phù hợp"
- *     responses:
- *       200:
- *         description: Từ chối thành công
- */
-
-/**
- * @swagger
  * /admin/reviews/{id}:
  *   delete:
  *     tags: [Admin]
@@ -191,50 +146,20 @@
 
 /**
  * @swagger
- * /admin/users/{id}:
- *   get:
- *     tags: [Admin]
- *     summary: Chi tiết user
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Thông tin user
- *   delete:
- *     tags: [Admin]
- *     summary: Xóa user (Super Admin only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Xóa user thành công
- */
-
-/**
- * @swagger
  * /admin/users/{id}/role:
  *   put:
  *     tags: [Admin]
- *     summary: Thay đổi role user (Super Admin only)
+ *     summary: Cập nhật vai trò và quyền (Super Admin)
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -242,12 +167,19 @@
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [customer, staff, admin, super-admin, manager]
- *                 example: "staff"
+ *               permissions:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *     responses:
  *       200:
- *         description: Cập nhật role thành công
+ *         description: Cập nhật thành công
+ *       404:
+ *         description: Không tìm thấy người dùng
+ *       500:
+ *         description: Lỗi server
  */
+
 
 // ============================================
 // ADMIN PRODUCTS - Thêm vào products.swagger.js

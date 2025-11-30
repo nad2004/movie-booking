@@ -457,4 +457,128 @@
  *         description: Forbidden
  */
 
+/**
+ * @swagger
+ * /shifts/my-theater:
+ *   get:
+ *     tags: [Shift Management]
+ *     summary: Lấy ca làm việc của rạp mà nhân viên đang thuộc về
+ *     description: Lấy danh sách ca làm việc theo rạp của nhân viên đang đăng nhập
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Danh sách ca làm việc
+ *       404:
+ *         description: Nhân viên không thuộc rạp nào
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /shifts/flexible:
+ *   get:
+ *     tags: [Shift Management]
+ *     summary: Lấy ca làm việc linh hoạt theo nhân viên hoặc rạp
+ *     description: API linh hoạt cho phép lọc ca theo rạp, nhân viên hoặc toàn bộ
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: theaterId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: staffId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Danh sách ca làm việc
+ *       400:
+ *         description: Invalid date range
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /shifts/{shiftId}:
+ *   put:
+ *     tags: [Shift Management]
+ *     summary: Cập nhật thông tin ca làm việc
+ *     description: Admin/Manager cập nhật thông tin ca
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: shiftId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Các trường cần cập nhật
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ *       404:
+ *         description: Shift not found
+ *       401:
+ *         description: Unauthorized
+ */
+
+
+/**
+ * @swagger
+ * /shifts/{shiftId}:
+ *   delete:
+ *     tags: [Shift Management]
+ *     summary: Hủy ca làm việc
+ *     description: Đặt trạng thái ca làm việc thành 'cancelled'
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: shiftId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Hủy ca thành công
+ *       404:
+ *         description: Shift not found
+ *       401:
+ *         description: Unauthorized
+ */
+
+
+
+
 export default {};

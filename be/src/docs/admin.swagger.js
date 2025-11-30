@@ -98,21 +98,41 @@
  * /admin/users:
  *   get:
  *     tags: [Admin]
- *     summary: Lấy danh sách users (Admin)
+ *     summary: Lấy danh sách tất cả người dùng (Admin)
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Danh sách users
+ *         description: Danh sách người dùng kèm phân trang
+ *       500:
+ *         description: Lỗi server
  */
+
 
 /**
  * @swagger
  * /admin/users/{id}:
  *   get:
  *     tags: [Admin]
- *     summary: Lấy chi tiết người dùng (Admin)
- *     description: Lấy toàn bộ thông tin người dùng trừ mật khẩu.
+ *     summary: Lấy thông tin chi tiết user (Admin)
+ *     description: Bao gồm thông tin cá nhân và thống kê chi tiêu.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -121,10 +141,10 @@
  *         required: true
  *         schema:
  *           type: string
- *         description: ID của người dùng
+ *         description: ID người dùng
  *     responses:
  *       200:
- *         description: Lấy thông tin user thành công
+ *         description: Lấy thông tin thành công
  *         content:
  *           application/json:
  *             schema:
@@ -134,7 +154,6 @@
  *                   type: boolean
  *                 data:
  *                   type: object
- *                   description: Thông tin user (không bao gồm password)
  *                   properties:
  *                     _id:
  *                       type: string
@@ -146,21 +165,29 @@
  *                       type: string
  *                     role:
  *                       type: string
- *                       example: "customer"
  *                     membershipLevel:
  *                       type: string
- *                       example: "Silver"
  *                     loyaltyPoints:
  *                       type: number
- *                       example: 120
  *                     profilePicture:
  *                       type: string
- *                       example: "https://example.com/avatar.jpg"
+ *                     spending:
+ *                       type: object
+ *                       properties:
+ *                         totalSpent:
+ *                           type: number
+ *                         totalBookings:
+ *                           type: number
+ *                         completedBookings:
+ *                           type: number
+ *                         cancelledBookings:
+ *                           type: number
  *       404:
  *         description: Không tìm thấy người dùng
  *       500:
  *         description: Lỗi server
  */
+
 
 /**
  * @swagger
@@ -1235,10 +1262,35 @@
  *     summary: Lấy tất cả đánh giá (Admin)
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           example: "Đã duyệt"
+ *       - in: query
+ *         name: rating
+ *         schema:
+ *           type: number
+ *           minimum: 1
+ *           maximum: 5
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 20
  *     responses:
  *       200:
  *         description: Danh sách đánh giá
+ *       500:
+ *         description: Lỗi server
  */
+
 
 /**
  * @swagger

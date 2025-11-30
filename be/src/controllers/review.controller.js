@@ -1,22 +1,40 @@
 import mongoose from "mongoose";
-import Review from "../models/review.model.js";
 import Movie from "../models/movie.model.js";
-import Booking from "../models/booking.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
+import Review from "../models/review.model.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const reviewController = {
   // Lấy đánh giá theo phim
   getReviewsByMovie: async (req, res) => {
     try {
       const { movieId } = req.params;
-      const { page = 1, limit = 10, status = "Đã duyệt" } = req.query;
+      const { page = 1, limit = 10 } = req.query;
+      // Optional filters
+      const statusParam = req.query.status; // if not provided, default to "Đã duyệt" for statistics
+      const ratingParam = req.query.rating;
+
+      // Validate rating if provided
+      let ratingFilter;
+      if (ratingParam !== undefined) {
+        const parsed = parseInt(ratingParam, 10);
+        if (isNaN(parsed) || parsed < 1 || parsed > 5) {
+          return errorResponse(res, "Rating filter phải là số từ 1 đến 5", 400);
+        }
+        ratingFilter = parsed;
+      }
 
       const skip = (page - 1) * limit;
 
-      const query = {
-        movie: movieId,
-        status,
-      };
+      // Build query for list/count
+      const query = { movie: movieId };
+      if (statusParam) query.status = statusParam;
+      if (ratingFilter) query.rating = ratingFilter;
+
+      // Build aggregate match for statistics. If status param not provided, default stats to approved reviews (Đã duyệt)
+      const aggMatch = { movie: new mongoose.Types.ObjectId(movieId) };
+      if (statusParam) aggMatch.status = statusParam;
+      else aggMatch.status = "Đã duyệt";
+      if (ratingFilter) aggMatch.rating = ratingFilter;
 
       const [reviews, total, avgRating] = await Promise.all([
         Review.find(query)
@@ -27,7 +45,7 @@ const reviewController = {
           .lean(),
         Review.countDocuments(query),
         Review.aggregate([
-          { $match: { movie: new mongoose.Types.ObjectId(movieId), status: "Đã duyệt" } },
+          { $match: aggMatch },
           { $group: { _id: null, avgRating: { $avg: "$rating" }, totalReviews: { $sum: 1 } } },
         ]),
       ]);
@@ -173,11 +191,18 @@ const reviewController = {
   // Lấy tất cả đánh giá (Admin)
   getAllReviews: async (req, res) => {
     try {
-      const { status, page = 1, limit = 20 } = req.query;
+      const { status, rating, page = 1, limit = 20 } = req.query;
 
       const query = {};
       if (status) {
         query.status = status;
+      }
+      if (rating !== undefined) {
+        const parsed = parseInt(rating, 10);
+        if (isNaN(parsed) || parsed < 1 || parsed > 5) {
+          return errorResponse(res, "Rating filter phải là số từ 1 đến 5", 400);
+        }
+        query.rating = parsed;
       }
 
       const skip = (page - 1) * limit;

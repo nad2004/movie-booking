@@ -159,7 +159,7 @@ scheduleSchema.pre("save", function (next) {
 
 // === INSTANCE METHODS ===
 // Unified hold method with type specification
-scheduleSchema.methods.holdSeats = function (seatNumbers, holderId, holdMinutes = 10, holderType = "user") {
+scheduleSchema.methods.holdSeats = function (seatNumbers, holderId, holdMinutes = 10, holderType = "user", session) {
   const holdUntil = new Date(Date.now() + holdMinutes * 60 * 1000);
 
   seatNumbers.forEach((seatNum) => {
@@ -171,6 +171,7 @@ scheduleSchema.methods.holdSeats = function (seatNumbers, holderId, holdMinutes 
     }
   });
 
+  if (session) return this.save({ session });
   return this.save();
 };
 
@@ -183,7 +184,7 @@ scheduleSchema.methods.holdSeatsForBooking = function (seatNumbers, bookingId, h
   return this.holdSeats(seatNumbers, bookingId, holdMinutes, "booking");
 };
 
-scheduleSchema.methods.confirmSeats = function (seatNumbers, bookingId) {
+scheduleSchema.methods.confirmSeats = function (seatNumbers, bookingId, session) {
   seatNumbers.forEach((seatNum) => {
     const seat = this.seatAvailability.find((s) => s.seatNumber === seatNum);
     if (seat) {
@@ -195,10 +196,11 @@ scheduleSchema.methods.confirmSeats = function (seatNumbers, bookingId) {
 
   // Calculate actual booked count instead of manual increment
   this.bookedSeatsCount = this.seatAvailability.filter((seat) => seat.isBooked).length;
+  if (session) return this.save({ session });
   return this.save();
 };
 
-scheduleSchema.methods.releaseSeats = function (seatNumbers) {
+scheduleSchema.methods.releaseSeats = function (seatNumbers, session) {
   seatNumbers.forEach((seatNum) => {
     const seat = this.seatAvailability.find((s) => s.seatNumber === seatNum);
     if (seat) {
@@ -210,10 +212,11 @@ scheduleSchema.methods.releaseSeats = function (seatNumbers) {
 
   // Calculate actual booked count instead of manual decrement
   this.bookedSeatsCount = this.seatAvailability.filter((seat) => seat.isBooked).length;
+  if (session) return this.save({ session });
   return this.save();
 };
 
-scheduleSchema.methods.releaseExpiredHolds = function () {
+scheduleSchema.methods.releaseExpiredHolds = function (session) {
   const now = new Date();
   let releasedCount = 0;
 
@@ -226,6 +229,7 @@ scheduleSchema.methods.releaseExpiredHolds = function () {
   });
 
   if (releasedCount > 0) {
+    if (session) return this.save({ session });
     return this.save();
   }
   return Promise.resolve(this);

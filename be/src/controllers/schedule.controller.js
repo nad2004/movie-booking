@@ -616,8 +616,11 @@ const scheduleController = {
                 }
                 await booking.save({ session });
 
-                // Release seats
-                await schedule.releaseSeats(booking.seats.map((s) => s.seatNumber));
+                // Release seats (use session-aware release)
+                await schedule.releaseSeats(
+                  booking.seats.map((s) => s.seatNumber),
+                  session
+                );
 
                 // Rollback voucher
                 if (booking.appliedVoucher) {

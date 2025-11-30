@@ -1,19 +1,19 @@
 import mongoose from "mongoose";
 import QRCode from "qrcode";
+import { BOOKING_STATUS } from "../constants/booking.js";
 import Booking from "../models/booking.model.js";
+import Notification from "../models/notification.model.js";
+import Product from "../models/product.model.js";
 import Schedule from "../models/schedule.model.js";
 import User from "../models/user.model.js";
 import Voucher from "../models/voucher.model.js";
-import Product from "../models/product.model.js";
-import vnpayService from "../services/payment/vnpay.service.js";
-import momoService from "../services/payment/momo.service.js";
 import emailService from "../services/email.service.js";
+import momoService from "../services/payment/momo.service.js";
+import vnpayService from "../services/payment/vnpay.service.js";
+import redisService from "../services/redis.service.js";
 import smsService from "../services/sms.service.js";
 import websocketService from "../services/websocket.service.js";
-import redisService from "../services/redis.service.js";
-import Notification from "../models/notification.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
-import { BOOKING_STATUS } from "../constants/booking.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 /**
  *  #1-4, #9-10: Helper function để confirm payment
@@ -76,14 +76,14 @@ async function confirmPaymentSuccess(booking, paymentMethod, transactionId, paym
 
       await booking.save({ session });
 
-      //  #1: Confirm seats trong schedule
+      //  #1: Confirm seats trong schedule (session-aware)
       const schedule = await Schedule.findById(booking.schedule).session(session);
       if (schedule) {
         await schedule.confirmSeats(
           booking.seats.map((s) => s.seatNumber),
-          booking._id
+          booking._id,
+          session
         );
-        await schedule.save({ session });
 
         // Broadcast qua WebSocket
         websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
@@ -165,8 +165,10 @@ async function handlePaymentFailure(booking) {
       // Release seats trong schedule
       const schedule = await Schedule.findById(booking.schedule).session(session);
       if (schedule) {
-        await schedule.releaseSeats(booking.seats.map((s) => s.seatNumber));
-        await schedule.save({ session });
+        await schedule.releaseSeats(
+          booking.seats.map((s) => s.seatNumber),
+          session
+        );
 
         // Broadcast qua WebSocket
         websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {

@@ -97,6 +97,7 @@ router.get("/auth/me", authenticateToken, authController.getCurrentUser);
 router.put("/auth/change-password", authenticateToken, authController.changePassword);
 router.put("/users/profile", authenticateToken, userController.updateProfile);
 router.get("/users/loyalty-points", authenticateToken, userController.getLoyaltyPoints);
+router.get("/users/spending-stats", authenticateToken, userController.getSpendingStats);
 
 //  FIX #5 & #9: Add validation and rate limiting for bookings
 router.post("/bookings", authenticateToken, bookingRateLimiter, validateBookingInput, bookingController.createBooking);
@@ -320,12 +321,21 @@ router.post("/qr-scanner/test", authenticateToken, authorize("admin"), qrScanner
 
 // Shift routes
 router.post("/shifts", authenticateToken, authorize("admin", "manager"), shiftController.createShift);
+
+router.get("/shifts", authenticateToken, authorize("admin", "manager", "staff"), shiftController.getShiftsFlexible);
+
+// Staff - view own theater shifts
+router.get("/shifts/my-theater", authenticateToken, authorize("staff"), shiftController.getMyTheaterShifts);
+
+// Admin/Manager - view any theater shifts
 router.get(
   "/shifts/theater/:theaterId",
   authenticateToken,
-  authorize("admin", "manager", "staff"),
+  authorize("admin", "manager"),
   shiftController.getShiftsByTheater
 );
+
+// View shifts by staff member
 router.get(
   "/shifts/staff/:staffId",
   authenticateToken,
