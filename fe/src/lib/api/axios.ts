@@ -50,3 +50,53 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+// Biến cờ để kiểm soát việc Refresh Token
+// let isRefreshing = false;
+// // Hàng đợi lưu các request bị lỗi chờ refresh xong
+// let failedQueue: any[] = [];
+
+// const processQueue = (error: any, token: string | null = null) => {
+//   failedQueue.forEach((prom) => {
+//     if (error) {
+//       prom.reject(error);
+//     } else {
+//       prom.resolve(token);
+//     }
+//   });
+//   failedQueue = [];
+// };
+// try {
+//         const { data } = await api.post('/auth/refresh-token'); 
+        
+//         const newAccessToken = data.accessToken;
+//         Cookies.set("authToken", newAccessToken, {
+//             expires: 1/24, 
+//             secure: process.env.NODE_ENV === 'production',
+//             sameSite: 'strict'
+//         });
+
+//         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+
+//         processQueue(null, newAccessToken);
+
+//         // Gọi lại request ban đầu bị lỗi
+//         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+//         return api(originalRequest);
+
+//       } catch (refreshError) {
+//         // Refresh thất bại (Hết hạn cả Refresh Token hoặc bị khóa)
+//         processQueue(refreshError, null);
+        
+//         // Logout & Redirect
+//         Cookies.remove("authToken");
+//         if (typeof window !== "undefined") {
+//            const currentPath = window.location.pathname;
+//            // Chỉ redirect nếu đang ở trang cần bảo vệ, tránh redirect loop ở trang login
+//            if (!currentPath.startsWith('/login')) {
+//                window.location.href = `/login?callbackUrl=${encodeURIComponent(currentPath)}`;
+//            }
+//         }
+//         return Promise.reject(refreshError);
+//       } finally {
+//         isRefreshing = false;
+//       }

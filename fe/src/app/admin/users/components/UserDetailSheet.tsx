@@ -21,7 +21,6 @@ export function UserDetailSheet({ open, onOpenChange, userId }: UserDetailSheetP
         <SheetHeader>
           <SheetTitle>Thông Tin Người Dùng</SheetTitle>
         </SheetHeader>
-
         {isLoading ? (
             <div className="flex justify-center py-10"><Loader2 className="animate-spin w-8 h-8 text-primary"/></div>
         ) : user ? (
@@ -50,14 +49,11 @@ export function UserDetailSheet({ open, onOpenChange, userId }: UserDetailSheetP
             <div className="pt-4 border-t border-gray-100">
               <h4 className="font-semibold mb-4 text-gray-900">Thống Kê</h4>
               <div className="grid grid-cols-2 gap-4">
-                <StatCard label="Tổng Vé" value={user.bookingsCount || 0} />
-                <StatCard label="Đã Chi Tiêu" value={`${(0).toLocaleString()} đ`} /> {/* Cần trường totalSpent từ BE */}
+                <StatCard label="Tổng Vé" value={user.spending?.totalBookings || 0} />
+                <StatCard label="Đã Chi Tiêu" value={`${user.spending?.totalSpent} đ`} /> {/* Cần trường totalSpent từ BE */}
               </div>
             </div>
-            <div className="pt-4 border-t border-gray-100">
-                <h4 className="font-semibold mb-4 text-gray-900">Lịch Sử Giao Dịch</h4>
-                <p className="text-sm text-gray-500 italic">Chưa có giao dịch nào gần đây.</p>
-            </div>
+      
           </div>
         ) : (
             <p className="text-center py-10 text-red-500">Không tìm thấy thông tin user.</p>
@@ -80,7 +76,6 @@ function InfoItem({ icon: Icon, label, value }: any) {
         </div>
     )
 }
-
 function StatCard({ label, value }: any) {
     return (
         <Card className="p-4 bg-gray-50 border-none shadow-none">

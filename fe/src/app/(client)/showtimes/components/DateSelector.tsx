@@ -24,7 +24,7 @@ export default function DateSelector({ selectedDate, onSelectDate }: DateSelecto
       
       // Format value để lưu state (YYYY-MM-DD) cho dễ so sánh/gọi API
       // Lưu ý: cẩn thận múi giờ, ở đây dùng toLocaleDateString('en-CA') để lấy YYYY-MM-DD theo local time
-      const value = date.toLocaleDateString('en-CA') 
+      const value = date.toLocaleDateString('vi-VN') 
 
       days.push({ label: dayOfWeek, date: dateStr, value })
     }

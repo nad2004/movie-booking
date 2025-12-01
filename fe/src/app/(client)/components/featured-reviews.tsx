@@ -1,204 +1,42 @@
-import { Play, Star, ChevronDown, ChevronRight } from 'lucide-react'
+'use client'
+
+import { Play, Star, ChevronDown, ChevronRight, MessageSquare } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-
-const featuredComments = [
-  {
-    id: 1,
-    movie: {
-      title: 'The Dark Knight',
-      image:
-        'https://images.unsplash.com/photo-1666698907755-672d406ea71d?auto=format&fit=crop&w=1080&q=80',
-      momoScore: 9.2,
-      imdbScore: 9.0,
-    },
-    reviews: [
-      {
-        id: 1,
-        user: {
-          name: 'Nguyễn Văn A',
-          avatar: 'https://images.unsplash.com/photo-1724435811349-32d27f4d5806?w=100',
-          verified: true,
-        },
-        date: '2 ngày trước',
-        comment:
-          'Phim hay tuyệt vời! Diễn xuất của Heath Ledger thật đỉnh cao. Cốt truyện chặt chẽ, hình ảnh ấn tượng. Rất đáng xem!',
-      },
-      {
-        id: 2,
-        user: {
-          name: 'Trần Thị B',
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
-          verified: true,
-        },
-        date: '5 ngày trước',
-        comment:
-          'Một trong những phim siêu anh hùng hay nhất mọi thời đại. Christopher Nolan là thiên tài!',
-      },
-    ],
-  },
-  {
-    id: 2,
-    movie: {
-      title: 'Inception',
-      image:
-        'https://images.unsplash.com/photo-1700174561966-36ed87c7bbeb?auto=format&fit=crop&w=1080&q=80',
-      momoScore: 8.9,
-      imdbScore: 8.8,
-    },
-    reviews: [
-      {
-        id: 3,
-        user: {
-          name: 'Lê Minh C',
-          avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100',
-          verified: true,
-        },
-        date: '1 tuần trước',
-        comment:
-          'Cốt truyện phức tạp nhưng rất hấp dẫn. Hiệu ứng hình ảnh tuyệt đẹp. Phim khoa học viễn tưởng đỉnh cao!',
-      },
-      {
-        id: 4,
-        user: {
-          name: 'Phạm Thu D',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-          verified: true,
-        },
-        date: '1 tuần trước',
-        comment:
-          'Xem xong phải suy ngẫm rất nhiều. Nolan không bao giờ làm tôi thất vọng. Masterpiece!',
-      },
-    ],
-  },
-  {
-    id: 3,
-    movie: {
-      title: 'Interstellar',
-      image:
-        'https://images.unsplash.com/photo-1761948245703-cbf27a3e7502?auto=format&fit=crop&w=1080&q=80',
-      momoScore: 9.1,
-      imdbScore: 8.7,
-    },
-    reviews: [
-      {
-        id: 5,
-        user: {
-          name: 'Hoàng Văn E',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-          verified: true,
-        },
-        date: '3 ngày trước',
-        comment:
-          'Phim về vũ trụ hay nhất từng xem. Âm nhạc của Hans Zimmer thật tuyệt vời. Cảm động và hùng vĩ!',
-      },
-      {
-        id: 6,
-        user: {
-          name: 'Đỗ Thị F',
-          avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-          verified: true,
-        },
-        date: '4 ngày trước',
-        comment:
-          'Kiệt tác của Nolan. Mỗi lần xem lại đều có cảm xúc mới. Rất đáng xem trên màn hình lớn!',
-      },
-    ],
-  },
-]
+import { useMovies } from '@/lib/api/movies'
+import { useMovieReviews } from '@/lib/api/reviews'
+import type { Movie } from '@/types/movie'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function FeaturedReviews() {
+  // 1. Lấy top 3 phim có rating cao nhất hoặc view cao nhất
+  const { data: movieData, isLoading } = useMovies({ 
+    limit: 3, 
+    sortBy: 'averageRating', 
+    order: 'desc' 
+  })
+
+  const movies = movieData?.movies || []
+
+  if (isLoading) return null; // Hoặc Skeleton loading section
+
   return (
     <section className="py-16 bg-bg-secondary text-text-primary">
       <div className="max-w-[1400px] mx-auto px-6">
-        <h2 className="text-center mb-10 font-semibold text-2xl">💬 Bình luận nổi bật</h2>
+        <h2 className="text-center mb-10 font-semibold text-2xl flex items-center justify-center gap-2">
+            <MessageSquare className="text-primary w-6 h-6" /> 
+            Bình luận nổi bật
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {featuredComments.map(item => (
-            <Card
-              key={item.id}
-              className="rounded-2xl border border-border bg-surface shadow-sm hover:shadow-md transition-all overflow-hidden"
-            >
-              {/* Movie Thumbnail */}
-              <div className="relative aspect-[16/9] group">
-                <img
-                  src={item.movie.image}
-                  alt={item.movie.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition" />
-
-                {/* Play Button */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition">
-                    <Play className="w-6 h-6 text-white fill-white" />
-                  </div>
-                </div>
-
-                {/* Movie Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h4 className="text-white font-medium mb-2">{item.movie.title}</h4>
-                  <div className="flex gap-2">
-                    <Badge className="bg-accent text-white border-0">
-                      MoMo {item.movie.momoScore}
-                    </Badge>
-                    <Badge className="bg-primary text-white border-0">
-                      IMDb {item.movie.imdbScore}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {/* Reviews */}
-              <div className="p-5 space-y-4">
-                {item.reviews.map(review => (
-                  <div key={review.id} className="border-b border-border/60 pb-3 last:border-none">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={review.user.avatar} />
-                        <AvatarFallback>{review.user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h5 className="text-sm font-medium truncate">{review.user.name}</h5>
-                          {review.user.verified && (
-                            <Star className="w-4 h-4 fill-accent text-accent" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge
-                            variant="secondary"
-                            className="bg-accent/10 text-accent border-0 text-xs"
-                          >
-                            Đã mua qua MoMo
-                          </Badge>
-                          <span className="text-xs text-text-secondary">{review.date}</span>
-                        </div>
-                        <p className="text-sm text-text-secondary line-clamp-2">{review.comment}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <Button
-                  variant="ghost"
-                  asChild
-                  className="text-sm hover:text-[hsl(var(--primary))] transition"
-                >
-                  <Link href="/reviews" className="flex items-center gap-1">
-                    Xem thêm <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </div>
-            </Card>
+          {movies.map(movie => (
+            <FeaturedMovieCard key={movie._id} movie={movie} />
           ))}
         </div>
 
-        {/* Bottom Gradient Button */}
         <div className="text-center">
           <Button className="bg-gradient-to-r from-primary to-accent text-white rounded-full px-10 py-5 shadow-md hover:opacity-90">
             <ChevronDown className="w-5 h-5 mr-2" />
@@ -207,5 +45,98 @@ export function FeaturedReviews() {
         </div>
       </div>
     </section>
+  )
+}
+
+// --- SUB COMPONENT: Card cho từng phim ---
+function FeaturedMovieCard({ movie }: { movie: Movie }) {
+  // 2. Lấy reviews cho từng phim
+  const { data: reviewList, isLoading } = useMovieReviews(movie._id)
+  
+  // Lấy 2 review mới nhất
+  const reviews = reviewList?.reviews?.slice(0, 2) || []
+
+  return (
+    <Card className="rounded-2xl border border-border bg-surface shadow-sm hover:shadow-md transition-all overflow-hidden h-full flex flex-col">
+      {/* Movie Thumbnail */}
+      <div className="relative aspect-[16/9] group shrink-0">
+        <img
+          src={movie.posterUrl || "/placeholder-movie.png"}
+          alt={movie.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition" />
+
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Link href={`/movies/${movie._id}`} className="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition">
+            <Play className="w-6 h-6 text-white fill-white ml-1" />
+          </Link>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h4 className="text-white font-medium mb-2 line-clamp-1">{movie.title}</h4>
+          <div className="flex gap-2">
+            <Badge className="bg-primary text-white border-0">
+              {(movie.averageRating || 0).toFixed(1)} ⭐
+            </Badge>
+            <Badge className="bg-white/20 text-white border-0 backdrop-blur-md">
+              {movie.duration}p
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews List */}
+      <div className="p-5 space-y-4 flex-1 flex flex-col">
+        {isLoading ? (
+            <div className="space-y-3">
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-12 w-full rounded-lg" />
+            </div>
+        ) : reviews.length > 0 ? (
+            reviews.map(review => (
+            <div key={review._id} className="border-b border-border/60 pb-3 last:border-none last:pb-0">
+                <div className="flex items-start gap-3">
+                <Avatar className="w-9 h-9 border border-border">
+                    <AvatarImage src={review.customer?.profilePicture} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {review.customer?.fullName?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                        <h5 className="text-xs font-bold truncate">{review.customer?.fullName || 'Người dùng ẩn danh'}</h5>
+                        <div className="flex text-accent">
+                            {[...Array(review.rating)].map((_, i) => <Star key={i} className="w-3 h-3 fill-accent" />)}
+                        </div>
+                    </div>
+                    <p className="text-xs text-text-secondary mb-1">
+                        {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                    </p>
+                    <p className="text-sm text-text-primary line-clamp-2 italic">&ldquo;{review.comment}&rdquo;</p>
+                </div>
+                </div>
+            </div>
+            ))
+        ) : (
+            <div className="text-center py-4 text-sm text-muted-foreground italic">
+                Chưa có bình luận nào. Hãy là người đầu tiên!
+            </div>
+        )}
+
+        <div className="mt-auto pt-2">
+            <Button
+            variant="ghost"
+            asChild
+            className="text-sm w-full hover:text-primary hover:bg-primary/5 transition"
+            >
+            <Link href={`/movies/${movie._id}`} className="flex items-center justify-center gap-1">
+                Xem chi tiết & bình luận <ChevronRight className="w-4 h-4" />
+            </Link>
+            </Button>
+        </div>
+      </div>
+    </Card>
   )
 }

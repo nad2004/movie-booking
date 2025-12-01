@@ -21,7 +21,6 @@ export function useGenreMutations() {
     onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   })
 
-  // Cập nhật
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: GenreUpdateDTO }) => updateGenre(id, data),
     onSuccess: () => {

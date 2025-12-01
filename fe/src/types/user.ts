@@ -34,7 +34,12 @@ export interface User {
   lastLogin?: string | Date;
   createdAt?: string | Date;
   updatedAt?: string | Date;
-
+  spending?:{
+    totalSpent: number;
+    totalBookings: number;
+    completedBookings: number;
+    cancelledBookings: number;
+  },
   // Virtuals
   bookingsCount?: number;
   reviewsCount?: number;
