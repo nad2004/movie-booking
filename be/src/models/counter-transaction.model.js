@@ -54,7 +54,7 @@ const counterTransactionSchema = new Schema(
     },
     customerPhone: {
       type: String,
-      required: true,
+      default: "",
     },
     customerEmail: {
       type: String,
@@ -164,8 +164,8 @@ counterTransactionSchema.index({ status: 1, createdAt: -1 });
 
 // Pre-save middleware
 counterTransactionSchema.pre("save", function (next) {
-  // Auto-generate transaction ID
-  if (!this.transactionId && this.isNew) {
+  // Auto-generate transaction ID if not provided
+  if (!this.transactionId) {
     const date = new Date();
     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
     const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();

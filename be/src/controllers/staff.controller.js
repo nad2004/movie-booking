@@ -1,9 +1,9 @@
-import User from "../models/user.model.js";
 import Booking from "../models/booking.model.js";
 import Schedule from "../models/schedule.model.js";
 import Theater from "../models/theater.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
-import { AuthenticationError, AuthorizationError, NotFoundError } from "../utils/errors.js";
+import User from "../models/user.model.js";
+import { AuthorizationError, NotFoundError } from "../utils/errors.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const staffController = {
   // ============================================
@@ -186,6 +186,125 @@ const staffController = {
       return successResponse(res, { hasPermission });
     } catch (error) {
       console.error("Check permission error:", error);
+      return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
+    }
+  },
+
+  // ============================================
+  // ADMIN STAFF MANAGEMENT
+  // ============================================
+
+  // Assign theater to staff (Admin only)
+  assignTheater: async (req, res) => {
+    try {
+      const { staffId, theaterId } = req.body;
+
+      // Validate input
+      if (!staffId || !theaterId) {
+        return errorResponse(res, "staffId và theaterId là bắt buộc", 400);
+      }
+
+      // Check if staff exists
+      const staff = await User.findById(staffId);
+      if (!staff || staff.role !== "staff") {
+        throw new NotFoundError("Nhân viên không tồn tại hoặc không phải nhân viên");
+      }
+
+      // Check if theater exists
+      const theater = await Theater.findById(theaterId);
+      if (!theater) {
+        throw new NotFoundError("Rạp chiếu không tồn tại");
+      }
+
+      // Assign theater to staff
+      staff.staffInfo.assignedTheater = theaterId;
+      await staff.save();
+
+      // Return updated staff with theater info
+      await staff.populate("staffInfo.assignedTheater", "name address city");
+
+      return successResponse(
+        res,
+        { staff },
+        `Đã gán rạp "${theater.name}" cho nhân viên "${staff.fullName}" thành công`
+      );
+    } catch (error) {
+      console.error("Assign theater error:", error);
+      return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
+    }
+  },
+
+  // Get all staff with theater assignments
+  getAllStaff: async (req, res) => {
+    try {
+      const { theaterId } = req.query;
+
+      let query = { role: "staff" };
+      if (theaterId) {
+        query["staffInfo.assignedTheater"] = theaterId;
+      }
+
+      const staffList = await User.find(query)
+        .select("-password")
+        .populate("staffInfo.assignedTheater", "name address city")
+        .sort({ fullName: 1 });
+
+      return successResponse(res, { staff: staffList, total: staffList.length }, "Lấy danh sách nhân viên thành công");
+    } catch (error) {
+      console.error("Get all staff error:", error);
+      return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
+    }
+  },
+
+  // Remove theater assignment from staff
+  removeTheaterAssignment: async (req, res) => {
+    try {
+      const { staffId } = req.params;
+
+      const staff = await User.findById(staffId);
+      if (!staff || staff.role !== "staff") {
+        throw new NotFoundError("Nhân viên không tồn tại");
+      }
+
+      const theaterName = staff.staffInfo?.assignedTheater?.name || "không xác định";
+
+      // Remove theater assignment
+      staff.staffInfo.assignedTheater = null;
+      await staff.save();
+
+      return successResponse(res, { staff }, `Đã hủy gán rạp cho nhân viên "${staff.fullName}" thành công`);
+    } catch (error) {
+      console.error("Remove theater assignment error:", error);
+      return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
+    }
+  },
+
+  // Get staff by theater
+  getStaffByTheater: async (req, res) => {
+    try {
+      const { theaterId } = req.params;
+
+      // Check if theater exists
+      const theater = await Theater.findById(theaterId);
+      if (!theater) {
+        throw new NotFoundError("Rạp chiếu không tồn tại");
+      }
+
+      const staffList = await User.find({
+        role: "staff",
+        "staffInfo.assignedTheater": theaterId,
+      })
+        .select("-password")
+        .populate("staffInfo.assignedTheater", "name address city")
+        .sort({ fullName: 1 });
+
+      return successResponse(
+        res,
+        { staff: staffList, total: staffList.length, theater: theater.name },
+        `Lấy danh sách nhân viên tại rạp "${theater.name}" thành công`
+      );
+    } catch (error) {
+      console.error("Get staff by theater error:", error);
       return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
     }
   },

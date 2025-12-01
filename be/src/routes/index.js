@@ -665,6 +665,27 @@ router.delete(
   voucherController.deleteVoucher
 );
 
+// Staff management (Admin)
+router.get("/admin/staff", authenticateToken, authorize("admin", "super-admin"), staffController.getAllStaff);
+router.post(
+  "/admin/staff/assign-theater",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  staffController.assignTheater
+);
+router.delete(
+  "/admin/staff/:staffId/remove-theater",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  staffController.removeTheaterAssignment
+);
+router.get(
+  "/admin/staff/theater/:theaterId",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  staffController.getStaffByTheater
+);
+
 // Statistics & Reports (Admin)
 router.get(
   "/admin/statistics/overview",

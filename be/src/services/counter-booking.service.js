@@ -16,16 +16,39 @@ class CounterBookingService {
 
     try {
       return await session.withTransaction(async () => {
-        const { scheduleId, seats, products, customerInfo, paymentMethod, cashReceived } = bookingData;
+        const { scheduleId, products, customerInfo, paymentMethod, cashReceived } = bookingData;
+        let seats = bookingData.seats;
 
-        // 1. Get staff info
-        const staff = await User.findById(staffId).populate("staffInfo.assignedTheater");
+        // 1. Get staff info with assigned theater
+        const staff = await User.findById(staffId).populate({
+          path: "staffInfo.assignedTheater",
+          select: "_id name address city",
+        });
         if (!staff || staff.role !== "staff") {
           throw new BookingError("Chỉ nhân viên mới có thể tạo booking tại quầy");
         }
 
-        // 2. Validate schedule
-        const schedule = await Schedule.findById(scheduleId).populate("movie", "title").populate("theater", "name");
+        // Validate staff has assigned theater
+        if (!staff.staffInfo?.assignedTheater) {
+          throw new BookingError(
+            `Nhân viên ${staff.fullName} chưa được gán rạp. Vui lòng liên hệ quản lý để được gán rạp.`
+          );
+        }
+
+        // Ensure theater data is available
+        if (!staff.staffInfo.assignedTheater._id || !staff.staffInfo.assignedTheater.name) {
+          throw new BookingError("Dữ liệu rạp không đầy đủ. Vui lòng liên hệ quản lý.");
+        }
+
+        if (seats && typeof seats === "object" && !Array.isArray(seats)) {
+          seats = Object.values(seats);
+        }
+
+        // 2. Validate and fetch schedule
+        let schedule = await Schedule.findById(scheduleId)
+          .populate("movie", "title")
+          .populate("theater", "name")
+          .session(session);
 
         if (!schedule) {
           throw new BookingError("Không tìm thấy suất chiếu");
@@ -35,40 +58,25 @@ class CounterBookingService {
           throw new BookingError("Suất chiếu không còn mở bán vé");
         }
 
-        // 3. Atomic seat holding
+        // 3. Check seat availability and hold seats
         const seatNumbers = seats.map((s) => s.seatNumber);
-        const atomicSchedule = await Schedule.findOneAndUpdate(
-          {
-            _id: scheduleId,
-            status: "Đang mở bán vé",
-            $and: seatNumbers.map((seatNum) => ({
-              seatAvailability: {
-                $elemMatch: {
-                  seatNumber: seatNum,
-                  isBooked: false,
-                  $or: [{ holdUntil: { $exists: false } }, { holdUntil: null }, { holdUntil: { $lt: new Date() } }],
-                },
-              },
-            })),
-          },
-          {
-            $set: seatNumbers.reduce((update, seatNum) => {
-              update[`seatAvailability.$[seat_${seatNum}].isBooked`] = true;
-              return update;
-            }, {}),
-          },
-          {
-            arrayFilters: seatNumbers.map((seatNum) => ({
-              [`seat_${seatNum}.seatNumber`]: seatNum,
-            })),
-            new: true,
-            session,
-          }
-        );
 
-        if (!atomicSchedule) {
-          throw new SeatUnavailableError(seatNumbers);
+        // Check if seats are available (not booked)
+        const unavailableSeats = [];
+        for (const seatNum of seatNumbers) {
+          const seat = schedule.seatAvailability.find((s) => s.seatNumber === seatNum);
+          if (!seat) {
+            unavailableSeats.push(seatNum);
+          } else if (seat.isBooked) {
+            unavailableSeats.push(seatNum);
+          }
         }
+
+        if (unavailableSeats.length > 0) {
+          throw new SeatUnavailableError(unavailableSeats);
+        }
+
+        const atomicSchedule = schedule;
 
         // 4. Calculate ticket prices
         let ticketsAmount = 0;
@@ -146,13 +154,14 @@ class CounterBookingService {
         } else {
           // Create guest customer
           const guestEmail = `guest_${Date.now()}@counter.local`;
+          const guestPassword = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 8); // Generate 12-char password
           customer = new User({
             email: guestEmail,
             fullName: customerInfo.fullName,
             phoneNumber: customerInfo.phoneNumber,
             role: "customer",
-            authProvider: "local",
-            password: Math.random().toString(36).substring(7), // Random password
+            authProviders: ["local"],
+            password: guestPassword, // At least 12 characters
           });
           await customer.save({ session });
           isGuestCustomer = true;
@@ -272,9 +281,8 @@ class CounterBookingService {
           );
         }
 
-        // 9. Update schedule booked count
-        atomicSchedule.bookedSeatsCount = atomicSchedule.seatAvailability.filter((seat) => seat.isBooked).length;
-        await atomicSchedule.save({ session });
+        // 9. Confirm seats (mark isBooked=true and set bookedBy to booking ID)
+        await atomicSchedule.confirmSeats(seatNumbers, newBooking._id, session);
 
         // 10. Generate QR code
         try {
@@ -305,16 +313,23 @@ class CounterBookingService {
           console.error("QR Code generation error:", qrError);
         }
 
+        // 11. Generate transaction ID
+        const date = new Date();
+        const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
+        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const transactionId = `CT${dateStr}${randomStr}`;
+
         // 11. Create counter transaction record
         const counterTransaction = new CounterTransaction({
+          transactionId, // Explicitly set transactionId
           staff: staffId,
           staffName: staff.fullName,
-          theater: staff.staffInfo?.assignedTheater?._id,
-          theaterName: staff.staffInfo?.assignedTheater?.name,
+          theater: staff.staffInfo.assignedTheater._id,
+          theaterName: staff.staffInfo.assignedTheater.name,
           booking: newBooking._id,
           customer: customer._id,
           customerName: customer.fullName,
-          customerPhone: customer.phoneNumber,
+          customerPhone: customer.phoneNumber || "", // Default to empty if not provided
           customerEmail: customer.email,
           isGuestCustomer,
           movieTitle: newBooking.movieTitle,
