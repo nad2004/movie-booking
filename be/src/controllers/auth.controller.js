@@ -55,7 +55,8 @@ const authController = {
       const data = {
         token,
         user: {
-          id: newUser._id,
+          // id: newUser._id,
+          _id: newUser._id,
           email: newUser.email,
           fullName: newUser.fullName,
           role: newUser.role,
@@ -105,7 +106,8 @@ const authController = {
       const data = {
         token,
         user: {
-          id: user._id,
+          // id: user._id,
+          _id: user._id,
           email: user.email,
           fullName: user.fullName,
           role: user.role,
@@ -171,7 +173,8 @@ const authController = {
       const data = {
         token,
         user: {
-          id: user._id,
+          // id: user._id,
+          _id: user._id,
           email: user.email,
           fullName: user.fullName,
           role: user.role,

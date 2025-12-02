@@ -52,18 +52,22 @@ const userController = {
         {
           $match: {
             customer: new mongoose.Types.ObjectId(userId),
-            status: { $in: ["completed", "confirmed", "cancelled"] },
+            status: { $in: ["completed", "confirmed", "Hoàn tất", "Đã xác nhận"] },
           },
         },
         {
           $group: {
             _id: null,
-            totalSpent: { $sum: "$finalPrice" },
+            totalSpent: { $sum: "$totalAmount" },
             completedBookings: {
-              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+              $sum: {
+                $cond: [{ $in: ["$status", ["completed", "Hoàn tất"]] }, 1, 0],
+              },
             },
             cancelledBookings: {
-              $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
+              $sum: {
+                $cond: [{ $in: ["$status", ["cancelled", "Đã hủy"]] }, 1, 0],
+              },
             },
             totalBookings: { $sum: 1 },
           },
@@ -133,18 +137,22 @@ const userController = {
         {
           $match: {
             customer: new mongoose.Types.ObjectId(id),
-            status: { $in: ["completed", "confirmed", "cancelled"] },
+            status: { $in: ["completed", "confirmed", "Hoàn tất", "Đã xác nhận"] },
           },
         },
         {
           $group: {
             _id: null,
-            totalSpent: { $sum: "$finalPrice" },
+            totalSpent: { $sum: "$totalAmount" },
             completedBookings: {
-              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+              $sum: {
+                $cond: [{ $in: ["$status", ["completed", "Hoàn tất"]] }, 1, 0],
+              },
             },
             cancelledBookings: {
-              $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
+              $sum: {
+                $cond: [{ $in: ["$status", ["cancelled", "Đã hủy"]] }, 1, 0],
+              },
             },
             totalBookings: { $sum: 1 },
           },

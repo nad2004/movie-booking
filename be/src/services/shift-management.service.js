@@ -1,6 +1,10 @@
+import mongoose from "mongoose";
 import Shift from "../models/shift.model.js";
-import User from "../models/user.model.js";
+import ShiftAssignment from "../models/shiftAssignment.model.js";
+import ShiftTemplate from "../models/shiftTemplate.model.js";
 import Theater from "../models/theater.model.js";
+import User from "../models/user.model.js";
+import WorkSchedule from "../models/workSchedule.model.js";
 import { AppError } from "../utils/errors.js";
 
 class ShiftManagementService {
@@ -27,8 +31,75 @@ class ShiftManagementService {
     }
 
     const scheduledHours = this.calculateScheduledHours(shiftData.startTime, shiftData.endTime);
-    const shift = await Shift.create({ ...shiftData, scheduledHours, status: "scheduled" });
-    return shift.populate(["staff", "theater"]);
+
+    // Create Shift plus compatible WorkSchedule and ShiftAssignment in a transaction
+    const session = await mongoose.startSession();
+    let createdShift = null;
+    try {
+      await session.withTransaction(async () => {
+        const [s] = await Shift.create([{ ...shiftData, scheduledHours, status: "scheduled" }], { session });
+        createdShift = s;
+
+        // Ensure a ShiftTemplate exists for this shiftType (use shiftType as code)
+        const tplCode = shiftData.shiftType || `T_${shiftData.startTime}_${shiftData.endTime}`;
+        const tpl = await ShiftTemplate.findOneAndUpdate(
+          { code: tplCode },
+          {
+            $setOnInsert: {
+              code: tplCode,
+              name: shiftData.shiftType || tplCode,
+              startTime: shiftData.startTime,
+              endTime: shiftData.endTime,
+            },
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true, session }
+        );
+
+        // compute date string YYYY-MM-DD
+        const dateObj = shiftData.date instanceof Date ? shiftData.date : new Date(shiftData.date);
+        const dateStr = dateObj.toISOString().slice(0, 10);
+
+        // create WorkSchedule linked to legacy Shift
+        const wsDoc = {
+          date: dateStr,
+          theaterId: shiftData.theater,
+          shiftTemplateId: tpl._id,
+          startDateTime: new Date(dateStr + "T" + shiftData.startTime + ":00Z"),
+          endDateTime: (() => {
+            let e = new Date(dateStr + "T" + shiftData.endTime + ":00Z");
+            if (e <= new Date(dateStr + "T" + shiftData.startTime + ":00Z")) {
+              // overnight
+              e = new Date(e.getTime() + 24 * 60 * 60 * 1000);
+            }
+            return e;
+          })(),
+          status: "open",
+          createdBy: shiftData.createdBy || shiftData.staff,
+          legacyShiftId: s._id,
+        };
+
+        const [ws] = await WorkSchedule.create([wsDoc], { session });
+
+        // create ShiftAssignment linking the staff to this WorkSchedule
+        await ShiftAssignment.create(
+          [
+            {
+              workScheduleId: ws._id,
+              userId: shiftData.staff,
+              role: shiftData.position || "staff",
+              assignedBy: shiftData.createdBy || shiftData.staff,
+              legacyShiftId: s._id,
+            },
+          ],
+          { session }
+        );
+      });
+    } finally {
+      session.endSession();
+    }
+
+    if (!createdShift) throw new AppError("Failed to create shift", 500);
+    return createdShift.populate(["staff", "theater"]);
   }
 
   async checkIn(shiftId, checkInData) {
@@ -40,6 +111,21 @@ class ShiftManagementService {
     shift.checkIn = { time: new Date(), location: checkInData.location, method: checkInData.method || "manual" };
     shift.status = "in-progress";
     await shift.save();
+
+    // Sync to ShiftAssignment if exists
+    try {
+      const assignment = await ShiftAssignment.findOne({ legacyShiftId: shift._id });
+      if (assignment) {
+        assignment.checkInTime = shift.checkIn.time;
+        assignment.checkInLocation = checkInData.location
+          ? { type: "Point", coordinates: checkInData.location.coordinates || [] }
+          : assignment.checkInLocation;
+        assignment.status = "active";
+        await assignment.save();
+      }
+    } catch (syncErr) {
+      console.error("Sync check-in to ShiftAssignment failed:", syncErr);
+    }
     return shift;
   }
 
@@ -52,6 +138,21 @@ class ShiftManagementService {
     shift.calculateActualHours();
     shift.status = "completed";
     await shift.save();
+
+    // Sync to ShiftAssignment if exists
+    try {
+      const assignment = await ShiftAssignment.findOne({ legacyShiftId: shift._id });
+      if (assignment) {
+        assignment.checkOutTime = shift.checkOut.time;
+        assignment.checkOutLocation = checkOutData.location
+          ? { type: "Point", coordinates: checkOutData.location.coordinates || [] }
+          : assignment.checkOutLocation;
+        assignment.status = "completed";
+        await assignment.save();
+      }
+    } catch (syncErr) {
+      console.error("Sync check-out to ShiftAssignment failed:", syncErr);
+    }
     return shift;
   }
 

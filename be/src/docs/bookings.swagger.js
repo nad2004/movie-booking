@@ -144,4 +144,97 @@
  *         description: Hủy vé thành công
  */
 
+/**
+ * @swagger
+ * /bookings/code/{bookingCode}:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Lấy thông tin booking theo mã vé
+ *     description: API công khai để tra cứu thông tin booking bằng mã vé (không cần authentication)
+ *     parameters:
+ *       - in: path
+ *         name: bookingCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Mã booking (VD BK20251202S9GA61)
+ *         example: "BK20251202S9GA61"
+ *     responses:
+ *       200:
+ *         description: Thông tin booking
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     bookingCode:
+ *                       type: string
+ *                       example: "BK20251202S9GA61"
+ *                     customer:
+ *                       type: object
+ *                       properties:
+ *                         _id: { type: string }
+ *                         fullName: { type: string }
+ *                         email: { type: string }
+ *                         phoneNumber: { type: string }
+ *                     schedule:
+ *                       type: object
+ *                       properties:
+ *                         _id: { type: string }
+ *                         showDate: { type: string, format: date-time }
+ *                         showTime: { type: string }
+ *                         movie:
+ *                           type: object
+ *                           properties:
+ *                             title: { type: string }
+ *                             posterUrl: { type: string }
+ *                             duration: { type: number }
+ *                         theater:
+ *                           type: object
+ *                           properties:
+ *                             name: { type: string }
+ *                             address: { type: string }
+ *                         room:
+ *                           type: object
+ *                           properties:
+ *                             name: { type: string }
+ *                             roomType: { type: string }
+ *                     seats:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           seatNumber: { type: string }
+ *                           seatType: { type: string }
+ *                           price: { type: number }
+ *                     products:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     totalAmount:
+ *                       type: number
+ *                       example: 120000
+ *                     status:
+ *                       type: string
+ *                       example: "Hoàn tất"
+ *                     qrCode:
+ *                       type: string
+ *                       description: Base64 QR code image
+ *       404:
+ *         description: Không tìm thấy booking
+ *       500:
+ *         description: Lỗi server
+ */
+
 export default {};
