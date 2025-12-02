@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useEffect, useRef } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useMounted } from '@/hooks/useMounted' // Import custom hook
 import { useMovies } from '@/lib/api/movies'
 import type { Genre } from '@/types/genre'
 import Image from 'next/image'
@@ -55,7 +56,10 @@ export function Header() {
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
-  const { user, isAuthenticated, logout, _hasHydrated } = useUserStore()
+  const { user, isAuthenticated, logout } = useUserStore()
+
+  // FIX HYDRATION: Sử dụng custom hook
+  const isMounted = useMounted()
 
   // --- SEARCH LOGIC ---
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -63,19 +67,16 @@ export function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
 
-  // Debounce từ khóa tìm kiếm (500ms)
   const debouncedSearch = useDebounce(searchQuery, 500)
 
-  // 2. Gọi API tìm kiếm Movie
   const { data: movieData, isLoading: isSearching } = useMovies({
     search: debouncedSearch,
-    limit: 5, // Chỉ lấy 5 kết quả gợi ý
-    status: '', // Tìm tất cả trạng thái (Sắp chiếu/Đang chiếu)
+    limit: 5,
+    status: '',
   })
 
   const movies = movieData?.movies || []
 
-  // Xử lý đóng search khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -89,7 +90,6 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Focus input khi mở search
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
       searchInputRef.current.focus()
@@ -108,13 +108,13 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div
         className={cn(
           'flex items-center justify-between w-full border-b border-border',
           'h-[72px] md:h-[82px] xl:h-[65px]',
           'px-[5px] py-[17px]',
-          'md:px-[24px] md:py-[16px]',
+          'md:px-6 md:py-4',
           'xl:px-[86px] xl:py-[15px]'
         )}
       >
@@ -126,7 +126,7 @@ export function Header() {
           )}
         >
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -147,9 +147,9 @@ export function Header() {
                 <DropdownMenu key={link.label}>
                   <DropdownMenuTrigger
                     className={cn(
-                      'text-sm font-medium transition-colors hover:text-[var(--primary)] flex items-center gap-1 focus-visible:outline-none',
+                      'text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 focus-visible:outline-none',
                       pathname.startsWith(link.href)
-                        ? 'text-[var(--primary)]'
+                        ? 'text-primary'
                         : 'text-muted-foreground'
                     )}
                   >
@@ -169,8 +169,8 @@ export function Header() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'text-sm font-medium transition-colors hover:text-[var(--primary)]',
-                    pathname === link.href ? 'text-[var(--primary)]' : 'text-muted-foreground'
+                    'text-sm font-medium transition-colors hover:text-primary',
+                    pathname === link.href ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
                   {link.label}
@@ -220,7 +220,7 @@ export function Header() {
 
                 {/* --- SEARCH RESULTS DROPDOWN --- */}
                 {searchQuery.trim() && (
-                  <div className="absolute top-full left-0 w-full mt-2 bg-surface border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-[60]">
+                  <div className="absolute top-full left-0 w-full mt-2 bg-surface border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-60">
                     {movies.length > 0 ? (
                       <div className="max-h-[400px] overflow-y-auto py-2">
                         <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -229,12 +229,11 @@ export function Header() {
                         {movies.map(movie => (
                           <Link
                             key={movie._id}
-                            href={`/movies/${movie._id}`} // Điều hướng đến chi tiết phim
+                            href={`/movies/${movie._id}`}
                             onClick={handleCloseSearch}
                             className="flex items-start gap-3 px-3 py-2 hover:bg-muted/50 transition-colors group"
                           >
-                            {/* Poster phim */}
-                            <div className="relative w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-gray-100 shadow-sm">
+                            <div className="relative w-10 h-14 shrink-0 rounded overflow-hidden bg-gray-100 shadow-sm">
                               <Image
                                 src={movie.posterUrl || '/placeholder-movie.png'}
                                 alt={movie.title}
@@ -244,7 +243,6 @@ export function Header() {
                               />
                             </div>
 
-                            {/* Thông tin phim */}
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-start">
                                 <p className="text-sm font-medium text-text-primary truncate group-hover:text-primary transition-colors">
@@ -270,7 +268,6 @@ export function Header() {
                                 </span>
                               </div>
 
-                              {/* Thể loại */}
                               <div className="text-[10px] text-text-secondary mt-1 truncate">
                                 {movie.genres?.map((g: Genre) => g.name).join(', ')}
                               </div>
@@ -310,7 +307,7 @@ export function Header() {
             )}
           </div>
 
-          {/* User Section & Actions (Ẩn khi search trên mobile) */}
+          {/* User Section & Actions */}
           <div className={cn('flex items-center gap-2', isSearchOpen ? 'hidden md:flex' : 'flex')}>
             <Button
               variant="ghost"
@@ -322,8 +319,8 @@ export function Header() {
               <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
-            {/* Phần User Dropdown giữ nguyên */}
-            {!_hasHydrated ? (
+            {/* FIX: Hiển thị Skeleton cho đến khi component mount */}
+            {!isMounted ? (
               <Skeleton className="h-10 w-10 rounded-full bg-muted" />
             ) : isAuthenticated && user ? (
               <DropdownMenu>
@@ -338,7 +335,6 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  {/* ... Nội dung Dropdown User ... */}
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.fullName}</p>
@@ -379,7 +375,7 @@ export function Header() {
             ) : (
               <Button
                 asChild
-                className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-xl px-4"
+                className="bg-primary hover:bg-primary/90 text-white rounded-xl px-4"
               >
                 <Link href="/login">Đăng nhập</Link>
               </Button>

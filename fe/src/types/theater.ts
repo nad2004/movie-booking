@@ -9,6 +9,7 @@ export interface Seat {
   isAvailable: boolean;
   row: string;
   column: number;
+  price?: number;
 }
 
 // ======================

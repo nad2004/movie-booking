@@ -1,31 +1,69 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Filters, { type BookingStatus } from './components/Filters'
 import BookingList from './components/BookingList'
-// Import hook mới vừa tạo
 import { useMyBookings } from '@/lib/api/booking'
-
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
+import Link from 'next/link'
 export default function OrderHistoryPage() {
-  // 1. State quản lý Status
-  // Mặc định là 'all' -> API sẽ không gửi param status -> lấy tất cả
-  const [status, setStatus] = useState<BookingStatus | 'all'>('all')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Lấy giá trị từ URL params
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
+  const statusFromUrl = (searchParams.get('status') || 'all') as BookingStatus | 'all'
 
-  // 2. Fetch Data từ API mới
+  const [status, setStatus] = useState<BookingStatus | 'all'>(statusFromUrl)
+  const [currentPage, setCurrentPage] = useState(pageFromUrl)
+  const itemsPerPage = 10
+
+  // Sync state với URL
+  useEffect(() => {
+    setCurrentPage(pageFromUrl)
+    setStatus(statusFromUrl)
+  }, [pageFromUrl, statusFromUrl])
+
+  // Fetch Data từ API
   const {
     data: bookingData,
     isError,
     isLoading,
   } = useMyBookings({
-    page: 1,
-    limit: 100, // Lấy tạm 100 item mới nhất, sau này có thể thêm phân trang
+    page: currentPage,
+    limit: itemsPerPage,
     status: status === 'all' ? undefined : status,
   })
 
-  // Fallback dữ liệu an toàn
   const bookings = bookingData?.bookings || []
+  const totalPages = bookingData?.pagination?.totalPages || 1
+  const totalBookings = bookingData?.pagination.totalItems || 0
 
-  // Hiển thị lỗi
+  // Update URL params khi thay đổi page
+  const updateUrlParams = (newPage: number, newStatus: BookingStatus | 'all') => {
+    const params = new URLSearchParams()
+    params.set('page', newPage.toString())
+    if (newStatus !== 'all') {
+      params.set('status', newStatus)
+    }
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
+  // Handler thay đổi trang
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    updateUrlParams(page, status)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Handler thay đổi status
+  const handleStatusChange = (newStatus: BookingStatus | 'all') => {
+    setStatus(newStatus)
+    setCurrentPage(1)
+    updateUrlParams(1, newStatus)
+  }
+
   if (isError) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -39,7 +77,6 @@ export default function OrderHistoryPage() {
   return (
     <div className="min-h-screen bg-bg-primary">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h2
             className="text-text-primary mb-2 flex items-center gap-3"
@@ -52,18 +89,14 @@ export default function OrderHistoryPage() {
           </p>
         </div>
 
-        {/* Filters */}
-        {/* Truyền số lượng vé ĐÃ LỌC (từ API) xuống để hiển thị */}
         <Filters
           currentStatus={status}
-          onStatusChange={setStatus}
-          bookingsCount={bookings.length}
+          onStatusChange={handleStatusChange}
+          bookingsCount={totalBookings}
           isLoading={isLoading}
         />
 
-        {/* Booking List */}
         {isLoading ? (
-          // Skeleton Loading
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map(i => (
               <div
@@ -72,9 +105,42 @@ export default function OrderHistoryPage() {
               />
             ))}
           </div>
+        ) : bookings.length > 0 ? (
+          <>
+            <BookingList bookings={bookings} />
+
+            <PaginationInfo
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalBookings}
+              itemsPerPage={itemsPerPage}
+            />
+
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              showPageNumbers={5}
+            />
+          </>
         ) : (
-          // Danh sách vé
-          <BookingList bookings={bookings} />
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="text-6xl mb-4">🎬</div>
+            <h3 className="text-xl font-semibold text-text-primary mb-2">
+              Chưa có vé nào
+            </h3>
+            <p className="text-text-secondary mb-6">
+              {status === 'all'
+                ? 'Bạn chưa đặt vé nào. Hãy khám phá các bộ phim đang chiếu!'
+                : `Không có vé nào ở trạng thái "${status}"`}
+            </p>
+            <Link
+              href="/movies"
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Khám phá phim
+            </Link>
+          </div>
         )}
       </div>
     </div>

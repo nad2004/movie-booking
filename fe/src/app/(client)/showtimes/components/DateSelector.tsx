@@ -40,7 +40,7 @@ export default function DateSelector({ selectedDate, onSelectDate }: DateSelecto
 
           return (
             <button
-              key={item.value}
+              key={item.date}
               onClick={() => onSelectDate(item.value)}
               className={`shrink-0 min-w-20 px-3 py-2 rounded-xl transition-all border border-transparent ${
                 isSelected

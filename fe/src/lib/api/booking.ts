@@ -2,7 +2,7 @@ import { BookingListResponse, BookingStatus, Booking } from "@/types/booking";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
 import { ApiResponse } from "@/types/apiTemplate";
-import { CreateBookingRequest, CreateBookingResponse } from '@/types/booking';
+import { CreateBookingRequest, CreateBookingResponse, CreateStaffBookingRequest } from '@/types/booking';
 export interface GetBookingParams {
   page?: string;      // movieId
   status?: string;    // theaterId
@@ -80,6 +80,10 @@ export function useMyBookings(params: GetMyBookingParams = {}) {
 
 export const createBookingApi = async (data: CreateBookingRequest): Promise<CreateBookingResponse> => {
   const response = await api.post<CreateBookingResponse>('/bookings', data);
+  return response.data;
+};
+export const createStaffBookingApi = async (data: CreateStaffBookingRequest): Promise<CreateBookingResponse> => {
+  const response = await api.post<CreateBookingResponse>('/staff/bookings', data);
   return response.data;
 };
 export interface GetAdminBookingsParams {

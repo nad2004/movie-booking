@@ -90,8 +90,8 @@ export interface CreateBookingRequest {
   scheduleId: string;
   seats: {
     seatNumber: string;
-    seatType: string;
-    price: number;
+    seatType: "Thường" | "VIP" | "Ghế đôi";
+    price?: number;
   }[];
   products: {
     productId: string;
@@ -100,7 +100,20 @@ export interface CreateBookingRequest {
   }[];
   voucherCode?: string; // Optional nếu không nhập
 }
-
+export interface CreateStaffBookingRequest {
+  scheduleId: string;
+  seats: {
+    seatNumber: string;
+    seatType: "Thường" | "VIP" | "Ghế đôi";
+    price?: number;
+  }[];
+  customerInfo:{
+    fullName: string,
+    email: string,
+  }
+  paymentMethod: string;
+  cashReceived?: number;
+}
 export interface BookingResponseData {
     bookingId: string,
     bookingCode: string,

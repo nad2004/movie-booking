@@ -197,3 +197,51 @@
   --color-surface: var(--surface);
   --color-card-hover: var(--card-hover);
 }
+
+@keyframes scan-line {
+  0% {
+    top: 0;
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0.8;
+  }
+}
+
+.animate-scan-line {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+/* Pulse animation cho scan frame */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: hsl(var(--primary));
+    opacity: 1;
+  }
+  50% {
+    border-color: hsl(var(--primary) / 0.6);
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-border {
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+/* Glow effect cho corners */
+@keyframes corner-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.8);
+  }
+  50% {
+    box-shadow: 0 0 16px hsl(var(--primary));
+  }
+}
+
+.corner-glow {
+  animation: corner-glow 2s ease-in-out infinite;
+}
