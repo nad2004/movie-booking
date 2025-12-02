@@ -26,7 +26,6 @@ export function BookingSummary({
   onPayment,
   isProcessing
 }: BookingSummaryProps) {
-    console.log(selectedSeats)
   return (
     <Card className="p-5 border border-gray-200 shadow-md h-full flex flex-col sticky top-0">
       <h3 className="font-bold text-lg text-gray-900 mb-4 pb-3 border-b border-gray-100">
@@ -88,9 +87,9 @@ export function BookingSummary({
               <p className="text-[10px] text-gray-500 uppercase font-semibold">Thanh toán qua</p>
               <div className="grid grid-cols-2 gap-2">
                   <button
-                      onClick={() => setPaymentMethod('Tiền mặt')}
+                      onClick={() => setPaymentMethod('cash')}
                       className={`p-2 rounded-lg border text-xs font-medium flex flex-col items-center gap-1 transition-all ${
-                          paymentMethod === 'Tiền mặt' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 hover:bg-gray-50'
+                          paymentMethod === 'cash' ? 'border-primary bg-primary/5 text-primary' : 'border-gray-200 hover:bg-gray-50'
                       }`}
                   >
                       <Banknote className="w-4 h-4" /> Tiền mặt

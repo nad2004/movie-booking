@@ -8,18 +8,53 @@ import { toast } from 'sonner'
 import { MovieSelector } from './components/MovieSelector'
 import { SeatSelector } from './components/SeatSelector'
 import { BookingSummary } from './components/BookingSummary'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { User, Mail, ArrowRight, ArrowLeft } from 'lucide-react'
+import { useNotification } from '@/providers/NotificationProvider'
+import { useQueryClient } from '@tanstack/react-query'
+// 1. Định nghĩa Schema Validation với Zod
+const customerSchema = z.object({
+  fullName: z.string().min(2, 'Tên khách hàng phải có ít nhất 2 ký tự'),
+  email: z.string().email('Email không hợp lệ').or(z.literal('')), // Email có thể để trống nếu muốn, hoặc bỏ .or(z.literal('')) nếu bắt buộc
+})
+
+type CustomerFormData = z.infer<typeof customerSchema>
 
 export default function TicketSales() {
   // State UI
   const [selectedMovieId, setSelectedMovieId] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA'))
-  const [paymentMethod, setPaymentMethod] = useState<string>('Tiền mặt')
+  const [paymentMethod, setPaymentMethod] = useState<string>('cash')
+  const { showSuccess } = useNotification()
+  const queryClient = useQueryClient()
+  // State lưu thông tin khách hàng sau khi submit form
+  const [customerInfo, setCustomerInfo] = useState<CustomerFormData | null>(null)
+
+  // React Hook Form Setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+    },
+  })
 
   // Fetch Movies
   const { data: movieData } = useMovies({ status: 'Đang chiếu', limit: 100 })
   const movies = movieData?.movies || []
 
-  // Sử dụng Hook useBooking để quản lý logic ghế và lịch chiếu
+  // Sử dụng Hook useBooking
   const {
     schedules,
     isLoadingSchedules,
@@ -28,23 +63,34 @@ export default function TicketSales() {
     selectedSeats,
     handleSeatClick,
     totalAmount,
-  } = useBooking({ movieId: selectedMovieId }) // Hook này đã fetch schedules theo movieId
+  } = useBooking({ movieId: selectedMovieId })
 
-  // Lọc schedules theo ngày (Client-side filter vì hook useBooking có thể fetch hết)
   const filteredSchedules = schedules.filter(s => s.showDate.startsWith(selectedDate))
-
-  // Hook Tạo Booking
   const { mutate: staffCreateBooking, isPending } = useStaffCreateBooking()
 
-  // Reset khi đổi phim
   useEffect(() => {
     setSelectedSchedule(null)
   }, [selectedMovieId, selectedDate])
 
+  // Xử lý submit form khách hàng
+  const onCustomerSubmit = (data: CustomerFormData) => {
+    setCustomerInfo(data)
+    toast.success(`Đã nhận khách: ${data.fullName}`)
+  }
+
+  // Quay lại bước nhập thông tin khách
+  const handleBackToCustomer = () => {
+    if (confirm('Quay lại sẽ xóa các ghế đang chọn. Bạn chắc chắn chứ?')) {
+      setCustomerInfo(null)
+      setSelectedSchedule(null)
+      // selectedSeats nên được reset ở đây nếu có thể
+    }
+  }
+
   const handlePayment = () => {
     if (!selectedSchedule) return toast.error('Chưa chọn suất chiếu')
     if (selectedSeats.length === 0) return toast.error('Chưa chọn ghế')
-
+    if (!customerInfo) return toast.error('Thiếu thông tin khách hàng')
     const payload = {
       scheduleId: selectedSchedule._id,
       seats: selectedSeats.map(s => ({
@@ -53,57 +99,146 @@ export default function TicketSales() {
         price: s.price,
       })),
       customerInfo: {
-        fullName: '',
-        email: '',
+        fullName: customerInfo.fullName,
+        email: customerInfo.email || 'no-email@example.com', // Fallback nếu email rỗng
       },
-      paymentMethod: '',
+      paymentMethod: paymentMethod, // Thêm paymentMethod vào payload nếu API hỗ trợ
       cashReceived: 0,
     }
 
     staffCreateBooking(payload, {
       onSuccess: () => {
-        toast.success('Tạo vé thành công!')
-        // Reset sau khi bán xong
+        queryClient.invalidateQueries({ queryKey: ['schedules'] })
+        showSuccess('Tạo đơn thành công!')
         setSelectedSchedule(null)
-        // selectedSeats sẽ tự clear do hook useBooking quản lý hoặc cần reset tay tùy implementation
-        window.location.reload() // Reload tạm để refresh ghế
+        setCustomerInfo(null)
+        reset() // Reset form
       },
     })
   }
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full pb-4">
-      {/* Cột Trái & Giữa */}
-      <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
-        <MovieSelector
-          movies={movies}
-          selectedMovieId={selectedMovieId}
-          onSelectMovie={setSelectedMovieId}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
+  // VIEW 1: FORM NHẬP THÔNG TIN KHÁCH HÀNG
+  if (!customerInfo) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[500px] bg-gray-50/50 p-4">
+        <Card className="w-full max-w-md shadow-lg border-gray-200">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center text-primary">
+              Thông Tin Khách Hàng
+            </CardTitle>
+            <CardDescription className="text-center">
+              Nhập thông tin để bắt đầu quy trình bán vé
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onCustomerSubmit)} className="space-y-4">
+              {/* Tên Khách Hàng */}
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-500" /> Họ và tên
+                </Label>
+                <Input
+                  id="fullName"
+                  placeholder="Ví dụ: Nguyễn Văn A"
+                  {...register('fullName')}
+                  className={errors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                />
+                {errors.fullName && (
+                  <p className="text-xs text-red-500 font-medium">{errors.fullName.message}</p>
+                )}
+              </div>
 
-        <SeatSelector
-          schedules={filteredSchedules}
-          isLoadingSchedules={isLoadingSchedules}
-          selectedSchedule={selectedSchedule}
-          onSelectSchedule={setSelectedSchedule}
-          selectedSeats={selectedSeats}
-          onSeatClick={handleSeatClick}
-        />
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-500" /> Email (Tùy chọn)
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="khachhang@example.com"
+                  {...register('email')}
+                  className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full mt-4 font-semibold">
+                Tiếp Tục Chọn Phim <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // VIEW 2: GIAO DIỆN BÁN VÉ CHÍNH (Chỉ hiện khi đã có customerInfo)
+  return (
+    <div className="h-full pb-4 flex flex-col gap-4">
+      {/* Header Bar hiển thị thông tin khách đang phục vụ */}
+      <div className="bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center shadow-sm shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 p-2 rounded-full">
+            <User className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium uppercase">Khách hàng</p>
+            <h2 className="text-sm font-bold text-gray-900">{customerInfo.fullName}</h2>
+          </div>
+          {customerInfo.email && (
+            <div className="hidden md:block pl-4 border-l border-gray-200 ml-4">
+              <p className="text-xs text-gray-500 font-medium uppercase">Email</p>
+              <p className="text-sm text-gray-700">{customerInfo.email}</p>
+            </div>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBackToCustomer}
+          className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Đổi khách
+        </Button>
       </div>
 
-      {/* Cột Phải */}
-      <div className="lg:col-span-1 min-h-0">
-        <BookingSummary
-          selectedSchedule={selectedSchedule}
-          selectedSeats={selectedSeats}
-          totalAmount={totalAmount}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
-          onPayment={handlePayment}
-          isProcessing={isPending}
-        />
+      {/* Grid Layout Chính */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+        {/* Cột Trái & Giữa */}
+        <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
+          <MovieSelector
+            movies={movies}
+            selectedMovieId={selectedMovieId}
+            onSelectMovie={setSelectedMovieId}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+
+          <SeatSelector
+            schedules={filteredSchedules}
+            isLoadingSchedules={isLoadingSchedules}
+            selectedSchedule={selectedSchedule}
+            onSelectSchedule={setSelectedSchedule}
+            selectedSeats={selectedSeats}
+            onSeatClick={handleSeatClick}
+          />
+        </div>
+
+        {/* Cột Phải */}
+        <div className="lg:col-span-1 min-h-0">
+          <BookingSummary
+            selectedSchedule={selectedSchedule}
+            selectedSeats={selectedSeats}
+            totalAmount={totalAmount}
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
+            onPayment={handlePayment}
+            isProcessing={isPending}
+          />
+        </div>
       </div>
     </div>
   )

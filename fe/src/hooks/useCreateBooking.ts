@@ -24,16 +24,11 @@ export const useCreateBooking = () => {
   });
 };
 export const useStaffCreateBooking = () => {
-    const { showSuccess, showError } = useNotification()
-    const queryClient = useQueryClient()
+    const { showError } = useNotification()
 
   return useMutation({
     mutationFn: (data: CreateStaffBookingRequest) => createStaffBookingApi(data),
 
-    onSuccess: (response)=>{
-    queryClient.invalidateQueries({ queryKey: ['schedules'] })
-      showSuccess('Tạo đơn thành công!', 'Vui lòng thanh toán!')
-    },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Đặt vé thất bại. Vui lòng thử lại.';
       showError("lỗi!", message)
