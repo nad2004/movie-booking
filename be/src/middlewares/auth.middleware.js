@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import ShiftAssignment from "../models/shiftAssignment.model.js";
 import User from "../models/user.model.js";
 import { errorResponse } from "../utils/response.js";
 
@@ -98,4 +99,43 @@ export const checkPermission = (permission) => {
 
     next();
   };
+};
+
+// Middleware bắt buộc staff phải check-in trước khi thực hiện thao tác
+export const requireActiveShift = async (req, res, next) => {
+  try {
+    // Admin và manager không cần check-in
+    if (req.userRole === "admin" || req.userRole === "manager" || req.userRole === "super-admin") {
+      return next();
+    }
+
+    // Staff phải có active shift assignment
+    const activeAssignment = await ShiftAssignment.findOne({
+      userId: req.userId,
+      status: "active",
+    })
+      .populate("workScheduleId")
+      .lean();
+
+    if (!activeAssignment) {
+      return errorResponse(res, "Bạn phải check-in ca làm việc trước khi thực hiện thao tác này", 403);
+    }
+
+    // Kiểm tra xem ca làm việc có đang trong thời gian không (optional, có thể bỏ)
+    const now = new Date();
+    if (activeAssignment.workScheduleId) {
+      const schedule = activeAssignment.workScheduleId;
+      if (now < schedule.startDateTime || now > schedule.endDateTime) {
+        return errorResponse(res, "Ca làm việc của bạn chưa bắt đầu hoặc đã kết thúc", 403);
+      }
+    }
+
+    // Attach assignment info vào request để controller có thể sử dụng
+    req.activeShift = activeAssignment;
+
+    next();
+  } catch (error) {
+    console.error("requireActiveShift middleware error:", error);
+    return errorResponse(res, "Lỗi kiểm tra ca làm việc", 500);
+  }
 };

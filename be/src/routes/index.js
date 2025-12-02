@@ -15,6 +15,8 @@ import qrScannerController from "../controllers/qr-scanner.controller.js";
 import reviewController from "../controllers/review.controller.js";
 import scheduleController from "../controllers/schedule.controller.js";
 import shiftController from "../controllers/shift.controller.js";
+import shiftAssignmentController from "../controllers/shiftAssignment.controller.js";
+import shiftTemplateController from "../controllers/shiftTemplate.controller.js";
 import staffReportsController from "../controllers/staff-reports.controller.js";
 import staffController from "../controllers/staff.controller.js";
 import statisticsController from "../controllers/statistics.controller.js";
@@ -23,9 +25,10 @@ import ticketValidationController from "../controllers/ticket-validation.control
 import uploadController from "../controllers/upload.controller.js";
 import userController from "../controllers/user.controller.js";
 import voucherController from "../controllers/voucher.controller.js";
+import workScheduleController from "../controllers/workSchedule.controller.js";
 
 // Import middleware
-import { authenticateToken, authorize } from "../middlewares/auth.middleware.js";
+import { authenticateToken, authorize, requireActiveShift } from "../middlewares/auth.middleware.js";
 import {
   bookingRateLimiter,
   passwordResetRateLimiter,
@@ -102,6 +105,7 @@ router.get("/users/spending-stats", authenticateToken, userController.getSpendin
 //  FIX #5 & #9: Add validation and rate limiting for bookings
 router.post("/bookings", authenticateToken, bookingRateLimiter, validateBookingInput, bookingController.createBooking);
 router.get("/bookings/my-bookings", authenticateToken, bookingController.getMyBookings);
+router.get("/bookings/code/:bookingCode", bookingController.getBookingByCode);
 router.get("/bookings/:id", authenticateToken, validateObjectId("id"), bookingController.getBookingById);
 router.post(
   "/bookings/:id/confirm-payment",
@@ -134,8 +138,14 @@ router.get("/staff/dashboard", authenticateToken, authorize("staff"), staffContr
 router.get("/staff/theater", authenticateToken, authorize("staff"), staffController.getAssignedTheater);
 router.get("/staff/permissions/:permission", authenticateToken, authorize("staff"), staffController.hasPermission);
 
-// Counter booking
-router.post("/staff/bookings", authenticateToken, authorize("staff"), counterBookingController.createBooking);
+// Counter booking - Require active shift
+router.post(
+  "/staff/bookings",
+  authenticateToken,
+  authorize("staff"),
+  requireActiveShift,
+  counterBookingController.createBooking
+);
 router.get(
   "/staff/bookings/my-transactions",
   authenticateToken,
@@ -149,17 +159,19 @@ router.get(
   counterBookingController.getTheaterTransactions
 );
 
-// Ticket validation
+// Ticket validation - Require active shift
 router.post(
   "/staff/tickets/validate-code",
   authenticateToken,
   authorize("staff"),
+  requireActiveShift,
   ticketValidationController.validateByBookingCode
 );
 router.post(
   "/staff/tickets/validate-qr",
   authenticateToken,
   authorize("staff"),
+  requireActiveShift,
   ticketValidationController.validateByQRCode
 );
 router.get(
@@ -240,53 +252,60 @@ router.get("/staff/reports/stats", authenticateToken, authorize("staff"), staffR
 // QR SCANNER & HARDWARE INTEGRATION (Staff)
 // ============================================
 
-// QR validation
+// QR validation - Require active shift for staff
 router.post(
   "/qr-scanner/validate",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.validateQR
 );
 router.post(
   "/qr-scanner/quick-validate",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.quickValidate
 );
 
-// Check-in via QR
+// Check-in via QR - Require active shift for staff
 router.post(
   "/qr-scanner/scan-check-in",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.scanCheckIn
 );
 router.post(
   "/qr-scanner/check-in-by-code",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.checkInByCode
 );
 router.post(
   "/qr-scanner/bulk-check-in",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.bulkCheckIn
 );
 
-// QR generation
+// QR generation - Require active shift for staff
 router.post(
   "/qr-scanner/generate/:bookingId",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.generateQR
 );
 
-// Booking code verification
+// Booking code verification - Require active shift for staff
 router.post(
   "/qr-scanner/verify-code",
   authenticateToken,
   authorize("staff", "admin", "manager"),
+  requireActiveShift,
   qrScannerController.verifyBookingCode
 );
 
@@ -365,6 +384,55 @@ router.post(
 );
 router.put("/shifts/:shiftId", authenticateToken, authorize("admin", "manager"), shiftController.updateShift);
 router.delete("/shifts/:shiftId", authenticateToken, authorize("admin", "manager"), shiftController.deleteShift);
+
+// === New: Shift Template (Configuration) ===
+// Public read, admin management
+router.get("/shift-templates", shiftTemplateController.list);
+router.post("/shift-templates", authenticateToken, authorize("admin", "super-admin"), shiftTemplateController.create);
+router.get("/shift-templates/:id", shiftTemplateController.getById);
+router.put(
+  "/shift-templates/:id",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  shiftTemplateController.update
+);
+router.delete(
+  "/shift-templates/:id",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  shiftTemplateController.remove
+);
+
+// === New: Work Schedules (Planning) ===
+router.post(
+  "/work-schedules/generate",
+  authenticateToken,
+  authorize("admin", "manager"),
+  workScheduleController.generate
+);
+router.get("/work-schedules", authenticateToken, authorize("admin", "manager", "staff"), workScheduleController.list);
+router.get(
+  "/theaters/:theaterId/roster",
+  authenticateToken,
+  authorize("admin", "manager", "staff"),
+  workScheduleController.roster
+);
+
+// === New: Shift Assignments (Execution) ===
+router.post(
+  "/assignments/bulk",
+  authenticateToken,
+  authorize("admin", "manager"),
+  shiftAssignmentController.bulkAssign
+);
+router.get(
+  "/schedules/:scheduleId/assignments",
+  authenticateToken,
+  authorize("admin", "manager", "staff"),
+  shiftAssignmentController.listBySchedule
+);
+router.post("/assignments/check-in", authenticateToken, authorize("staff"), shiftAssignmentController.checkIn);
+router.post("/assignments/check-out", authenticateToken, authorize("staff"), shiftAssignmentController.checkOut);
 
 // ============================================
 // ANALYTICS & REPORTING ROUTES (Admin & Manager)

@@ -691,7 +691,19 @@ const bookingController = {
       }
 
       const [bookings, total] = await Promise.all([
-        Booking.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Booking.find(query)
+          .populate({
+            path: "schedule",
+            populate: [
+              { path: "movie", select: "title posterUrl duration genre rating" },
+              { path: "theater", select: "name address city" },
+              { path: "room", select: "name roomType" },
+            ],
+          })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
         Booking.countDocuments(query),
       ]);
 
@@ -720,8 +732,17 @@ const bookingController = {
       const { id } = req.params;
 
       const booking = await Booking.findById(id)
+        .populate("customer", "fullName email phoneNumber")
+        .populate({
+          path: "schedule",
+          populate: [
+            { path: "movie", select: "title posterUrl duration genre rating" },
+            { path: "theater", select: "name address city" },
+            { path: "room", select: "name roomType" },
+          ],
+        })
         .populate("appliedVoucher", "code description discountValue")
-        .populate("products.product", "name category")
+        .populate("products.product", "name category price imageUrl")
         .lean();
 
       if (!booking) {
@@ -974,6 +995,14 @@ const bookingController = {
       const [bookings, total] = await Promise.all([
         Booking.find(query)
           .populate("customer", "fullName email phoneNumber")
+          .populate({
+            path: "schedule",
+            populate: [
+              { path: "movie", select: "title posterUrl duration genre rating" },
+              { path: "theater", select: "name address city" },
+              { path: "room", select: "name roomType" },
+            ],
+          })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit))
@@ -1099,6 +1128,61 @@ const bookingController = {
       return successResponse(res, { qrCode: qrCodeUrl }, "QR code đã được tạo lại thành công");
     } catch (error) {
       console.error("Regenerate QR code error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // GET /api/v1/bookings/:bookingCode - Lấy thông tin booking theo mã
+  getBookingByCode: async (req, res) => {
+    try {
+      const { bookingCode } = req.params;
+
+      if (!bookingCode) {
+        return errorResponse(res, "Mã booking là bắt buộc", 400);
+      }
+
+      const booking = await Booking.findOne({ bookingCode })
+        .populate("customer", "fullName email phoneNumber")
+        .populate({
+          path: "schedule",
+          select: "showDate showTime movie theater room",
+          populate: [
+            { path: "movie", select: "title posterUrl duration genre rating" },
+            { path: "theater", select: "name address city" },
+            { path: "room", select: "name roomType" },
+          ],
+        })
+        .populate("products.product", "name price imageUrl")
+        .populate("appliedVoucher", "code discountType discountValue")
+        .lean();
+
+      if (!booking) {
+        return errorResponse(res, "Không tìm thấy booking với mã này", 404);
+      }
+
+      // Clean response - chỉ trả về thông tin cần thiết
+      const cleanBooking = {
+        _id: booking._id,
+        bookingCode: booking.bookingCode,
+        customer: booking.customer,
+        schedule: booking.schedule,
+        seats: booking.seats, // Chỉ ghế của người đặt
+        products: booking.products,
+        appliedVoucher: booking.appliedVoucher,
+        ticketsAmount: booking.ticketsAmount,
+        productsAmount: booking.productsAmount,
+        subtotal: booking.subtotal,
+        discountAmount: booking.discountAmount,
+        totalAmount: booking.totalAmount,
+        status: booking.status,
+        qrCode: booking.qrCode,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+      };
+
+      return successResponse(res, cleanBooking);
+    } catch (error) {
+      console.error("Get booking by code error:", error);
       return errorResponse(res, "Lỗi server", 500);
     }
   },
