@@ -1,20 +1,27 @@
-import { Bell, User, Search } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+"use client"
+import { Bell } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { useUserStore } from '@/store/userStore'
+import { LogoutButton } from '@/app/components/shared/LogoutButton' 
 
 export function StaffHeader() {
+  const { user } = useUserStore()
+  const router = useRouter()
+
   return (
     <header className="bg-card border-b border-border px-8 py-4 flex items-center justify-between">
-      <div className="flex-1 max-w-xl">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder="Tìm kiếm phim, vé, khách hàng..."
-            className="pl-10 bg-input-background border-border rounded-[10px]"
-          />
-        </div>
-      </div>
-      
+      <div className="flex-1 max-w-xl"></div>
+
       <div className="flex items-center gap-4">
         {/* Ca làm việc */}
         <div className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-[10px]">
@@ -30,15 +37,37 @@ export function StaffHeader() {
 
         {/* Thông tin nhân viên */}
         <div className="flex items-center gap-3 pl-4 border-l border-border">
-          <div className="text-right">
-            <p className="text-sm text-foreground font-medium">Nguyễn Văn An</p>
-            <p className="text-xs text-muted-foreground">NV001</p>
-          </div>
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-hover rounded-[10px] flex items-center justify-center shadow-sm">
-            <User className="w-5 h-5 text-primary-foreground" />
-          </div>
+          {user && <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Avatar className="h-10 w-10 border border-border">
+                  <AvatarImage src={user.profilePicture || ''} alt={user.fullName} />
+                  <AvatarFallback>{user.fullName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user.fullName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="p-0! focus:bg-transparent!" 
+                onSelect={(e) => {
+                  e.preventDefault() // QUAN TRỌNG: Ngăn Dropdown đóng ngay lập tức
+                }}
+              >
+                <LogoutButton className='w-full bg-white text-gray-700 hover:bg-gray-100 hover:text-red-600  shadow-none justify-start' />
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>}
         </div>
       </div>
     </header>
-  );
+  )
 }

@@ -1,14 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
   Moon,
   Sun,
-  Bell,
   Search,
   User as UserIcon,
-  LogOut,
   ChevronDown,
   Ticket,
   Settings,
@@ -39,6 +37,7 @@ import { useMounted } from '@/hooks/useMounted' // Import custom hook
 import { useMovies } from '@/lib/api/movies'
 import type { Genre } from '@/types/genre'
 import Image from 'next/image'
+import { LogoutButton } from '@/app/components/shared/LogoutButton' 
 
 interface NavLink {
   href: string
@@ -54,9 +53,8 @@ const navLinks: NavLink[] = [
 
 export function Header() {
   const pathname = usePathname()
-  const router = useRouter()
   const { theme, setTheme } = useTheme()
-  const { user, isAuthenticated, logout } = useUserStore()
+  const { user, isAuthenticated } = useUserStore()
 
   // FIX HYDRATION: Sử dụng custom hook
   const isMounted = useMounted()
@@ -99,12 +97,6 @@ export function Header() {
   const handleCloseSearch = () => {
     setIsSearchOpen(false)
     setSearchQuery('')
-  }
-
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
-    router.refresh()
   }
 
   return (
@@ -363,13 +355,14 @@ export function Header() {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer text-red-500 focus:text-red-500"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Đăng xuất</span>
-                  </DropdownMenuItem>
+                 <DropdownMenuItem
+                className="p-0! focus:bg-transparent!" 
+                onSelect={(e) => {
+                  e.preventDefault() // QUAN TRỌNG: Ngăn Dropdown đóng ngay lập tức
+                }}
+              >
+                <LogoutButton className='w-full bg-bg-primary! text-text-primary! hover:bg-accent! hover:text-red-600!  shadow-none justify-start' />
+              </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

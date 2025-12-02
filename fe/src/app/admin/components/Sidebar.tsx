@@ -14,34 +14,34 @@ import {
   Settings,
   Clock,
 } from 'lucide-react'
+import { LogoutButton } from '@/app/components/shared/LogoutButton' 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
- 
+
 export function Sidebar() {
   const pathname = usePathname()
- const menuItems = [
+  
+  const menuItems = [
     { icon: LayoutDashboard, label: 'Tổng Quan', path: '/admin' },
     { icon: BarChart3, label: 'Báo Cáo Thống Kê', path: '/admin/reports' },
     { icon: Film, label: 'Quản Lý Phim', path: '/admin/movies' },
     { icon: Users, label: 'Quản Lý Người Dùng', path: '/admin/users' },
     { icon: MapPin, label: 'Quản Lý Rạp', path: '/admin/theaters' },
     { icon: Armchair, label: 'Quản Lý Phòng Chiếu', path: '/admin/screening-rooms' },
-    { icon: Calendar, label: 'Quản Lý Lịch Chiếu', path: '/admin/schedules' }, 
-    { icon: Clock, label: 'Quản Lý Ca Làm Việc', path: '/admin/shift' }, 
+    { icon: Calendar, label: 'Quản Lý Lịch Chiếu', path: '/admin/schedules' },
+    { icon: Clock, label: 'Quản Lý Ca Làm Việc', path: '/admin/shift' },
     { icon: Ticket, label: 'Quản Lý Vé', path: '/admin/tickets' },
     { icon: Tag, label: 'Quản Lý Thể Loại', path: '/admin/genres' },
     { icon: Star, label: 'Danh Sách Đánh Giá', path: '/admin/reviews' },
     { icon: Settings, label: 'Cấu Hình Hệ Thống', path: '/admin/settings' },
   ]
-  // Danh sách menu: Đảm bảo 'path' là duy nhất cho mỗi mục
-
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-50">
       {/* Logo */}
       <div className="h-20 flex items-center px-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6C63FF] to-[#8C82FF] flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#6C63FF] to-[#8C82FF] flex items-center justify-center shadow-lg">
             <Film className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -59,7 +59,6 @@ export function Sidebar() {
               item.path === '/admin' ? pathname === '/admin' : pathname?.startsWith(item.path)
 
             return (
-              // Key phải là duy nhất trong mảng map
               <li key={item.path}>
                 <Link
                   href={item.path}
@@ -83,15 +82,8 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#8C82FF] flex items-center justify-center text-white font-bold shadow-sm">
-            A
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">Admin User</p>
-            <p className="text-xs text-gray-500 truncate">admin@cinema.com</p>
-          </div>
-        </div>
+        {/* Sử dụng LogoutButton ở đây */}
+        <LogoutButton className="w-full bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-red-600 border shadow-none justify-start" />
       </div>
     </aside>
   )

@@ -55,13 +55,12 @@ function PaymentResult() {
     );
   }
 
-  // Thành công -> Tái sử dụng StepSuccess
-  // Cần map dữ liệu Booking -> BookingResponseData mà StepSuccess yêu cầu
   const bookingResponseData = {
     bookingId: booking._id,
     bookingCode: booking.bookingCode || booking._id.slice(-6).toUpperCase(),
     totalAmount: booking.totalAmount,
-    holdUntil: new Date() // Không quan trọng ở bước này
+    
+    holdUntil: new Date()
   };
 
   return (
