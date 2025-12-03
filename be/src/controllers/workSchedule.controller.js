@@ -93,7 +93,13 @@ const workScheduleController = {
         q.startDateTime = { $gte: new Date(from) };
         q.endDateTime = { $lte: new Date(to) };
       }
-      const schedules = await WorkSchedule.find(q).sort({ startDateTime: 1 }).lean();
+      // const schedules = await WorkSchedule.find(q).sort({ startDateTime: 1 }).lean();
+      const schedules = await WorkSchedule.find(q)
+        .populate("theaterId", "name")
+        .populate("shiftTemplateId", "name startTime endTime")
+        .sort({ startDateTime: 1 })
+        .lean();
+
       return successResponse(res, schedules);
     } catch (err) {
       console.error("List schedules error:", err);
@@ -107,8 +113,15 @@ const workScheduleController = {
       const { from, to } = req.query;
       if (!from || !to) return errorResponse(res, "from/to required", 400);
 
-      const schedules = await WorkSchedule.find({ theaterId, date: { $gte: from, $lte: to } })
-        .populate("shiftTemplateId")
+      // const schedules = await WorkSchedule.find({ theaterId, date: { $gte: from, $lte: to } })
+      //   .populate("shiftTemplateId")
+      //   .lean();
+      const schedules = await WorkSchedule.find({
+        theaterId,
+        date: { $gte: from, $lte: to },
+      })
+        .populate("theaterId", "name")
+        .populate("shiftTemplateId", "name startTime endTime")
         .lean();
 
       // group by date then templates
