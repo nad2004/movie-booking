@@ -133,7 +133,6 @@
  *         description: Không tìm thấy ca mẫu
  */
 
-
 /* ============================================================
    WORK SCHEDULES
    ============================================================ */
@@ -307,6 +306,68 @@
  *     responses:
  *       200:
  *         description: Danh sách phân công của lịch
+ *       500:
+ *         description: Lỗi server
+ */
+
+/**
+ * @swagger
+ * /assignments/of-user/{userId}:
+ *   get:
+ *     tags: [ShiftAssignments]
+ *     summary: Lấy danh sách các ca làm (shift assignments) của 1 nhân viên
+ *     description: Trả về toàn bộ danh sách các ca được phân cho user, bao gồm thông tin ca làm (WorkSchedule) đã populate.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của nhân viên
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách phân ca thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   userId:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                   checkInTime:
+ *                     type: string
+ *                   checkOutTime:
+ *                     type: string
+ *                   workScheduleId:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       date:
+ *                         type: string
+ *                       startDateTime:
+ *                         type: string
+ *                       endDateTime:
+ *                         type: string
+ *                       theaterId:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *       404:
+ *         description: Không tìm thấy phân ca cho nhân viên
  *       500:
  *         description: Lỗi server
  */

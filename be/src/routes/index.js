@@ -431,6 +431,13 @@ router.get(
   authorize("admin", "manager", "staff"),
   shiftAssignmentController.listBySchedule
 );
+router.get(
+  "/assignments/of-user/:userId",
+  authenticateToken,
+  authorize("admin", "manager", "staff"),
+  shiftAssignmentController.listByUser
+);
+
 router.post("/assignments/check-in", authenticateToken, authorize("staff"), shiftAssignmentController.checkIn);
 router.post("/assignments/check-out", authenticateToken, authorize("staff"), shiftAssignmentController.checkOut);
 

@@ -48,8 +48,9 @@ const bookingSchema = new Schema(
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      index: true, // Index để query nhanh
+      // required: true,
+      // index: true, // Index để query nhanh
+      required: false,
     },
 
     // === THÔNG TIN SUẤT CHIẾU ===
@@ -152,6 +153,13 @@ const bookingSchema = new Schema(
     // === THÔNG TIN BỔ SUNG ===
     notes: { type: String }, // Ghi chú từ khách hàng
     usedAt: { type: Date }, // Thời gian check-in tại rạp
+
+    guestCustomer: {
+      name: String,
+      email: String,
+      phone: String,
+      _id: false,
+    },
   },
   {
     timestamps: true, // Tự động tạo createdAt, updatedAt

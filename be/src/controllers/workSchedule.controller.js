@@ -6,9 +6,10 @@ import { errorResponse, successResponse } from "../utils/response.js";
 // helpers
 function combineDateAndTime(dateStr, timeStr) {
   // dateStr: YYYY-MM-DD, timeStr: HH:mm
-  const [y, m, d] = dateStr.split("-").map((v) => parseInt(v, 10));
-  const [hh, mm] = timeStr.split(":").map((v) => parseInt(v, 10));
-  return new Date(Date.UTC(y, m - 1, d, hh, mm, 0));
+  // const [y, m, d] = dateStr.split("-").map((v) => parseInt(v, 10));
+  // const [hh, mm] = timeStr.split(":").map((v) => parseInt(v, 10));
+  // return new Date(Date.UTC(y, m - 1, d, hh, mm, 0));
+  return new Date(`${dateStr}T${timeStr}:00+07:00`);
 }
 
 function dateRange(fromStr, toStr) {
@@ -26,9 +27,14 @@ const workScheduleController = {
     try {
       let { theaterId, range, templateIds, skipExisting = true } = req.body;
 
-      if (templateIds && typeof templateIds === "object" && !Array.isArray(templateIds)) {
-        templateIds = Object.values(templateIds);
-        req.body.templateIds = templateIds;
+      if (!Array.isArray(templateIds)) {
+        if (typeof templateIds === "object") {
+          templateIds = Object.values(templateIds);
+        } else if (typeof templateIds === "string") {
+          templateIds = [templateIds];
+        } else {
+          return errorResponse(res, "templateIds format invalid", 400);
+        }
       }
 
       if (!theaterId || !range || !range.from || !range.to || !Array.isArray(templateIds)) {
@@ -100,7 +106,20 @@ const workScheduleController = {
         .sort({ startDateTime: 1 })
         .lean();
 
-      return successResponse(res, schedules);
+      // Group schedules by date
+      const grouped = schedules.reduce((acc, item) => {
+        if (!acc[item.date]) acc[item.date] = [];
+        acc[item.date].push(item);
+        return acc;
+      }, {});
+
+      // Convert to array format
+      const result = Object.keys(grouped).map((date) => ({
+        date,
+        shifts: grouped[date],
+      }));
+
+      return successResponse(res, result);
     } catch (err) {
       console.error("List schedules error:", err);
       return errorResponse(res, "Lỗi server", 500);

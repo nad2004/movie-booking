@@ -98,7 +98,7 @@ const shiftAssignmentController = {
       if (workScheduleId) {
         assignment = await ShiftAssignment.findOne({ userId, workScheduleId });
 
-        // Debug 
+        // Debug
         if (!assignment) {
           const allAssignments = await ShiftAssignment.find({ workScheduleId }).populate("userId", "email fullName");
           console.log("Check-in debug:", {
@@ -128,11 +128,48 @@ const shiftAssignmentController = {
       if (!assignment) return errorResponse(res, "No eligible assignment found", 404);
 
       // update
-      assignment.checkInTime = new Date();
+      // assignment.checkInTime = new Date();
+      // assignment.status = "active";
+      // await assignment.save();
+
+      // return successResponse(res, { assignmentId: assignment._id, checkInTime: assignment.checkInTime });
+
+      // ==== CHECK 1: Phải đúng ngày ====
+      const today = new Date().toISOString().slice(0, 10);
+      if (assignment.workScheduleId.date !== today) {
+        return errorResponse(res, "Không thể check-in: Không đúng ngày làm việc", 400);
+      }
+
+      // ==== CHECK 2: Phải đúng giờ ca ====
+      const now = new Date();
+      const start = new Date(assignment.workScheduleId.startDateTime);
+      const end = new Date(assignment.workScheduleId.endDateTime);
+
+      // Cho phép check-in sớm 30 phút
+      const allowedEarly = 30 * 60 * 1000;
+
+      if (now < start - allowedEarly) {
+        return errorResponse(res, "Chưa đến giờ check-in", 400);
+      }
+
+      if (now > end) {
+        return errorResponse(res, "Đã quá giờ check-in của ca này", 400);
+      }
+
+      // ==== CHECK 3: Không được check-in nếu đã active/completed ====
+      if (assignment.status !== "pending") {
+        return errorResponse(res, "Bạn đã check-in hoặc đã hoàn thành ca", 400);
+      }
+
+      // === SUCCESS ===
+      assignment.checkInTime = now;
       assignment.status = "active";
       await assignment.save();
 
-      return successResponse(res, { assignmentId: assignment._id, checkInTime: assignment.checkInTime });
+      return successResponse(res, {
+        assignmentId: assignment._id,
+        checkInTime: now,
+      });
     } catch (err) {
       console.error("Check-in error:", err);
       return errorResponse(res, err.message || "Lỗi server", 500);
@@ -164,14 +201,64 @@ const shiftAssignmentController = {
 
       if (!assignment) return errorResponse(res, "No active assignment found", 404);
 
-      assignment.checkOutTime = new Date();
+      // assignment.checkOutTime = new Date();
+      // assignment.status = "completed";
+      // await assignment.save();
+
+      // return successResponse(res, { assignmentId: assignment._id, checkOutTime: assignment.checkOutTime });
+
+      const now = new Date();
+      const start = new Date(assignment.workScheduleId.startDateTime);
+      const end = new Date(assignment.workScheduleId.endDateTime);
+
+      // ==== CHECK 1: Không checkout nếu chưa check-in ====
+      if (assignment.status !== "active") {
+        return errorResponse(res, "Bạn chưa check-in ca này", 400);
+      }
+
+      // ==== CHECK 2: Không được checkout trước giờ bắt đầu ====
+      if (now < start) {
+        return errorResponse(res, "Chưa đến giờ checkout", 400);
+      }
+
+      // ==== CHECK 3: Cho phép checkout trong vòng 2 giờ sau ca ====
+      const allowedLate = 2 * 60 * 60 * 1000;
+      if (now > end.getTime() + allowedLate) {
+        return errorResponse(res, "Đã quá giờ checkout cho phép", 400);
+      }
+
+      // === SUCCESS ===
+      assignment.checkOutTime = now;
       assignment.status = "completed";
       await assignment.save();
 
-      return successResponse(res, { assignmentId: assignment._id, checkOutTime: assignment.checkOutTime });
+      return successResponse(res, {
+        assignmentId: assignment._id,
+        checkOutTime: now,
+      });
     } catch (err) {
       console.error("Check-out error:", err);
       return errorResponse(res, err.message || "Lỗi server", 500);
+    }
+  },
+
+  listByUser: async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      const assignments = await ShiftAssignment.find({ userId })
+        .populate({
+          path: "workScheduleId",
+          select: "date startDateTime endDateTime theaterId",
+          populate: { path: "theaterId", select: "name" },
+        })
+        .sort({ "workScheduleId.startDateTime": 1 })
+        .lean();
+
+      return successResponse(res, assignments);
+    } catch (err) {
+      console.error("List assignments by user error:", err);
+      return errorResponse(res, "Lỗi server", 500);
     }
   },
 };

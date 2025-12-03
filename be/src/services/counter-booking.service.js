@@ -146,26 +146,31 @@ class CounterBookingService {
         }
 
         // 6. Handle customer (create guest if needed)
-        let customer;
-        let isGuestCustomer = false;
+        // let customer;
+        // let isGuestCustomer = false;
 
-        if (customerInfo.customerId) {
-          customer = await User.findById(customerInfo.customerId);
-        } else {
-          // Create guest customer
-          const guestEmail = `guest_${Date.now()}@counter.local`;
-          const guestPassword = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 8); // Generate 12-char password
-          customer = new User({
-            email: guestEmail,
-            fullName: customerInfo.fullName,
-            phoneNumber: customerInfo.phoneNumber,
-            role: "customer",
-            authProviders: ["local"],
-            password: guestPassword, // At least 12 characters
-          });
-          await customer.save({ session });
-          isGuestCustomer = true;
-        }
+        // if (customerInfo.customerId) {
+        //   customer = await User.findById(customerInfo.customerId);
+        // } else {
+        //   // Create guest customer
+        //   const guestEmail = `guest_${Date.now()}@counter.local`;
+        //   const guestPassword = Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 8); // Generate 12-char password
+        //   customer = new User({
+        //     email: guestEmail,
+        //     fullName: customerInfo.fullName,
+        //     phoneNumber: customerInfo.phoneNumber,
+        //     role: "customer",
+        //     authProviders: ["local"],
+        //     password: guestPassword, // At least 12 characters
+        //   });
+        //   await customer.save({ session });
+        //   isGuestCustomer = true;
+        // }
+
+        // 6. Handle customer without creating User
+        const customerName = customerInfo.fullName;
+        const customerEmail = customerInfo.email || null;
+        const customerPhone = customerInfo.phoneNumber || null;
 
         // 6.5.  FIX: Handle voucher if provided
         let discountAmount = 0;
@@ -192,8 +197,9 @@ class CounterBookingService {
           }
 
           // Check if customer can use this voucher
-          if (customer && customer.membershipLevel) {
-            const canUse = voucher.canBeUsedBy(customer._id, customer.membershipLevel);
+          if (customerInfo.customerId) {
+            const realCustomer = await User.findById(customerInfo.customerId);
+            const canUse = voucher.canBeUsedBy(realCustomer._id, realCustomer.membershipLevel);
             if (!canUse.valid) {
               throw new BookingError(canUse.message || "Không thể sử dụng voucher này");
             }
@@ -206,7 +212,8 @@ class CounterBookingService {
               $inc: { usageCount: 1 },
               $push: {
                 usedBy: {
-                  user: customer._id,
+                  // user: customer._id,
+                  user: customerInfo.customerId || null,
                   bookingId: null, // Will update after booking created
                   usedAt: new Date(),
                 },
@@ -235,7 +242,13 @@ class CounterBookingService {
 
         // 8. Create booking
         const newBooking = new Booking({
-          customer: customer._id,
+          // customer: customer._id,
+          customer: customerInfo.customerId || null,
+          guestCustomer: {
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+          },
           schedule: scheduleId,
           movieTitle: atomicSchedule.movie.title,
           theaterName: atomicSchedule.theater.name,
@@ -269,7 +282,8 @@ class CounterBookingService {
           await Voucher.updateOne(
             {
               _id: appliedVoucher,
-              "usedBy.user": customer._id,
+              // "usedBy.user": customer._id,
+              "usedBy.user": customerInfo.customerId || null,
               "usedBy.bookingId": null,
             },
             {
@@ -327,11 +341,16 @@ class CounterBookingService {
           theater: staff.staffInfo.assignedTheater._id,
           theaterName: staff.staffInfo.assignedTheater.name,
           booking: newBooking._id,
-          customer: customer._id,
-          customerName: customer.fullName,
-          customerPhone: customer.phoneNumber || "", // Default to empty if not provided
-          customerEmail: customer.email,
-          isGuestCustomer,
+          // customer: customer._id,
+          customer: customerInfo.customerId || null,
+          customerName: customerName,
+          customerPhone: customerPhone || "",
+          customerEmail: customerEmail || "",
+          isGuestCustomer: !customerInfo.customerId,
+          // customerName: customer.fullName,
+          // customerPhone: customer.phoneNumber || "", // Default to empty if not provided
+          // customerEmail: customer.email,
+          // isGuestCustomer,
           movieTitle: newBooking.movieTitle,
           showTime: newBooking.showTime,
           seats: validatedSeats,
@@ -350,10 +369,10 @@ class CounterBookingService {
           booking: newBooking,
           transaction: counterTransaction,
           customer: {
-            id: customer._id,
-            name: customer.fullName,
-            phone: customer.phoneNumber,
-            isGuest: isGuestCustomer,
+            id: customerInfo.customerId || null,
+            name: customerName,
+            phone: customerPhone,
+            isGuest: !customerInfo.customerId,
           },
         };
       });
