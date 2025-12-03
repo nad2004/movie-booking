@@ -1,32 +1,44 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation' // [Mới] Import router
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTheaters } from '@/lib/api/theaters';
 import { useRoomMutations } from './hooks/useRoomMutations';
 import { RoomTable } from './components/RoomTable';
 import { RoomToolbar } from './components/RoomToolbar';
 import { RoomFormDialog, FlatRoom } from './components/RoomFormDialog';
-import { AdminSeatMap } from './components/AdminSeatMap'; // Import mới
+import { AdminSeatMap } from './components/AdminSeatMap';
 import { Seat } from '@/types/theater';
-import { toast } from "sonner"; // Giả sử bạn dùng sonner hoặc thư viện toast nào đó trong package.json
+import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+// [Mới] Import components phân trang
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 export default function ScreeningRoomPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // [Mới] Lấy page từ URL
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
+  const itemsPerPage = 10;
+
   // State
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [search, setSearch] = useState("");
   const [selectedTheater, setSelectedTheater] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [roomToEdit, setRoomToEdit] = useState<FlatRoom | null>(null);
   const [deleteInfo, setDeleteInfo] = useState<{ tid: string, rid: string } | null>(null);
 
-  // State mới cho việc xem SeatMap
+  // State cho SeatMap
   const [viewingRoom, setViewingRoom] = useState<FlatRoom | null>(null);
-  const seatMapRef = useRef<HTMLDivElement>(null); // Ref để scroll tới map
+  const seatMapRef = useRef<HTMLDivElement>(null);
 
   // Fetch Data
+  // Lưu ý: Vẫn lấy limit lớn để có đủ dữ liệu flatten, phân trang sẽ xử lý ở client
   const { data: theaterList, isLoading } = useTheaters({ limit: 100 });
   const theaters = theaterList?.theaters || [];
 
@@ -58,7 +70,45 @@ export default function ScreeningRoomPage() {
     });
   }, [allRooms, search, selectedTheater]);
 
+  // [Mới] Logic Phân trang Client-side
+  const totalItems = filteredRooms.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+  const paginatedRooms = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredRooms.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredRooms, currentPage, itemsPerPage]);
+
   const { deleteMutation, updateMutation, updateSeatMutation } = useRoomMutations();
+
+  // [Mới] Đồng bộ URL khi page thay đổi
+  const updateUrlParams = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateUrlParams(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // [Mới] Đồng bộ state từ URL (nếu user back/forward browser)
+  useEffect(() => {
+    setCurrentPage(pageFromUrl);
+  }, [pageFromUrl]);
+
+  // [Mới] Reset về trang 1 khi filter thay đổi
+  useEffect(() => {
+    if (currentPage !== 1) {
+       // Cập nhật URL về trang 1 mà không cần gọi router.push ngay lập tức nếu muốn tối ưu,
+       // nhưng ở đây ta gọi để đồng bộ
+       updateUrlParams(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, selectedTheater]);
+
 
   // Handlers
   const handleAdd = () => {
@@ -71,31 +121,24 @@ export default function ScreeningRoomPage() {
     setIsDialogOpen(true);
   };
 
-  // Handler mới: Mở seat map
   const handleViewSeatMap = (room: FlatRoom) => {
     setViewingRoom(room);
-    // Tự động scroll xuống phần map sau 100ms
     setTimeout(() => {
         seatMapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   };
 
-  // Handler mới: Lưu seat map đã chỉnh sửa
   const handleSaveSeatMap = (updatedSeats: Seat[]) => {
     if (!viewingRoom) return;
-
     updateSeatMutation.mutate(
         { 
           theaterId: viewingRoom.theater._id, 
           roomId: viewingRoom._id, 
-          data: {
-            seats: updatedSeats
-          } 
+          data: { seats: updatedSeats } 
         },
         { 
           onSuccess: () => {
              toast.success("Cập nhật sơ đồ ghế thành công!");
-
              setViewingRoom({ ...viewingRoom, seatMap: updatedSeats });
           },
           onError: () => {
@@ -128,17 +171,35 @@ export default function ScreeningRoomPage() {
             onOpenAdd={handleAdd}
         />
 
+        {/* Truyền dữ liệu đã phân trang vào Table */}
         <RoomTable 
-            rooms={filteredRooms}
+            rooms={paginatedRooms}
             isLoading={isLoading}
             onEdit={handleEdit}
             onDelete={(tid, rid) => setDeleteInfo({ tid, rid })}
-            onView={handleViewSeatMap} // Pass handler xuống
+            onView={handleViewSeatMap}
         />
+
+        {/* [Mới] UI Phân trang */}
+        <div className="flex flex-col gap-4 mt-4">
+            <PaginationInfo
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+            />
+
+            <CustomPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                showPageNumbers={5}
+            />
+        </div>
 
         {/* SECTION: ADMIN SEAT MAP */}
         {viewingRoom && (
-            <div ref={seatMapRef} className="pt-4 border-t border-gray-200">
+            <div ref={seatMapRef} className="pt-4 border-t border-gray-200 mt-6">
                 <AdminSeatMap 
                     room={viewingRoom} 
                     onClose={() => setViewingRoom(null)}

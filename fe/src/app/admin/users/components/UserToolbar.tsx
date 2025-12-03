@@ -6,15 +6,15 @@ import { Button } from "@/components/ui/button";
 interface UserToolbarProps {
   search: string;
   onSearchChange: (val: string) => void;
-  currentTab: string;
+  typeUser: string;
   onTabChange: (val: string) => void;
 }
 
-export function UserToolbar({ search, onSearchChange, currentTab, onTabChange }: UserToolbarProps) {
+export function UserToolbar({ search, onSearchChange, typeUser, onTabChange }: UserToolbarProps) {
   return (
     <div className="space-y-4">
       {/* Tabs Switcher */}
-      <Tabs value={currentTab} onValueChange={onTabChange} className="w-full">
+      <Tabs value={typeUser} onValueChange={onTabChange} className="w-full">
         <TabsList className="bg-white border border-gray-200 p-1 rounded-xl h-auto w-full sm:w-auto justify-start">
           <TabsTrigger 
             value="customer" 

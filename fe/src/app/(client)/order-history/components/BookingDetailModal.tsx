@@ -60,7 +60,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
             <div className="p-6 space-y-6">
               {/* Movie Info Header */}
               <div className="flex gap-4 md:gap-6">
-                <div className="relative w-28 h-40 md:w-32 md:h-48 flex-shrink-0 rounded-lg shadow-md overflow-hidden bg-gray-100">
+                <div className="relative w-28 h-40 md:w-32 md:h-48 shrink-0 rounded-lg shadow-md overflow-hidden bg-gray-100">
                     <Image
                       src={booking.schedule?.movie?.posterUrl || "/placeholder-movie.png"}
                       alt={booking.movieTitle}
@@ -86,7 +86,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                 
                 {/* QR Code Section (Chỉ hiện nếu vé hợp lệ) */}
                 {(booking.status === 'Hoàn tất' || booking.status === 'Chờ thanh toán') && (
-                    <div className="flex-shrink-0 text-center hidden sm:block">
+                    <div className="shrink-0 text-center hidden sm:block">
                         <div className="w-24 h-24 bg-white p-1 rounded-lg border border-border flex items-center justify-center mb-2 overflow-hidden relative">
                             {booking.qrCode ? (
                                  <Image 
@@ -163,7 +163,7 @@ function DetailItem({ icon, label, value, className = "", fullWidth = false }: D
             <div className="mt-0.5 text-text-secondary">{icon}</div>
             <div className="flex-1">
                 <p className="text-xs text-text-secondary mb-0.5">{label}</p>
-                <p className={`text-sm text-text-primary font-medium break-words ${className}`}>{value}</p>
+                <p className={`text-sm text-text-primary font-medium wrap-break-word ${className}`}>{value}</p>
             </div>
         </div>
     )

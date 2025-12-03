@@ -118,6 +118,7 @@ export interface BookingResponseData {
     bookingId: string,
     bookingCode: string,
     totalAmount: number,
+    qrCode?: string,
     holdUntil: Date;
   };
 

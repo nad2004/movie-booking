@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation' // [Mới] Import router
+import { useState, useEffect } from 'react'
 import { useGenres } from '@/lib/api/genres'
 import { useGenreMutations } from './hooks/useGenreMutations'
 import { GenreTable } from './components/GenreTable'
@@ -20,27 +21,71 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useDebounce } from '@/hooks/useDebounce' // Giả sử bạn đã có hook này
+import { useDebounce } from '@/hooks/useDebounce'
+// [Mới] Import component phân trang
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 export default function GenreManagementPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // [Mới] Lấy page từ URL
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
+  const itemsPerPage = 10 // Số lượng items trên 1 trang
+
   // --- State ---
+  const [currentPage, setCurrentPage] = useState(pageFromUrl)
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebounce(search, 500) // Tối ưu search
+  const debouncedSearch = useDebounce(search, 500)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [genreToEdit, setGenreToEdit] = useState<Genre | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
+  // [Mới] Đồng bộ state khi URL thay đổi (VD: User bấm Back browser)
+  useEffect(() => {
+    setCurrentPage(pageFromUrl)
+  }, [pageFromUrl])
+
+  // [Mới] Reset về trang 1 khi thay đổi từ khóa tìm kiếm
+  useEffect(() => {
+    if (currentPage !== 1) {
+      handlePageChange(1)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch])
+
   // --- Data Fetching ---
   const { data: genreData, isLoading } = useGenres({
-    page: 1,
-    limit: 100, // Lấy nhiều hoặc làm pagination sau
+    page: currentPage,
+    limit: itemsPerPage,
     search: debouncedSearch,
   })
+
+  // [Mới] Lấy dữ liệu an toàn cho phân trang
+  // Giả sử API trả về: { genres: [], pagination: { totalPages: number, totalItems: number } }
+  const genres = genreData ?? []
+  const totalPages = genreData ? Math.ceil(genreData.length / itemsPerPage) : 1
+  const totalItems = genreData ? genreData.length : 0
 
   const { deleteMutation } = useGenreMutations()
 
   // --- Handlers ---
+  
+  // [Mới] Hàm cập nhật URL
+  const updateUrlParams = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', newPage.toString())
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
+  // [Mới] Xử lý chuyển trang
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    updateUrlParams(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleAdd = () => {
     setGenreToEdit(null)
     setIsDialogOpen(true)
@@ -87,10 +132,25 @@ export default function GenreManagementPage() {
 
         {/* Table */}
         <GenreTable
-          genres={Array.isArray(genreData) ? genreData : (genreData?.genres ?? [])}
+          genres={genres}
           isLoading={isLoading}
           onEdit={handleEdit}
           onDelete={id => setDeleteId(id)}
+        />
+
+        {/* [Mới] Pagination UI */}
+        <PaginationInfo
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+        />
+
+        <CustomPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          showPageNumbers={5}
         />
       </div>
 

@@ -10,7 +10,7 @@ import Link from 'next/link'
 export default function OrderHistoryPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // Lấy giá trị từ URL params
   const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
   const statusFromUrl = (searchParams.get('status') || 'all') as BookingStatus | 'all'
@@ -21,8 +21,11 @@ export default function OrderHistoryPage() {
 
   // Sync state với URL
   useEffect(() => {
-    setCurrentPage(pageFromUrl)
-    setStatus(statusFromUrl)
+    const timer = setTimeout(() => {
+      setCurrentPage(pageFromUrl)
+      setStatus(statusFromUrl)
+    }, 0)
+    return () => clearTimeout(timer)
   }, [pageFromUrl, statusFromUrl])
 
   // Fetch Data từ API
@@ -126,9 +129,7 @@ export default function OrderHistoryPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="text-6xl mb-4">🎬</div>
-            <h3 className="text-xl font-semibold text-text-primary mb-2">
-              Chưa có vé nào
-            </h3>
+            <h3 className="text-xl font-semibold text-text-primary mb-2">Chưa có vé nào</h3>
             <p className="text-text-secondary mb-6">
               {status === 'all'
                 ? 'Bạn chưa đặt vé nào. Hãy khám phá các bộ phim đang chiếu!'

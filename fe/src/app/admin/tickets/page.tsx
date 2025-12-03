@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { useAdminBookings } from '@/lib/api/booking'
 import { useTicketMutations } from './hooks/useTicketMutations'
 import { TicketTable } from './components/TicketTable'
@@ -19,14 +20,23 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { DEFAULT_BOOKING_LIST } from '@/constants'
-import { GetAdminBookingsParams } from "@/lib/api/booking";
+import { GetAdminBookingsParams } from "@/lib/api/booking"
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
+
 export default function TicketManagementPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
+  const itemsPerPage = 10
+
   // State
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 500)
+  
   const [params, setParams] = useState<GetAdminBookingsParams>({
-    page: 1,
-    limit: 10,
+    page: pageFromUrl,
+    limit: itemsPerPage,
     status: undefined,
     showDate: undefined,
   })
@@ -35,12 +45,61 @@ export default function TicketManagementPage() {
   const [editTicket, setEditTicket] = useState<Booking | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
+  // Sync URL to State
+  useEffect(() => {
+    setParams(prev => ({ ...prev, page: pageFromUrl }))
+  }, [pageFromUrl])
+
   // API
   const { data: bookingData = DEFAULT_BOOKING_LIST, isLoading } = useAdminBookings({
     ...params,
     search: debouncedSearch,
   })
+  
+  const totalPages = bookingData?.pagination?.totalPages || 1
+  const totalItems = bookingData?.pagination?.totalItems || 0
+
   const { deleteMutation } = useTicketMutations()
+
+  // Update URL Helper
+  const updateUrlParams = (newPage: number) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString())
+    newSearchParams.set('page', newPage.toString())
+    router.push(`?${newSearchParams.toString()}`, { scroll: false })
+  }
+
+  // Handlers
+  const handlePageChange = (page: number) => {
+    setParams(prev => ({ ...prev, page }))
+    updateUrlParams(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // [ĐÃ SỬA LỖI] Tách logic side effect ra khỏi setParams
+  const handleFilterChange = (newParams: Partial<GetAdminBookingsParams & { search?: string }>) => {
+    if (newParams.search !== undefined) {
+      setSearch(newParams.search)
+    }
+
+    // 1. Tính toán điều kiện reset page TRƯỚC
+    const shouldResetPage =
+      (newParams.status !== undefined && newParams.status !== params.status) ||
+      (newParams.showDate !== undefined && newParams.showDate !== params.showDate) ||
+      (newParams.search !== undefined && newParams.search !== search)
+
+    // 2. Cập nhật State (Pure function)
+    setParams(prev => ({
+      ...prev,
+      ...newParams,
+      search: undefined,
+      page: shouldResetPage ? 1 : prev.page
+    }))
+
+    // 3. Thực hiện Side Effect (Update URL) SAU và NGOÀI setParams
+    if (shouldResetPage) {
+      updateUrlParams(1)
+    }
+  }
 
   const handleDelete = () => {
     if (deleteId) {
@@ -55,10 +114,7 @@ export default function TicketManagementPage() {
 
         <TicketToolbar
           params={{ ...params, search }}
-          setParams={newParams => {
-            setSearch(newParams.search || '')
-            setParams(prev => ({ ...prev, ...newParams, search: undefined }))
-          }}
+          setParams={handleFilterChange}
         />
 
         <TicketTable
@@ -66,6 +122,20 @@ export default function TicketManagementPage() {
           isLoading={isLoading}
           onEditStatus={setEditTicket}
           onDelete={setDeleteId}
+        />
+
+        <PaginationInfo
+          currentPage={params.page || 1}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+        />
+
+        <CustomPagination
+          currentPage={params.page || 1}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          showPageNumbers={5}
         />
       </div>
 

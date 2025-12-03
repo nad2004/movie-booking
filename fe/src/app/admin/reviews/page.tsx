@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation' // [Import mới]
+import { useState, useEffect } from 'react'
 import { useReviews } from '@/lib/api/reviews'
 import { useReviewMutations } from './hooks/useReviewMutations'
 import { ReviewToolbar } from './components/ReviewToolbar'
@@ -19,14 +20,24 @@ import {
 } from '@/components/ui/alert-dialog'
 import { GetReviewsParams } from '@/lib/api/reviews'
 import { DEFAULT_REVIEWS_LIST } from '@/constants'
+// [Import mới] Component phân trang
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 export default function ReviewManagementPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // [Logic mới] Lấy page từ URL
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
+  const itemsPerPage = 9 // Giữ nguyên limit 9 như code cũ của bạn
+
   // State
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 500)
+  
   const [params, setParams] = useState<GetReviewsParams>({
-    page: 1,
-    limit: 9,
+    page: pageFromUrl,
+    limit: itemsPerPage,
     status: undefined,
     rating: undefined,
   })
@@ -35,14 +46,61 @@ export default function ReviewManagementPage() {
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
+  // [Logic mới] Đồng bộ State khi URL thay đổi (VD: User bấm Back/Forward browser)
+  useEffect(() => {
+    setParams(prev => ({ ...prev, page: pageFromUrl }))
+  }, [pageFromUrl])
+
   // Fetch Data
   const { data: reviewData = DEFAULT_REVIEWS_LIST, isLoading } = useReviews({
     ...params,
     search: debouncedSearch,
   })
+
+  // Lấy thông tin phân trang từ API response
+  const totalPages = reviewData?.pagination?.totalPages || 1
+  const totalReviews = reviewData?.pagination?.totalItems || 0
+
   const { approveMutation, deleteMutation } = useReviewMutations()
 
-  // Handlers
+  // [Logic mới] Hàm cập nhật URL
+  const updateUrlParams = (newPage: number, otherParams?: Partial<GetReviewsParams>) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString())
+    
+    // Set page
+    newSearchParams.set('page', newPage.toString())
+    
+    // Nếu có thay đổi params khác (status, rating...) thì update vào URL nếu cần thiết
+    // (Ở đây mình tập trung vào page, các filter khác nếu muốn lưu lên URL thì handle thêm)
+    
+    router.push(`?${newSearchParams.toString()}`, { scroll: false })
+  }
+
+  // [Logic mới] Xử lý khi chuyển trang
+  const handlePageChange = (page: number) => {
+    setParams(prev => ({ ...prev, page }))
+    updateUrlParams(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // [Logic mới] Xử lý khi thay đổi filter (Reset về trang 1)
+  const handleFilterChange = (newParams: Partial<GetReviewsParams>) => {
+    if (newParams.search !== undefined) {
+      setSearch(newParams.search)
+    }
+    
+    setParams(prev => {
+      const updated = { ...prev, ...newParams, search: undefined }
+      // Nếu thay đổi filter (status, rating), reset về page 1
+      if (newParams.status !== prev.status || newParams.rating !== prev.rating) {
+        updated.page = 1
+        updateUrlParams(1)
+      }
+      return updated
+    })
+  }
+
+  // Handlers actions
   const handleApprove = (id: string) => {
     approveMutation.mutate(id)
   }
@@ -62,10 +120,7 @@ export default function ReviewManagementPage() {
 
         <ReviewToolbar
           params={{ ...params, search }}
-          setParams={newParams => {
-            setSearch(newParams.search || '')
-            setParams(prev => ({ ...prev, ...newParams, search: undefined }))
-          }}
+          setParams={handleFilterChange}
         />
 
         <ReviewTable
@@ -76,7 +131,20 @@ export default function ReviewManagementPage() {
           onDeleteClick={setDeleteId}
         />
 
-        {/* Pagination Controls (Có thể thêm ở đây) */}
+        {/* [UI Mới] Phần phân trang */}
+        <PaginationInfo
+            currentPage={params.page || 1}
+            totalPages={totalPages}
+            totalItems={totalReviews}
+            itemsPerPage={itemsPerPage}
+        />
+
+        <CustomPagination
+            currentPage={params.page || 1}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            showPageNumbers={5}
+        />
       </div>
 
       {/* Dialogs */}

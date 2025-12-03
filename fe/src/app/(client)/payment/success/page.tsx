@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react';
+import {  Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBookingDetail } from '@/lib/api/booking';
 import { StepSuccess } from '@/app/(client)/movies/[id]/booking-flow/components/steps/StepSuccess'; // Import component StepSuccess cũ
@@ -59,7 +59,7 @@ function PaymentResult() {
     bookingId: booking._id,
     bookingCode: booking.bookingCode || booking._id.slice(-6).toUpperCase(),
     totalAmount: booking.totalAmount,
-    
+    qrCode: booking.qrCode,
     holdUntil: new Date()
   };
 
@@ -68,7 +68,7 @@ function PaymentResult() {
       <div className="max-w-lg w-full bg-surface p-8 rounded-3xl shadow-xl border border-border">
         <StepSuccess 
             bookingData={bookingResponseData} 
-            onClose={() => router.push('/')} // Đóng thì về trang chủ
+            onClose={() => router.push('/')}
         />
       </div>
     </div>

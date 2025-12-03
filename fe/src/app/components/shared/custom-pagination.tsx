@@ -97,8 +97,8 @@ export function CustomPagination({
                 isActive={currentPage === page}
                 className={
                   currentPage === page
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                    : 'cursor-pointer hover:bg-accent hover:text-accent-foreground'
+                    ? 'bg-primary! text-primary-foreground! hover:bg-primary/90!'
+                    : 'cursor-pointer! hover:bg-accent! hover:text-accent-foreground!'
                 }
               >
                 {page}
@@ -115,7 +115,7 @@ export function CustomPagination({
             className={
               currentPage === totalPages
                 ? 'pointer-events-none opacity-50'
-                : 'cursor-pointer hover:bg-accent hover:text-accent-foreground'
+                : 'cursor-pointer hover:bg-accent! hover:text-accent-foreground!'
             }
             aria-disabled={currentPage === totalPages}
           >

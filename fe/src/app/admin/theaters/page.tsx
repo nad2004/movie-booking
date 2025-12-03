@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; // [Mới] Import router
+import { useState, useEffect } from "react";
 import { useTheaters } from "@/lib/api/theaters";
 import { useTheaterMutations } from "./hooks/useTheaterMutations";
 import { TheaterTable } from "./components/TheaterTable";
@@ -15,8 +16,19 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useDebounce } from "@/hooks/useDebounce"; 
+// [Mới] Import component phân trang
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 export default function TheaterManagementPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // [Mới] Lấy page từ URL
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
+  const itemsPerPage = 10; // Giảm limit xuống để phân trang
+
+  // State
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   
@@ -24,13 +36,47 @@ export default function TheaterManagementPage() {
   const [theaterToEdit, setTheaterToEdit] = useState<Theater | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // [Mới] Đồng bộ state khi URL thay đổi
+  useEffect(() => {
+    setCurrentPage(pageFromUrl);
+  }, [pageFromUrl]);
+
+  // [Mới] Reset về trang 1 khi search thay đổi
+  useEffect(() => {
+    if (currentPage !== 1 && search !== "") {
+        handlePageChange(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
   // Fetch Data
   const { data: theaterList, isLoading } = useTheaters({ 
     search: debouncedSearch, 
-    limit: 100 
+    page: currentPage, // [Mới] Truyền page
+    limit: itemsPerPage 
   });
   
+  // [Mới] Lấy thông tin phân trang từ API response
+  // Giả định API trả về cấu trúc: { theaters: [], pagination: { totalPages, totalItems } }
+  const theaters = theaterList?.theaters || [];
+  const totalPages = theaterList?.pagination?.totalPages || 1;
+  const totalItems = theaterList?.pagination?.totalItems || 0;
+
   const { deleteMutation } = useTheaterMutations();
+
+  // [Mới] Hàm cập nhật URL
+  const updateUrlParams = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
+  // [Mới] Xử lý chuyển trang
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateUrlParams(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleAdd = () => {
     setTheaterToEdit(null);
@@ -73,11 +119,28 @@ export default function TheaterManagementPage() {
 
         {/* Table */}
         <TheaterTable 
-          theaters={theaterList?.theaters || []}
+          theaters={theaters}
           isLoading={isLoading}
           onEdit={handleEdit}
           onDelete={(id) => setDeleteId(id)}
         />
+
+        {/* [Mới] Phần phân trang */}
+        <div className="flex flex-col gap-4 mt-4">
+            <PaginationInfo
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+            />
+
+            <CustomPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                showPageNumbers={5}
+            />
+        </div>
       </div>
 
       {/* Dialogs */}

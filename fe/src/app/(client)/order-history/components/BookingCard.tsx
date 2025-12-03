@@ -46,7 +46,7 @@ export default function BookingCard({ booking, onClick }: BookingCardProps) {
     >
       <div className="flex gap-4 p-4 h-full">
         {/* Poster */}
-        <div className="flex-shrink-0 relative w-24 h-36">
+        <div className="shrink-0 relative w-24 h-36">
              <Image 
                 // Lấy poster từ movie trong schedule, fallback nếu không có
                 src={booking.schedule?.movie?.posterUrl || "/placeholder-movie.png"} 
@@ -68,7 +68,7 @@ export default function BookingCard({ booking, onClick }: BookingCardProps) {
               </div>
 
               {/* Badge Status */}
-              <Badge className={`whitespace-nowrap flex-shrink-0 ${getStatusColor(booking.status)}`}>
+              <Badge className={`whitespace-nowrap shrink-0 ${getStatusColor(booking.status)}`}>
                 {booking.status}
               </Badge>
             </div>
@@ -76,21 +76,21 @@ export default function BookingCard({ booking, onClick }: BookingCardProps) {
             {/* Details */}
             <div className="space-y-2 text-sm text-text-secondary mt-2">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
+                <Calendar className="w-4 h-4 text-primary shrink-0" />
                 <span>
                   {formatDate(booking.schedule.showDate)} • {booking.schedule.startTime}
                 </span>
               </div>
               
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                <MapPin className="w-4 h-4 text-primary shrink-0" />
                 <span className="line-clamp-1" title={`${booking.theaterName} - ${booking.roomName}`}>
                   {booking.theaterName} - {booking.roomName}
                 </span>
               </div>
               
               <div className="flex items-center gap-2">
-                <Armchair className="w-4 h-4 text-primary flex-shrink-0" />
+                <Armchair className="w-4 h-4 text-primary shrink-0" />
                 <span className="line-clamp-1" title={seatList}>
                   Ghế: {seatList}
                 </span>

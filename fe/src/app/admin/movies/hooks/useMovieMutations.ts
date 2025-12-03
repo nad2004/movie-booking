@@ -18,11 +18,11 @@ export function useMovieMutations() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: MovieUpdateDTO }) => updateMovie(id, data),
-    onSuccess: () => {a
+    onSuccess: () => {
       showSuccess('Cập nhập phim thành công!')
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
-    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+    onError: (error: any) => {showError('Lỗi!', error.response?.data?.message)},
   });
 
   const deleteMutation = useMutation({
