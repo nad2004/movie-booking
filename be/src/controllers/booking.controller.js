@@ -708,7 +708,53 @@ const bookingController = {
       ]);
 
       const result = {
-        bookings,
+        bookings: bookings.map((b) => ({
+          _id: b._id,
+          bookingCode: b.bookingCode,
+          customer: b.customer,
+          schedule: {
+            _id: b.schedule?._id,
+            showDate: b.schedule?.showDate,
+            showTime: b.schedule?.showTime,
+            movie: b.schedule?.movie && {
+              _id: b.schedule.movie._id,
+              title: b.schedule.movie.title,
+              posterUrl: b.schedule.movie.posterUrl,
+              duration: b.schedule.movie.duration,
+              genre: b.schedule.movie.genre,
+              rating: b.schedule.movie.rating,
+            },
+            theater: b.schedule?.theater && {
+              _id: b.schedule.theater._id,
+              name: b.schedule.theater.name,
+              address: b.schedule.theater.address,
+              city: b.schedule.theater.city,
+            },
+            room: b.schedule?.room && {
+              _id: b.schedule.room._id,
+              name: b.schedule.room.name,
+              roomType: b.schedule.room.roomType,
+            },
+          },
+          seats: b.seats,
+          products: b.products.map((p) => ({
+            product: p.product,
+            productName: p.productName,
+            quantity: p.quantity,
+            priceAtBooking: p.priceAtBooking,
+            size: p.size,
+          })),
+          appliedVoucher: b.appliedVoucher,
+          ticketsAmount: b.ticketsAmount,
+          productsAmount: b.productsAmount,
+          subtotal: b.subtotal,
+          discountAmount: b.discountAmount,
+          totalAmount: b.totalAmount,
+          status: b.status,
+          qrCode: b.qrCode,
+          createdAt: b.createdAt,
+          updatedAt: b.updatedAt,
+        })),
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(total / limit),
@@ -731,7 +777,7 @@ const bookingController = {
     try {
       const { id } = req.params;
 
-      const booking = await Booking.findById(id)
+      const b = await Booking.findById(id)
         .populate("customer", "fullName email phoneNumber")
         .populate({
           path: "schedule",
@@ -745,16 +791,71 @@ const bookingController = {
         .populate("products.product", "name category price imageUrl")
         .lean();
 
-      if (!booking) {
+      if (!b) {
         return errorResponse(res, "Không tìm thấy đơn đặt vé", 404);
       }
 
-      // Kiểm tra quyền truy cập
-      if (booking.customer.toString() !== req.userId && req.userRole !== "admin") {
+      // Permission
+      if (b.customer._id.toString() !== req.userId && req.userRole !== "admin") {
         return errorResponse(res, "Bạn không có quyền xem đơn đặt vé này", 403);
       }
 
-      return successResponse(res, booking);
+      // === Format giống getMyBookings ===
+      const cleanBooking = {
+        _id: b._id,
+        bookingCode: b.bookingCode,
+        customer: b.customer,
+        schedule: b.schedule && {
+          _id: b.schedule._id,
+          showDate: b.schedule.showDate,
+          showTime: b.schedule.showTime,
+          movie: b.schedule.movie && {
+            _id: b.schedule.movie._id,
+            title: b.schedule.movie.title,
+            posterUrl: b.schedule.movie.posterUrl,
+            duration: b.schedule.movie.duration,
+            genre: b.schedule.movie.genre,
+            rating: b.schedule.movie.rating,
+          },
+          theater: b.schedule.theater && {
+            _id: b.schedule.theater._id,
+            name: b.schedule.theater.name,
+            address: b.schedule.theater.address,
+            city: b.schedule.theater.city,
+          },
+          room: b.schedule.room && {
+            _id: b.schedule.room._id,
+            name: b.schedule.room.name,
+            roomType: b.schedule.room.roomType,
+          },
+        },
+        seats: b.seats,
+        products: b.products.map((p) => ({
+          product: p.product,
+          productName: p.productName,
+          quantity: p.quantity,
+          priceAtBooking: p.priceAtBooking,
+          size: p.size,
+        })),
+        appliedVoucher: b.appliedVoucher,
+        ticketsAmount: b.ticketsAmount,
+        productsAmount: b.productsAmount,
+        subtotal: b.subtotal,
+        discountAmount: b.discountAmount,
+        totalAmount: b.totalAmount,
+        status: b.status,
+        qrCode: b.qrCode, // ✔ LẤY QR CODE
+        createdAt: b.createdAt,
+        updatedAt: b.updatedAt,
+        cancelledBy: b.cancelledBy,
+        cancelledAt: b.cancelledAt,
+        cancellationReason: b.cancellationReason,
+        refundAmount: b.refundAmount,
+        paymentDetails: b.paymentDetails,
+        __v: b.__v,
+      };
+
+      return successResponse(res, cleanBooking);
     } catch (error) {
       console.error("Get booking by id error:", error);
       return errorResponse(res, "Lỗi server", 500);
@@ -1132,7 +1233,6 @@ const bookingController = {
     }
   },
 
-  // GET /api/v1/bookings/:bookingCode - Lấy thông tin booking theo mã
   getBookingByCode: async (req, res) => {
     try {
       const { bookingCode } = req.params;
