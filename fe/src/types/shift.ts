@@ -23,7 +23,7 @@ export interface ShiftAssignment {
   workScheduleId: string;
   userId: string;
   userName: string;
-  role: 'Manager' | 'Staff' | 'Ticket';
+  role: string;
   checkInTime?: string;
   checkOutTime?: string;
   status: 'Assigned' | 'Working' | 'Completed' | 'Absent';
@@ -37,7 +37,7 @@ export interface AssignedEmployee {
   email: string
   phoneNumber: string
   avatar: string
-  role: 'staff' | 'manager' | 'ticket'
+  role: string
   status: 'active' | 'inactive'
   checkInTime?: string // ISO string
   checkOutTime?: string // ISO string
@@ -75,12 +75,12 @@ export type DailyRosterResponse = ApiResponse<DailyRosterData>
 export interface CreateAssignmentDTO {
   workScheduleId: string
   userId: string
-  role: 'staff' | 'manager' | 'ticket'
+  role: string
 }
 
 // DTO for Update Assignment
 export interface UpdateAssignmentDTO {
-  role?: 'staff' | 'manager' | 'ticket'
+  role?: string
   checkInTime?: string
   checkOutTime?: string
   status?: 'assigned' | 'working' | 'completed' | 'absent'
@@ -91,4 +91,14 @@ export interface GetDailyRosterParams {
   theaterId: string
   date: string // YYYY-MM-DD
   shiftCode?: string // S1, S2, S3 (optional filter)
+}
+export interface BulkAssignmentDTO {
+  theaterId: string
+  assignments: CreateAssignmentDTO[]
+}
+
+export interface CreateAssignmentDTO {
+  workScheduleId: string
+  userId: string
+  role: string
 }

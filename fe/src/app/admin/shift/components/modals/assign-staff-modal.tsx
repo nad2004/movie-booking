@@ -30,7 +30,6 @@ import { toast } from 'sonner'
 import { useAssignmentMutations } from '@/lib/api/shift-assignments'
 import { useUsers } from '@/lib/api/user'
 import { ShiftWithEmployees, CreateAssignmentDTO } from '@/types/shift'
-
 // Validation Schema
 const assignStaffSchema = z.object({
   userId: z.string().min(1, 'Vui lòng chọn nhân viên'),
@@ -42,15 +41,17 @@ interface AssignStaffModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedSchedule?: ShiftWithEmployees | null
+  selectedTheaterId: string
 }
 
 export default function AssignStaffModal({
   open,
   onOpenChange,
   selectedSchedule,
+  selectedTheaterId
 }: AssignStaffModalProps) {
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({role: 'staff'})
-  const { create } = useAssignmentMutations()
+  const { bulkCreate  } = useAssignmentMutations()
 
   const users = useMemo(() => usersData?.users || [], [usersData])
 
@@ -75,20 +76,25 @@ export default function AssignStaffModal({
       })
     }
   }, [open, reset])
-
   // --- Handlers ---
   const onSubmit = useCallback(
     async (data: AssignStaffFormData) => {
-      if (!selectedSchedule) return
+      if (!selectedSchedule || !selectedTheaterId) return
 
       try {
-        const payload: CreateAssignmentDTO = {
-          workScheduleId: selectedSchedule.scheduleId,
-          userId: data.userId,
-          role: 'staff', // Mặc định luôn là staff
+        // Sử dụng bulk API với structure đúng theo swagger
+        const payload = {
+          theaterId: selectedTheaterId,
+          assignments: [
+            {
+              workScheduleId: selectedSchedule.scheduleId,
+              userId: data.userId,
+              role: 'staff', 
+            }
+          ]
         }
 
-        await create.mutateAsync(payload)
+        await bulkCreate.mutateAsync(payload)
 
         const user = users.find((u) => u._id === data.userId)
         toast.success('Phân công thành công!', {
@@ -102,7 +108,7 @@ export default function AssignStaffModal({
         })
       }
     },
-    [selectedSchedule, create, onOpenChange, users]
+    [selectedSchedule, selectedTheaterId, bulkCreate, onOpenChange, users]
   )
 
   const handleCancel = useCallback(() => {

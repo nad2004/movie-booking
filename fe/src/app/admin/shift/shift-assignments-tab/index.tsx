@@ -3,6 +3,8 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { format } from 'date-fns'
+import { Loader2 } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 // Components
 import AssignmentFilters from './assignment-filters'
@@ -14,17 +16,32 @@ import ConfirmDeleteAlert from '../components/modals/confirm-delete-alert'
 
 // API & Types
 import { useDailyRoster, useAssignmentMutations } from '@/lib/api/shift-assignments'
+import { useShiftTemplates } from '@/lib/api/shift-templates'
 import { AssignedEmployee, ShiftWithEmployees } from '@/types/shift'
 import { useTheaters } from '@/lib/api/theaters'
 
-import { useShiftTemplates } from '@/lib/api/shift-templates'
-
 export default function ShiftAssignmentsTab() {
+  // --- API Hooks (Fetch theaters first) ---
+  const { data: theatersData } = useTheaters({})
+  const { data: shiftTemplatesData } = useShiftTemplates({ isActive: true })
+  const { remove } = useAssignmentMutations()
+
+  const theaters = useMemo(() => theatersData?.theaters || [], [theatersData])
+  const shiftTemplates = useMemo(() => shiftTemplatesData || [], [shiftTemplatesData])
+
+  // Initialize selectedTheaterId with first theater (derived state)
+  const defaultTheaterId = useMemo(() => {
+    return theaters.length > 0 ? theaters[0]._id : ''
+  }, [theaters])
+
   // --- States ---
-  const [selectedTheaterId, setSelectedTheaterId] = useState<string>('69198f14b80a32bf8ea5d91c')
+  const [selectedTheaterId, setSelectedTheaterId] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
   const [selectedShiftCode, setSelectedShiftCode] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
+
+  // Use defaultTheaterId if selectedTheaterId is empty
+  const activeTheaterId = selectedTheaterId || defaultTheaterId
 
   // Modal States
   const [isAssignOpen, setAssignOpen] = useState(false)
@@ -34,35 +51,46 @@ export default function ShiftAssignmentsTab() {
   const [selectedSchedule, setSelectedSchedule] = useState<ShiftWithEmployees | null>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<AssignedEmployee | null>(null)
 
-  // --- API Hooks ---
+  // Only fetch roster when we have a valid theater ID
   const { data: rostersData, isLoading } = useDailyRoster({
-    theaterId: selectedTheaterId,
+    theaterId: activeTheaterId,
     date: selectedDate,
     shiftCode: selectedShiftCode === 'all' ? undefined : selectedShiftCode,
   })
 
-  const { data: theatersData } = useTheaters({})
-  const { remove } = useAssignmentMutations()
-
-  const theaters = useMemo(() => theatersData?.theaters || [], [theatersData])
-  const { data: template } = useShiftTemplates()
   // --- Computed Data ---
-  const { summary, shifts } = useMemo(() => {
+  const { shifts, summary } = useMemo(() => {
     if (!rostersData) {
-      return { summary: null, shifts: [] }
+      return { shifts: [], summary: null }
     }
-    const summary = rostersData.summary
+
     const shifts = rostersData.shifts
-    return { summary, shifts }
+    const summary = rostersData.summary
+
+    return { shifts, summary }
   }, [rostersData])
-  const { availableShiftCodes } = useMemo(() => {
-    if (!template) {
-      return { availableShiftCodes: undefined }
-    }
-    const codes = new Set(template.map(s => s.code))
-    const availableShiftCodes = Array.from(codes)
-    return { availableShiftCodes }
-  }, [template])
+
+  // Get available shift codes from templates (for filter dropdown)
+  const availableShiftCodes = useMemo(() => {
+    if (!shiftTemplates || shiftTemplates.length === 0) return []
+    const codes = new Set(shiftTemplates.map((t) => t.code))
+    return Array.from(codes).sort()
+  }, [shiftTemplates])
+
+  // --- Filter shifts by search query ---
+  const filteredShifts = useMemo(() => {
+    if (!searchQuery) return shifts
+
+    return shifts
+      .map((shift) => ({
+        ...shift,
+        employees: shift.employees.filter((emp) =>
+          emp.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+      }))
+      .filter((shift) => shift.employees.length > 0)
+  }, [shifts, searchQuery])
+
   // --- Handlers ---
   const handleTheaterChange = useCallback((value: string) => {
     setSelectedTheaterId(value)
@@ -104,12 +132,26 @@ export default function ShiftAssignmentsTab() {
   }, [selectedEmployee, remove])
 
   // --- Render ---
+  // Show loading state while waiting for theaters to load
+  if (!activeTheaterId) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-4 rounded-2xl border-gray-100 shadow-sm bg-white">
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
+            <span className="text-gray-500">Đang tải dữ liệu...</span>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Filters */}
       <AssignmentFilters
         theaters={theaters}
-        selectedTheaterId={selectedTheaterId}
+        selectedTheaterId={activeTheaterId}
         selectedDate={selectedDate}
         selectedShiftCode={selectedShiftCode}
         searchQuery={searchQuery}
@@ -125,7 +167,7 @@ export default function ShiftAssignmentsTab() {
 
       {/* Shifts List */}
       <ShiftsList
-        shifts={shifts}
+        shifts={filteredShifts}
         isLoading={isLoading}
         onAssignNew={handleAssignNew}
         onEdit={handleEdit}
@@ -133,17 +175,9 @@ export default function ShiftAssignmentsTab() {
       />
 
       {/* Modals */}
-      <AssignStaffModal
-        open={isAssignOpen}
-        onOpenChange={setAssignOpen}
-        selectedSchedule={selectedSchedule}
-      />
+      <AssignStaffModal open={isAssignOpen} onOpenChange={setAssignOpen} selectedSchedule={selectedSchedule} selectedTheaterId={activeTheaterId} />
 
-      <UpdateAssignmentModal
-        open={isUpdateOpen}
-        onOpenChange={setUpdateOpen}
-        employee={selectedEmployee}
-      />
+      <UpdateAssignmentModal open={isUpdateOpen} onOpenChange={setUpdateOpen} employee={selectedEmployee} />
 
       <ConfirmDeleteAlert
         open={isDeleteOpen}
