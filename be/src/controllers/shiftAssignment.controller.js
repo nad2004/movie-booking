@@ -254,7 +254,8 @@ const shiftAssignmentController = {
       const assignments = await ShiftAssignment.find({ userId })
         .populate({
           path: "workScheduleId",
-          select: "date startDateTime endDateTime theaterId",
+          // Select thêm các trường snapshot: shiftName, shiftCode, startTime, endTime
+          select: "date startDateTime endDateTime theaterId shiftName shiftCode startTime endTime",
           populate: { path: "theaterId", select: "name" },
         })
         .sort({ "workScheduleId.startDateTime": 1 })

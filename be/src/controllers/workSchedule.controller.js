@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
+import ShiftAssignment from "../models/shiftAssignment.model.js";
 import ShiftTemplate from "../models/shiftTemplate.model.js";
 import WorkSchedule from "../models/workSchedule.model.js";
-import ShiftAssignment from "../models/shiftAssignment.model.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 // helpers
@@ -74,6 +74,11 @@ const workScheduleController = {
             date,
             theaterId,
             shiftTemplateId: tpl._id,
+            // Snapshot dữ liệu từ template
+            shiftCode: tpl.code,
+            shiftName: tpl.name,
+            startTime: tpl.startTime,
+            endTime: tpl.endTime,
             startDateTime,
             endDateTime,
             createdBy: req.userId,
@@ -103,9 +108,21 @@ const workScheduleController = {
       // const schedules = await WorkSchedule.find(q).sort({ startDateTime: 1 }).lean();
       const schedules = await WorkSchedule.find(q)
         .populate("theaterId", "name")
-        .populate("shiftTemplateId", "name startTime endTime")
+        // Vẫn populate name, startTime, endTime để làm fallback cho dữ liệu cũ
+        .populate("shiftTemplateId", "name startTime endTime color")
         .sort({ startDateTime: 1 })
         .lean();
+
+      // Xử lý logic ưu tiên Snapshot
+      schedules.forEach((s) => {
+        // Nếu không có snapshot (lịch cũ), lấy từ template
+        if (!s.shiftName && s.shiftTemplateId) {
+          s.shiftName = s.shiftTemplateId.name;
+          s.shiftCode = s.shiftTemplateId.code; // Lưu ý: template cũ có thể không có code nếu model chưa update
+          s.startTime = s.shiftTemplateId.startTime;
+          s.endTime = s.shiftTemplateId.endTime;
+        }
+      });
 
       // Group schedules by date
       const grouped = schedules.reduce((acc, item) => {
@@ -133,33 +150,38 @@ const workScheduleController = {
       const { from, to } = req.query;
       if (!from || !to) return errorResponse(res, "from/to required", 400);
 
-      // const schedules = await WorkSchedule.find({ theaterId, date: { $gte: from, $lte: to } })
-      //   .populate("shiftTemplateId")
-      //   .lean();
       const schedules = await WorkSchedule.find({
         theaterId,
         date: { $gte: from, $lte: to },
       })
         .populate("theaterId", "name")
-        .populate("shiftTemplateId", "name startTime endTime")
+        .populate("shiftTemplateId", "color") // Chỉ lấy color
         .lean();
 
       // group by date then templates
       const dates = Array.from(new Set(schedules.map((s) => s.date))).sort();
       const shiftsByDate = dates.map((date) => ({ date, templates: [] }));
 
-      for (const dateEntry of shiftsByDate) {
-        const items = schedules.filter((s) => s.date === dateEntry.date);
-        for (const it of items) {
-          dateEntry.templates.push({
-            id: it._id,
-            template: it.shiftTemplateId,
-            assignments: [], // assignments fetched separately if needed
-            startDateTime: it.startDateTime,
-            endDateTime: it.endDateTime,
-            status: it.status,
-          });
-        }
+      for (const it of items) {
+        const tplRef = it.shiftTemplateId || {};
+        // Construct lại object template: Ưu tiên Snapshot -> Fallback về Reference
+        const snapshotTemplate = {
+          _id: tplRef._id,
+          code: it.shiftCode || tplRef.code,
+          name: it.shiftName || tplRef.name,
+          startTime: it.startTime || tplRef.startTime,
+          endTime: it.endTime || tplRef.endTime,
+          color: tplRef.color || "#2b6cb0",
+        };
+
+        dateEntry.templates.push({
+          id: it._id,
+          template: snapshotTemplate, // Dùng snapshot
+          assignments: [], // assignments fetched separately if needed
+          startDateTime: it.startDateTime,
+          endDateTime: it.endDateTime,
+          status: it.status,
+        });
       }
 
       return successResponse(res, { dates, shifts: shiftsByDate });
@@ -181,7 +203,7 @@ const workScheduleController = {
       const query = { theaterId, date };
 
       const schedules = await WorkSchedule.find(query)
-        .populate("shiftTemplateId", "name code startTime endTime color")
+        .populate("shiftTemplateId", "color")
         .sort({ startDateTime: 1 })
         .lean();
 
@@ -219,16 +241,19 @@ const workScheduleController = {
       let result = schedules.map((schedule) => {
         const assignments = assignmentsBySchedule[schedule._id.toString()] || [];
 
+        const tpl = schedule.shiftTemplateId || {};
+
         return {
           scheduleId: schedule._id,
           date: schedule.date,
           shift: {
-            id: schedule.shiftTemplateId._id,
-            code: schedule.shiftTemplateId.code,
-            name: schedule.shiftTemplateId.name,
-            startTime: schedule.shiftTemplateId.startTime,
-            endTime: schedule.shiftTemplateId.endTime,
-            color: schedule.shiftTemplateId.color,
+            id: tpl._id,
+            // Ưu tiên lấy từ Snapshot (schedule), nếu không có thì lấy từ Template (tpl)
+            code: schedule.shiftCode || tpl.code,
+            name: schedule.shiftName || tpl.name,
+            startTime: schedule.startTime || tpl.startTime,
+            endTime: schedule.endTime || tpl.endTime,
+            color: tpl.color || "#2b6cb0",
           },
           startDateTime: schedule.startDateTime,
           endDateTime: schedule.endDateTime,

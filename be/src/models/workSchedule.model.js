@@ -5,6 +5,12 @@ const { Schema } = mongoose;
 const WorkScheduleSchema = new Schema(
   {
     date: { type: String, required: true }, // YYYY-MM-DD
+
+    shiftCode: { type: String }, // Copy code
+    shiftName: { type: String }, // Copy name
+    startTime: { type: String }, // Copy HH:mm
+    endTime: { type: String }, // Copy HH:mm
+
     theaterId: { type: Schema.Types.ObjectId, ref: "Theater", required: true, index: true },
     shiftTemplateId: { type: Schema.Types.ObjectId, ref: "ShiftTemplate", required: true },
     // optional link to legacy Shift document for backward compatibility
