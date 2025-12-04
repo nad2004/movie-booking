@@ -113,6 +113,7 @@ class DataSyncService {
 
       // Calculate expected points
       for (const booking of recentBookings) {
+        if (!booking.customer) continue;
         const userId = booking.customer._id.toString();
         const pointsEarned = Math.floor(booking.totalAmount / 10000);
 

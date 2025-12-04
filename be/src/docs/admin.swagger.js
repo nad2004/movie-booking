@@ -125,7 +125,6 @@
  *         description: Lỗi server
  */
 
-
 /**
  * @swagger
  * /admin/users/{id}:
@@ -188,6 +187,89 @@
  *         description: Lỗi server
  */
 
+/**
+ * @swagger
+ * /admin/staff/create:
+ *   post:
+ *     summary: Tạo tài khoản nhân viên mới
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - fullName
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "staff@cinema.com"
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 example: "password123"
+ *               fullName:
+ *                 type: string
+ *                 example: "Nguyễn Văn A"
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "0901234567"
+ *               assignedTheater:
+ *                 type: string
+ *                 description: "ID của rạp (tùy chọn)"
+ *                 example: "69198f14b80a32bf8ea5d91c"
+ *     responses:
+ *       201:
+ *         description: "Tạo tài khoản thành công"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Tạo tài khoản nhân viên thành công"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     phoneNumber:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       example: "staff"
+ *                     staffInfo:
+ *                       type: object
+ *                       properties:
+ *                         assignedTheater:
+ *                           type: string
+ *                         isActive:
+ *                           type: boolean
+ *                         permissions:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *       400:
+ *         description: "Thông tin không hợp lệ hoặc email đã tồn tại"
+ *       401:
+ *         description: "Không được phép"
+ *       500:
+ *         description: "Lỗi server"
+ */
 
 /**
  * @swagger
@@ -1290,7 +1372,6 @@
  *       500:
  *         description: Lỗi server
  */
-
 
 /**
  * @swagger

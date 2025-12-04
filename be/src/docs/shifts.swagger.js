@@ -455,8 +455,10 @@
  * /assignments/of-user/{userId}:
  *   get:
  *     tags: [ShiftAssignments]
- *     summary: Lấy danh sách các ca làm (shift assignments) của 1 nhân viên
- *     description: Trả về toàn bộ danh sách các ca được phân cho user, bao gồm thông tin ca làm (WorkSchedule) đã populate.
+ *     summary: Lấy danh sách ca làm của một nhân viên (có phân trang + lọc ngày)
+ *     description:
+ *       Trả về danh sách các ca làm được phân cho một nhân viên, bao gồm thông tin lịch làm, rạp, và template ca.
+ *       Hỗ trợ lọc theo ngày hoặc theo khoảng thời gian, đồng thời có phân trang.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -466,48 +468,102 @@
  *         schema:
  *           type: string
  *         description: ID của nhân viên
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Số lượng item mỗi trang
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           example: "2025-01-10"
+ *         description: Lọc theo ngày (YYYY-MM-DD)
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           example: "2025-01-01"
+ *         description: Ngày bắt đầu (dùng khi lọc khoảng)
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           example: "2025-01-31"
+ *         description: Ngày kết thúc (dùng khi lọc khoảng)
  *     responses:
  *       200:
- *         description: Lấy danh sách phân ca thành công
+ *         description: Lấy danh sách ca làm thành công
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   userId:
- *                     type: string
- *                   role:
- *                     type: string
- *                   status:
- *                     type: string
- *                   checkInTime:
- *                     type: string
- *                   checkOutTime:
- *                     type: string
- *                   workScheduleId:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       date:
- *                         type: string
- *                       startDateTime:
- *                         type: string
- *                       endDateTime:
- *                         type: string
- *                       theaterId:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignments:
+ *                       type: array
+ *                       items:
  *                         type: object
  *                         properties:
  *                           _id:
  *                             type: string
- *                           name:
+ *                           role:
  *                             type: string
+ *                           status:
+ *                             type: string
+ *                           checkInTime:
+ *                             type: string
+ *                           checkOutTime:
+ *                             type: string
+ *                           assignedAt:
+ *                             type: string
+ *                           date:
+ *                             type: string
+ *                             example: "2025-01-10"
+ *                           startDateTime:
+ *                             type: string
+ *                           endDateTime:
+ *                             type: string
+ *                           theaterName:
+ *                             type: string
+ *                           shiftName:
+ *                             type: string
+ *                           shiftCode:
+ *                             type: string
+ *                           startTime:
+ *                             type: string
+ *                           endTime:
+ *                             type: string
+ *                           color:
+ *                             type: string
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                 message:
+ *                   type: string
+ *                   example: "Lấy danh sách ca làm thành công"
  *       404:
- *         description: Không tìm thấy phân ca cho nhân viên
+ *         description: Không tìm thấy ca làm của nhân viên
  *       500:
  *         description: Lỗi server
  */

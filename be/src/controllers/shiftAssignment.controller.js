@@ -250,18 +250,135 @@ const shiftAssignmentController = {
   listByUser: async (req, res) => {
     try {
       const { userId } = req.params;
+      const { page = 1, limit = 20, from, to, date } = req.query;
 
-      const assignments = await ShiftAssignment.find({ userId })
-        .populate({
-          path: "workScheduleId",
-          // Select thêm các trường snapshot: shiftName, shiftCode, startTime, endTime
-          select: "date startDateTime endDateTime theaterId shiftName shiftCode startTime endTime",
-          populate: { path: "theaterId", select: "name" },
-        })
-        .sort({ "workScheduleId.startDateTime": 1 })
-        .lean();
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const skip = (pageNum - 1) * limitNum;
 
-      return successResponse(res, assignments);
+      // 1. Điều kiện lọc cơ bản: Phải đúng User
+      const matchStage = {
+        userId: new mongoose.Types.ObjectId(userId),
+      };
+
+      // 2. Pipeline Aggregation
+      const pipeline = [
+        // Bước 1: Lọc theo userId
+        { $match: matchStage },
+
+        // Bước 2: Join với bảng WorkSchedule để lấy thông tin lịch
+        {
+          $lookup: {
+            from: "workschedules",
+            localField: "workScheduleId",
+            foreignField: "_id",
+            as: "schedule",
+          },
+        },
+        { $unwind: "$schedule" }, // Bung mảng ra object
+
+        // Bước 3: Join với Theater để lấy tên rạp
+        {
+          $lookup: {
+            from: "theaters",
+            localField: "schedule.theaterId",
+            foreignField: "_id",
+            as: "theater",
+          },
+        },
+        {
+          $unwind: { path: "$theater", preserveNullAndEmptyArrays: true },
+        },
+
+        // Bước 4: Join với ShiftTemplate (để lấy Color và làm dữ liệu dự phòng - Fallback)
+        {
+          $lookup: {
+            from: "shifttemplates",
+            localField: "schedule.shiftTemplateId",
+            foreignField: "_id",
+            as: "template",
+          },
+        },
+        {
+          $unwind: { path: "$template", preserveNullAndEmptyArrays: true },
+        },
+      ];
+
+      // 3. Xử lý lọc theo ngày (nếu có params)
+      // Lưu ý: Filter phải đặt SAU khi lookup WorkSchedule
+      if (date) {
+        // Tìm chính xác ngày (String YYYY-MM-DD)
+        pipeline.push({
+          $match: { "schedule.date": date },
+        });
+      } else if (from && to) {
+        // Tìm theo khoảng thời gian
+        pipeline.push({
+          $match: {
+            "schedule.startDateTime": {
+              $gte: new Date(from),
+              $lte: new Date(to),
+            },
+          },
+        });
+      }
+
+      // 4. Sắp xếp: Lịch mới nhất lên đầu (hoặc sắp diễn ra)
+      pipeline.push({ $sort: { "schedule.startDateTime": -1 } });
+
+      // 5. Phân trang & Định dạng dữ liệu trả về (Facet)
+      pipeline.push({
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [
+            { $skip: skip },
+            { $limit: limitNum },
+            {
+              $project: {
+                _id: 1,
+                role: 1,
+                status: 1,
+                checkInTime: 1,
+                checkOutTime: 1,
+                assignedAt: 1,
+
+                workScheduleId: "$schedule._id",
+                theaterId: "$theater._id", 
+                shiftTemplateId: "$template._id",
+
+                date: "$schedule.date",
+                startDateTime: "$schedule.startDateTime",
+                endDateTime: "$schedule.endDateTime",
+                theaterName: "$theater.name",
+
+                // Ưu tiên lấy từ Schedule (Snapshot), nếu null lấy từ Template
+                shiftName: { $ifNull: ["$schedule.shiftName", "$template.name"] },
+                shiftCode: { $ifNull: ["$schedule.shiftCode", "$template.code"] },
+                startTime: { $ifNull: ["$schedule.startTime", "$template.startTime"] },
+                endTime: { $ifNull: ["$schedule.endTime", "$template.endTime"] },
+
+                color: { $ifNull: ["$template.color", "#2b6cb0"] },
+              },
+            },
+          ],
+        },
+      });
+
+      const result = await ShiftAssignment.aggregate(pipeline);
+
+      const data = result[0].data;
+      const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+      const totalPages = Math.ceil(total / limitNum);
+
+      return successResponse(res, {
+        assignments: data,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages,
+        },
+      });
     } catch (err) {
       console.error("List assignments by user error:", err);
       return errorResponse(res, "Lỗi server", 500);

@@ -750,6 +750,12 @@ router.delete(
 // Staff management (Admin)
 router.get("/admin/staff", authenticateToken, authorize("admin", "super-admin"), staffController.getAllStaff);
 router.post(
+  "/admin/staff/create",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  staffController.createStaffAccount
+);
+router.post(
   "/admin/staff/assign-theater",
   authenticateToken,
   authorize("admin", "super-admin"),

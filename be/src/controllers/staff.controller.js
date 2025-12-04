@@ -308,6 +308,51 @@ const staffController = {
       return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
     }
   },
+
+  // ============================================
+  // ADMIN: CREATE STAFF ACCOUNT
+  // ============================================
+  createStaffAccount: async (req, res) => {
+    try {
+      const { email, password, fullName, phoneNumber, assignedTheater, permissions } = req.body;
+
+      // Validation
+      if (!email || !password || !fullName) {
+        return errorResponse(res, "Email, mật khẩu và họ tên là bắt buộc", 400);
+      }
+
+      // Check email exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return errorResponse(res, "Email đã được sử dụng", 400);
+      }
+
+      // Create staff account
+      const staff = await User.create({
+        email,
+        password,
+        fullName,
+        phoneNumber,
+        role: "staff",
+        staffInfo: {
+          assignedTheater: assignedTheater || null,
+          isActive: true,
+          permissions: permissions || [],
+        },
+        isActive: true,
+        isEmailVerified: false,
+      });
+
+      // Remove password from response
+      const staffResponse = staff.toObject();
+      delete staffResponse.password;
+
+      return successResponse(res, staffResponse, "Tạo tài khoản nhân viên thành công", 201);
+    } catch (error) {
+      console.error("Create staff account error:", error);
+      return errorResponse(res, error.message || "Lỗi server", 500);
+    }
+  },
 };
 
 export default staffController;
