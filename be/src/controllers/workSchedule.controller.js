@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import ShiftTemplate from "../models/shiftTemplate.model.js";
 import WorkSchedule from "../models/workSchedule.model.js";
+import ShiftAssignment from "../models/shiftAssignment.model.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 // helpers
@@ -165,6 +166,113 @@ const workScheduleController = {
     } catch (err) {
       console.error("Roster error:", err);
       return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  dailyRoster: async (req, res) => {
+    try {
+      const { theaterId, date, shiftCode } = req.query;
+
+      if (!theaterId || !date) {
+        return errorResponse(res, "theaterId và date là bắt buộc", 400);
+      }
+
+      // 1. Lấy tất cả schedules của ngày đó
+      const query = { theaterId, date };
+
+      const schedules = await WorkSchedule.find(query)
+        .populate("shiftTemplateId", "name code startTime endTime color")
+        .sort({ startDateTime: 1 })
+        .lean();
+
+      if (schedules.length === 0) {
+        return successResponse(res, {
+          date,
+          shifts: [],
+          summary: {
+            totalSchedules: 0,
+            totalAssignments: 0,
+            activeNow: 0,
+            completed: 0,
+            pending: 0,
+          },
+        });
+      }
+
+      // 2. Lấy tất cả assignments cho các schedules này
+      const scheduleIds = schedules.map((s) => s._id);
+      const allAssignments = await ShiftAssignment.find({
+        workScheduleId: { $in: scheduleIds },
+      })
+        .populate("userId", "fullName email profilePicture phoneNumber")
+        .lean();
+
+      // 3. Group assignments theo scheduleId
+      const assignmentsBySchedule = allAssignments.reduce((acc, assignment) => {
+        const scheduleId = assignment.workScheduleId.toString();
+        if (!acc[scheduleId]) acc[scheduleId] = [];
+        acc[scheduleId].push(assignment);
+        return acc;
+      }, {});
+
+      // 4. Combine data
+      let result = schedules.map((schedule) => {
+        const assignments = assignmentsBySchedule[schedule._id.toString()] || [];
+
+        return {
+          scheduleId: schedule._id,
+          date: schedule.date,
+          shift: {
+            id: schedule.shiftTemplateId._id,
+            code: schedule.shiftTemplateId.code,
+            name: schedule.shiftTemplateId.name,
+            startTime: schedule.shiftTemplateId.startTime,
+            endTime: schedule.shiftTemplateId.endTime,
+            color: schedule.shiftTemplateId.color,
+          },
+          startDateTime: schedule.startDateTime,
+          endDateTime: schedule.endDateTime,
+          status: schedule.status,
+          employees: assignments.map((a) => ({
+            assignmentId: a._id,
+            userId: a.userId._id,
+            fullName: a.userId.fullName,
+            email: a.userId.email,
+            phoneNumber: a.userId.phoneNumber,
+            avatar: a.userId.profilePicture,
+            role: a.role,
+            status: a.status,
+            checkInTime: a.checkInTime,
+            checkOutTime: a.checkOutTime,
+            assignedAt: a.assignedAt,
+          })),
+          totalEmployees: assignments.length,
+        };
+      });
+
+      // 5. Filter theo shiftCode nếu có
+      if (shiftCode) {
+        result = result.filter((item) => item.shift.code === shiftCode);
+      }
+
+      // 6. Tính summary
+      const summary = {
+        totalSchedules: result.length,
+        totalAssignments: allAssignments.length,
+        activeNow: allAssignments.filter((a) => a.status === "active").length,
+        completed: allAssignments.filter((a) => a.status === "completed").length,
+        pending: allAssignments.filter((a) => a.status === "pending").length,
+        noShow: allAssignments.filter((a) => a.status === "no_show").length,
+      };
+
+      return successResponse(res, {
+        date,
+        shifts: result,
+        summary,
+      });
+    } catch (err) {
+      console.error("Daily roster error:", err);
+      return errorResponse(res, err.message || "Lỗi server", 500);
     }
   },
 };

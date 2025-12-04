@@ -417,6 +417,12 @@ router.get(
   authorize("admin", "manager", "staff"),
   workScheduleController.roster
 );
+router.get(
+  "/work-schedules/daily-roster",
+  authenticateToken,
+  authorize("admin", "manager", "staff"),
+  workScheduleController.dailyRoster
+);
 
 // === New: Shift Assignments (Execution) ===
 router.post(

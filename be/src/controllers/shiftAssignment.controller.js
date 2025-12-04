@@ -96,8 +96,8 @@ const shiftAssignmentController = {
       let assignment = null;
 
       if (workScheduleId) {
-        assignment = await ShiftAssignment.findOne({ userId, workScheduleId });
-
+        // assignment = await ShiftAssignment.findOne({ userId, workScheduleId });
+        assignment = await ShiftAssignment.findOne({ userId, workScheduleId }).populate("workScheduleId");
         // Debug
         if (!assignment) {
           const allAssignments = await ShiftAssignment.find({ workScheduleId }).populate("userId", "email fullName");
@@ -183,8 +183,10 @@ const shiftAssignmentController = {
 
       let assignment = null;
       if (workScheduleId) {
-        assignment = await ShiftAssignment.findOne({ userId, workScheduleId, status: "active" });
-
+        // assignment = await ShiftAssignment.findOne({ userId, workScheduleId, status: "active" });
+        assignment = await ShiftAssignment.findOne({ userId, workScheduleId, status: "active" }).populate(
+          "workScheduleId"
+        );
         // Debug: check if assignment exists with different status
         if (!assignment) {
           const anyAssignment = await ShiftAssignment.findOne({ userId, workScheduleId });
@@ -196,7 +198,10 @@ const shiftAssignmentController = {
           });
         }
       } else {
-        assignment = await ShiftAssignment.findOne({ userId, status: "active" }).sort({ checkInTime: -1 });
+        // assignment = await ShiftAssignment.findOne({ userId, status: "active" }).sort({ checkInTime: -1 });
+        assignment = await ShiftAssignment.findOne({ userId, status: "active" })
+          .populate("workScheduleId")
+          .sort({ checkInTime: -1 });
       }
 
       if (!assignment) return errorResponse(res, "No active assignment found", 404);

@@ -213,6 +213,146 @@
 
 /**
  * @swagger
+ * /work-schedules/daily-roster:
+ *   get:
+ *     tags: [WorkSchedules]
+ *     summary: Lấy danh sách phân công nhân sự theo từng ca trong một ngày
+ *     description: Trả về tất cả ca làm việc và nhân viên được phân công trong ngày, có thể lọc theo ca
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: theaterId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của rạp chiếu phim
+ *         example: "69198f14b80a32bf8ea5d91c"
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Ngày cần xem (YYYY-MM-DD)
+ *         example: "2025-12-04"
+ *       - in: query
+ *         name: shiftCode
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Mã ca để lọc (S1, S2, ...)
+ *         example: "S1"
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     date:
+ *                       type: string
+ *                       example: "2025-12-04"
+ *                     shifts:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           scheduleId:
+ *                             type: string
+ *                           date:
+ *                             type: string
+ *                           shift:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               code:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               startTime:
+ *                                 type: string
+ *                               endTime:
+ *                                 type: string
+ *                               color:
+ *                                 type: string
+ *                           startDateTime:
+ *                             type: string
+ *                             format: date-time
+ *                           endDateTime:
+ *                             type: string
+ *                             format: date-time
+ *                           status:
+ *                             type: string
+ *                             enum: [open, closed, cancelled]
+ *                           employees:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 assignmentId:
+ *                                   type: string
+ *                                 userId:
+ *                                   type: string
+ *                                 fullName:
+ *                                   type: string
+ *                                 email:
+ *                                   type: string
+ *                                 phoneNumber:
+ *                                   type: string
+ *                                 avatar:
+ *                                   type: string
+ *                                 role:
+ *                                   type: string
+ *                                 status:
+ *                                   type: string
+ *                                   enum: [pending, active, completed, no_show]
+ *                                 checkInTime:
+ *                                   type: string
+ *                                   format: date-time
+ *                                 checkOutTime:
+ *                                   type: string
+ *                                   format: date-time
+ *                           totalEmployees:
+ *                             type: integer
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         totalSchedules:
+ *                           type: integer
+ *                         totalAssignments:
+ *                           type: integer
+ *                         activeNow:
+ *                           type: integer
+ *                         completed:
+ *                           type: integer
+ *                         pending:
+ *                           type: integer
+ *                         noShow:
+ *                           type: integer
+ *       400:
+ *         description: Thiếu tham số bắt buộc
+ *       401:
+ *         description: Chưa đăng nhập
+ *       403:
+ *         description: Không có quyền truy cập
+ *       500:
+ *         description: Lỗi server
+ */
+
+/**
+ * @swagger
  * /theaters/{theaterId}/roster:
  *   get:
  *     tags: [WorkSchedules]
