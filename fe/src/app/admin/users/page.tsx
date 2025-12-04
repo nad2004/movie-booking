@@ -6,8 +6,6 @@ import { useUserMutations } from './hooks/useUserMutations'
 import { UserTable } from './components/UserTable'
 import { UserToolbar } from './components/UserToolbar'
 import { UserDetailSheet } from './components/UserDetailSheet'
-import { UpdateRoleDialog } from './components/UpdateRoleDialog'
-import { User } from '@/types/user'
 import { useDebounce } from '@/hooks/useDebounce'
 import {
   AlertDialog,
@@ -39,7 +37,6 @@ export default function UserManagementPage() {
 
   // Dialog State
   const [viewUserId, setViewUserId] = useState<string | null>(null)
-  const [userToEditRole, setUserToEditRole] = useState<User | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,10 +77,10 @@ export default function UserManagementPage() {
   }
   const handleTypeUserChange = (newTypeUser: string) => {
     console.log(newTypeUser)
-      setTypeUser(newTypeUser)
-      setCurrentPage(1)
-      updateUrlParams(1, newTypeUser)
-    }
+    setTypeUser(newTypeUser)
+    setCurrentPage(1)
+    updateUrlParams(1, newTypeUser)
+  }
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
       <div className="max-w-[1440px] mx-auto space-y-6">
@@ -95,14 +92,15 @@ export default function UserManagementPage() {
           typeUser={typeUser}
           onTabChange={handleTypeUserChange}
         />
-
-        <UserTable
-          users={users || []}
-          isLoading={isLoading}
-          onViewDetail={user => setViewUserId(user._id)}
-          onEditRole={setUserToEditRole}
-          onDelete={id => setDeleteId(id)}
-        />
+        {isLoading ? (
+          <div className="text-center py-10">Đang tải...</div>
+        ) : (
+          <UserTable
+            users={users || []}
+            onViewDetail={user => setViewUserId(user._id)}
+            onDelete={id => setDeleteId(id)}
+          />
+        )}
       </div>
       <PaginationInfo
         currentPage={currentPage}
@@ -124,11 +122,6 @@ export default function UserManagementPage() {
         userId={viewUserId}
       />
 
-      <UpdateRoleDialog
-        open={!!userToEditRole}
-        onOpenChange={() => setUserToEditRole(null)}
-        user={userToEditRole}
-      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-gray-50 text-gray-900">

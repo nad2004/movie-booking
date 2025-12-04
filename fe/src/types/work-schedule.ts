@@ -1,5 +1,5 @@
 // types/work-schedule.ts
-
+import { ApiResponse } from "./apiTemplate";
 // 1. Sub-types cho các field populated
 export interface TheaterShort {
   _id: string;
@@ -44,3 +44,8 @@ export interface GetWorkScheduleParams {
   from?: string; // YYYY-MM-DD
   to?: string;   // YYYY-MM-DD
 }
+export interface DayWorkSchedule{
+  date: string;
+  shifts: WorkSchedule[]
+}
+export type WorkScheduleResponseData = ApiResponse<DayWorkSchedule[]>
