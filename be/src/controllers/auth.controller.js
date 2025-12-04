@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { generateAuthToken, generatePasswordResetToken } from "../helpers/generateToken.js";
+import { generateAuthToken, generatePasswordResetToken, generateRefreshToken } from "../helpers/generateToken.js";
 import User from "../models/user.model.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
@@ -46,16 +46,35 @@ const authController = {
         role: "customer",
       });
 
-      await newUser.save(); // Pre-save hook sẽ hash password
+      // await newUser.save(); // Pre-save hook sẽ hash password
 
       // Tạo token
       // const token = jwt.sign({ userId: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-      const token = generateAuthToken(newUser);
+      // const token = generateAuthToken(newUser);
+
+      const accessToken = generateAuthToken(newUser);
+      const refreshToken = generateRefreshToken(newUser);
+
+      // Lưu refresh token
+      newUser.refreshToken = refreshToken;
+      newUser.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await newUser.save();
+
+      // const data = {
+      //   token,
+      //   user: {
+      //     // id: newUser._id,
+      //     _id: newUser._id,
+      //     email: newUser.email,
+      //     fullName: newUser.fullName,
+      //     role: newUser.role,
+      //   },
+      // };
 
       const data = {
-        token,
+        accessToken,
+        refreshToken,
         user: {
-          // id: newUser._id,
           _id: newUser._id,
           email: newUser.email,
           fullName: newUser.fullName,
@@ -101,10 +120,18 @@ const authController = {
 
       // Tạo token
       // const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-      const token = generateAuthToken(user);
+      // const token = generateAuthToken(user);
+      const accessToken = generateAuthToken(user);
+      const refreshToken = generateRefreshToken(user);
+
+      // Lưu refresh token vào database
+      user.refreshToken = refreshToken;
+      user.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await user.save();
 
       const data = {
-        token,
+        accessToken,
+        refreshToken,
         user: {
           // id: user._id,
           _id: user._id,
@@ -152,7 +179,7 @@ const authController = {
             user.profilePicture = profilePicture;
           }
 
-          await user.save();
+          // await user.save();
         } else {
           // TẠO MỚI: Chỉ có Google
           user = new User({
@@ -164,14 +191,22 @@ const authController = {
             authProviders: ["google"], // Chỉ Google
             role: "customer",
           });
-          await user.save();
+          // await user.save();
         }
       }
 
-      const token = generateAuthToken(user);
+      // const token = generateAuthToken(user);
+      const accessToken = generateAuthToken(user);
+      const refreshToken = generateRefreshToken(user);
+
+      // Lưu refresh token vào database
+      user.refreshToken = refreshToken;
+      user.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await user.save();
 
       const data = {
-        token,
+        accessToken,
+        refreshToken,
         user: {
           // id: user._id,
           _id: user._id,
@@ -234,6 +269,10 @@ const authController = {
 
       //    Không hash ở đây, để pre-save hook xử lý
       user.password = newPassword; //  Plain password
+
+      user.refreshToken = null;
+      user.refreshTokenExpires = null;
+
       await user.save(); //  Pre-save hook sẽ hash
 
       return successResponse(res, {}, "Đổi mật khẩu thành công");
@@ -317,13 +356,13 @@ const authController = {
       return successResponse(res, {}, "Reset mật khẩu thành công");
     } catch (error) {
       if (error.name === "TokenExpiredError") {
-        return errorResponse(res, "Token đã hết hạn", 400);
+        return errorResponse(res, "Reset token đã hết hạn", 401);
       }
       if (error.name === "JsonWebTokenError") {
-        return errorResponse(res, "Token không hợp lệ", 400);
+        return errorResponse(res, "Reset token không hợp lệ", 401);
       }
       console.error("Reset password error:", error);
-      return errorResponse(res, "Lỗi server không xác định");
+      return errorResponse(res, "Lỗi server không xác định", 500);
     }
   },
 
@@ -352,6 +391,48 @@ const authController = {
     } catch (error) {
       console.error("Set password error:", error);
       return errorResponse(res, "Lỗi server không xác định");
+    }
+  },
+
+  refreshToken: async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return errorResponse(res, "Refresh token là bắt buộc", 400);
+      }
+
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      if (decoded.tokenType !== "refresh") {
+        return errorResponse(res, "Token không hợp lệ", 401);
+      }
+
+      const user = await User.findById(decoded.userId);
+      if (!user || user.refreshToken !== refreshToken) {
+        return errorResponse(res, "Refresh token không hợp lệ", 401);
+      }
+
+      if (user.refreshTokenExpires < new Date()) {
+        return errorResponse(res, "Refresh token đã hết hạn", 401);
+      }
+
+      const newAccessToken = generateAuthToken(user);
+      const newRefreshToken = generateRefreshToken(user);
+
+      user.refreshToken = newRefreshToken;
+      user.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await user.save();
+
+      return successResponse(
+        res,
+        {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        },
+        "Refresh token thành công"
+      );
+    } catch (error) {
+      return errorResponse(res, "Refresh token không hợp lệ", 401);
     }
   },
 };

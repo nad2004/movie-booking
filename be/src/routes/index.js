@@ -55,6 +55,7 @@ router.use(sanitizeInput);
 //  FIX #5 & #9: Add validation and rate limiting
 router.post("/auth/register", validateRegisterInput, authController.register);
 router.post("/auth/login", validateLoginInput, authController.login);
+router.post("/auth/refresh-token", authController.refreshToken);
 router.post("/auth/google-login", authController.googleLogin);
 router.post("/auth/forgot-password", passwordResetRateLimiter, authController.forgotPassword);
 router.post("/auth/reset-password", passwordResetRateLimiter, authController.resetPassword);

@@ -17,3 +17,12 @@ export const generatePasswordResetToken = (userId) => {
   };
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
+
+// Sau function generateAuthToken, thêm:
+export const generateRefreshToken = (user) => {
+  const payload = {
+    userId: user._id,
+    tokenType: 'refresh'
+  };
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' });
+};

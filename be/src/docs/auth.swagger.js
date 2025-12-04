@@ -132,6 +132,80 @@
 
 /**
  * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Làm mới access token
+ *     description: |
+ *       Sử dụng refresh token để lấy access token mới khi access token hiện tại đã hết hạn.
+ *       Refresh token có thời hạn 30 ngày, access token có thời hạn 7 ngày.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2M..."
+ *                 description: Refresh token nhận được từ lúc đăng nhập/đăng ký
+ *     responses:
+ *       200:
+ *         description: Làm mới token thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Refresh token thành công"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                       description: Access token mới (7 ngày)
+ *                     refreshToken:
+ *                       type: string
+ *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                       description: Refresh token mới (30 ngày)
+ *       400:
+ *         description: Thiếu refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Refresh token là bắt buộc"
+ *       401:
+ *         description: Refresh token không hợp lệ hoặc đã hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Refresh token không hợp lệ"
+ */
+
+/**
+ * @swagger
  * /auth/google-login:
  *   post:
  *     tags: [Authentication]

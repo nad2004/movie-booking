@@ -181,6 +181,13 @@ const userSchema = new Schema(
     emailVerificationExpires: {
       type: Date,
     },
+
+    refreshToken: {
+      type: String,
+    },
+    refreshTokenExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
