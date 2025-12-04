@@ -30,3 +30,65 @@ export interface ShiftAssignment {
 }
 
 export type ShiftTemplateResponse = ApiResponse<ShiftTemplate[]>
+export interface AssignedEmployee {
+  assignmentId: string
+  userId: string
+  fullName: string
+  email: string
+  phoneNumber: string
+  avatar: string
+  role: 'staff' | 'manager' | 'ticket'
+  status: 'active' | 'inactive'
+  checkInTime?: string // ISO string
+  checkOutTime?: string // ISO string
+  assignedAt: string // ISO string
+}
+// Shift with Employees
+export interface ShiftWithEmployees {
+  scheduleId: string
+  date: string // YYYY-MM-DD
+  shift: ShiftTemplate
+  startDateTime: string // ISO
+  endDateTime: string // ISO
+  status: 'open' | 'closed'
+  employees: AssignedEmployee[]
+  totalEmployees: number
+}
+
+// Daily Roster Response
+export interface DailyRosterData {
+  date: string
+  shifts: ShiftWithEmployees[]
+  summary: {
+    totalSchedules: number
+    totalAssignments: number
+    activeNow: number
+    completed: number
+    pending: number
+    noShow: number
+  }
+}
+
+export type DailyRosterResponse = ApiResponse<DailyRosterData>
+
+// DTO for Create Assignment
+export interface CreateAssignmentDTO {
+  workScheduleId: string
+  userId: string
+  role: 'staff' | 'manager' | 'ticket'
+}
+
+// DTO for Update Assignment
+export interface UpdateAssignmentDTO {
+  role?: 'staff' | 'manager' | 'ticket'
+  checkInTime?: string
+  checkOutTime?: string
+  status?: 'assigned' | 'working' | 'completed' | 'absent'
+}
+
+// Get Daily Roster Params
+export interface GetDailyRosterParams {
+  theaterId: string
+  date: string // YYYY-MM-DD
+  shiftCode?: string // S1, S2, S3 (optional filter)
+}

@@ -4,16 +4,17 @@ import { api } from "@/lib/api/axios"; // Đường dẫn axios instance của b
 import { 
   WorkSchedule, 
   GenerateWorkScheduleDTO, 
-  GetWorkScheduleParams 
+  GetWorkScheduleParams,
+  WorkScheduleResponseData
 } from "@/types/work-schedule";
-
+import { useNotification } from "@/providers/NotificationProvider";
 // --- 1. Raw API Functions ---
 
 // GET: Lấy danh sách lịch làm việc
 export async function getWorkSchedules(params: GetWorkScheduleParams) {
   // Chỉ gọi API khi có đủ params quan trọng (ví dụ: theaterId)
   // Tuy nhiên, logic này có thể để ở component hoặc hook
-  const res = await api.get<{ success: boolean; data: WorkSchedule[] }>("/work-schedules", {
+  const res = await api.get<WorkScheduleResponseData>("/work-schedules", {
     params,
   });
   return res.data.data;
@@ -38,7 +39,7 @@ export function useWorkSchedules(params: GetWorkScheduleParams) {
   return useQuery({
     // Query Key bao gồm params để cache riêng biệt cho từng tháng/rạp
     queryKey: ["work-schedules", params], 
-    queryFn: () => getWorkSchedules(params),
+    queryFn:  () => getWorkSchedules(params),
     // Chỉ fetch khi có theaterId (để tránh gọi lỗi khi chưa chọn rạp)
     enabled: !!params.theaterId && !!params.from && !!params.to,
     staleTime: 1000 * 60 * 5, // Cache 5 phút
@@ -48,14 +49,15 @@ export function useWorkSchedules(params: GetWorkScheduleParams) {
 // Hook Mutation cho các hành động thay đổi dữ liệu
 export function useWorkScheduleMutations() {
   const queryClient = useQueryClient();
-
+  const {showSuccess, showError} = useNotification();
   // Generate Schedule Mutation
   const generateMutation = useMutation({
     mutationFn: (data: GenerateWorkScheduleDTO) => generateWorkSchedules(data),
-    onSuccess: () => {
-      // Invalidate query để UI tự cập nhật lại lịch mới sinh
-      queryClient.invalidateQueries({ queryKey: ["work-schedules"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["work-schedules"] });
+      showSuccess("Tạo lịch thành công")
     },
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   });
 
   // Delete Schedule Mutation
@@ -63,7 +65,9 @@ export function useWorkScheduleMutations() {
     mutationFn: (id: string) => deleteWorkSchedule(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["work-schedules"] });
+      showSuccess("Xoá lịch thành công")
     },
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   });
 
   return {

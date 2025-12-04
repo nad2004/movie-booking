@@ -52,8 +52,6 @@ export async function deleteUser(id: string) {
   return res.data;
 }
 
-// --- Hooks ---
-
 export function useUsers(params: GetUsersParams) {
   return useQuery({
     queryKey: ["users", params],
@@ -70,3 +68,15 @@ export function useUserDetail(id: string | null) {
     enabled: !!id, // Chỉ fetch khi có ID
   });
 }
+
+/**
+ * Hook lấy staff theo theater
+ * Wrapper tiện lợi cho useUsers với filter theaterId
+ */
+// export function useTheaterStaff(theaterId: string) {
+//   return useUsers({
+//     theaterId,
+//     role: 'staff',
+//     status: 'active',
+//   });
+// }

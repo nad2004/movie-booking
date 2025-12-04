@@ -1,92 +1,212 @@
 // app/(admin)/shift-manager/components/modals/assign-staff-modal.tsx
 'use client'
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useMemo, useCallback } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Loader2, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
+
+// API & Types
+import { useAssignmentMutations } from '@/lib/api/shift-assignments'
+import { useUsers } from '@/lib/api/user'
+import { ShiftWithEmployees, CreateAssignmentDTO } from '@/types/shift'
+
+// Validation Schema
+const assignStaffSchema = z.object({
+  userId: z.string().min(1, 'Vui lòng chọn nhân viên'),
+})
+
+type AssignStaffFormData = z.infer<typeof assignStaffSchema>
 
 interface AssignStaffModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedSchedule?: { id: string, name: string, time: string, date: string }; // Context data
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedSchedule?: ShiftWithEmployees | null
 }
 
-export default function AssignStaffModal({ open, onOpenChange, selectedSchedule }: AssignStaffModalProps) {
-  const [role, setRole] = useState('Staff');
-  const [userId, setUserId] = useState('');
+export default function AssignStaffModal({
+  open,
+  onOpenChange,
+  selectedSchedule,
+}: AssignStaffModalProps) {
+  const { data: usersData, isLoading: isLoadingUsers } = useUsers({role: 'staff'})
+  const { create } = useAssignmentMutations()
 
-  const handleAssign = () => {
-    const payload = {
-      workScheduleId: selectedSchedule?.id, // [cite: 59]
-      userId: userId, // [cite: 60]
-      role: role // [cite: 61]
-    };
-    console.log("Assigning Staff Payload:", payload);
-    // Call API POST /api/v1/assignments
-    onOpenChange(false);
-  };
+  const users = useMemo(() => usersData?.users || [], [usersData])
+
+  // --- React Hook Form ---
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<AssignStaffFormData>({
+    resolver: zodResolver(assignStaffSchema),
+    defaultValues: {
+      userId: '',
+    },
+  })
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      reset({
+        userId: '',
+      })
+    }
+  }, [open, reset])
+
+  // --- Handlers ---
+  const onSubmit = useCallback(
+    async (data: AssignStaffFormData) => {
+      if (!selectedSchedule) return
+
+      try {
+        const payload: CreateAssignmentDTO = {
+          workScheduleId: selectedSchedule.scheduleId,
+          userId: data.userId,
+          role: 'staff', // Mặc định luôn là staff
+        }
+
+        await create.mutateAsync(payload)
+
+        const user = users.find((u) => u._id === data.userId)
+        toast.success('Phân công thành công!', {
+          description: `Đã phân công ${user?.fullName} vào ca ${selectedSchedule.shift.name}`,
+        })
+
+        onOpenChange(false)
+      } catch (error: any) {
+        toast.error('Lỗi khi phân công', {
+          description: error?.message || 'Vui lòng thử lại',
+        })
+      }
+    },
+    [selectedSchedule, create, onOpenChange, users]
+  )
+
+  const handleCancel = useCallback(() => {
+    onOpenChange(false)
+  }, [onOpenChange])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-white text-gray-900">
+      <DialogContent className="sm:max-w-[480px] bg-white text-gray-900">
         <DialogHeader>
-          <DialogTitle>Phân Công Nhân Viên</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Phân Công Nhân Viên</DialogTitle>
           {selectedSchedule && (
-             <div className="text-sm text-gray-500 mt-1">
-                {selectedSchedule.date} - {selectedSchedule.name} ({selectedSchedule.time})
-             </div>
+            <DialogDescription className="text-sm text-gray-500 mt-1">
+              {selectedSchedule.date} - {selectedSchedule.shift.name} ({selectedSchedule.shift.startTime} -{' '}
+              {selectedSchedule.shift.endTime})
+            </DialogDescription>
           )}
         </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label>Chọn Nhân Viên</Label>
-            <Select onValueChange={setUserId}>
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="Tìm kiếm nhân viên..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user_1">
-                   <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6"><AvatarFallback>NA</AvatarFallback></Avatar>
-                      <span>Nguyễn Văn A (Full-time)</span>
-                   </div>
-                </SelectItem>
-                <SelectItem value="user_2">
-                   <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6"><AvatarFallback>TB</AvatarFallback></Avatar>
-                      <span>Trần Thị B (Part-time)</span>
-                   </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid gap-5 py-4">
+            {/* Select User */}
+            <div className="space-y-2">
+              <Label htmlFor="userId">
+                Chọn Nhân Viên <span className="text-red-500">*</span>
+              </Label>
+              <Controller
+                name="userId"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange} disabled={isLoadingUsers}>
+                    <SelectTrigger
+                      id="userId"
+                      className={`h-12 ${errors.userId ? 'border-red-500' : ''}`}
+                    >
+                      <SelectValue placeholder="Tìm kiếm nhân viên..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingUsers ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                        </div>
+                      ) : users.length === 0 ? (
+                        <div className="text-center py-6 text-gray-400 text-sm">
+                          Không có nhân viên khả dụng
+                        </div>
+                      ) : (
+                        users.map((user) => (
+                          <SelectItem key={user._id} value={user._id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={user.profilePicture} />
+                                <AvatarFallback className="text-xs">
+                                  {user.fullName.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>
+                                {user.fullName} • {user.email}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.userId && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.userId.message}
+                </p>
+              )}
+            </div>
+
+            {/* Info Box */}
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-900">
+                💡 Nhân viên sẽ nhận thông báo qua email sau khi được phân công
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Vai Trò Trong Ca</Label>
-            <Select defaultValue="Staff" onValueChange={setRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn vai trò" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Manager">Quản lý ca (Shift Leader)</SelectItem>
-                <SelectItem value="Staff">Nhân viên phục vụ</SelectItem>
-                <SelectItem value="Ticket">Bán vé</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
-          <Button onClick={handleAssign} className="bg-[#6C63FF] hover:bg-[#5a52e0] text-white">
-            Xác Nhận
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || isLoadingUsers}
+              className="bg-[#6C63FF] hover:bg-[#5a52e0] text-white min-w-[100px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                'Xác Nhận'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
