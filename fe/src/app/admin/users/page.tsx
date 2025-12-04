@@ -6,8 +6,6 @@ import { useUserMutations } from './hooks/useUserMutations'
 import { UserTable } from './components/UserTable'
 import { UserToolbar } from './components/UserToolbar'
 import { UserDetailSheet } from './components/UserDetailSheet'
-import { UpdateRoleDialog } from './components/UpdateRoleDialog'
-import { User } from '@/types/user'
 import { useDebounce } from '@/hooks/useDebounce'
 import {
   AlertDialog,
@@ -39,7 +37,6 @@ export default function UserManagementPage() {
 
   // Dialog State
   const [viewUserId, setViewUserId] = useState<string | null>(null)
-  const [userToEditRole, setUserToEditRole] = useState<User | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -101,7 +98,6 @@ export default function UserManagementPage() {
           <UserTable
             users={users || []}
             onViewDetail={user => setViewUserId(user._id)}
-            onEditRole={setUserToEditRole}
             onDelete={id => setDeleteId(id)}
           />
         )}
@@ -126,11 +122,6 @@ export default function UserManagementPage() {
         userId={viewUserId}
       />
 
-      <UpdateRoleDialog
-        open={!!userToEditRole}
-        onOpenChange={() => setUserToEditRole(null)}
-        user={userToEditRole}
-      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-gray-50 text-gray-900">

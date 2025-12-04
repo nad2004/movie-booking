@@ -9,20 +9,18 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Eye, Edit, Trash2 } from 'lucide-react'
+import { Eye, Trash2 } from 'lucide-react'
 import { User } from '@/types/user'
 
 interface UserTableProps {
   users: User[]
   onViewDetail: (user: User) => void
-  onEditRole: (user: User) => void
   onDelete: (id: string) => void
 }
 
 export function UserTable({
   users,
   onViewDetail,
-  onEditRole,
   onDelete,
 }: UserTableProps) {
 
@@ -85,15 +83,6 @@ export function UserTable({
                     title="Xem chi tiết"
                   >
                     <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-orange-600 hover:bg-orange-50"
-                    onClick={() => onEditRole(user)}
-                    title="Sửa quyền"
-                  >
-                    <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     size="icon"
