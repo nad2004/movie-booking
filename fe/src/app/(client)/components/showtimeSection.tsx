@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef, MouseEvent as ReactMouseEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react'
 import Link from 'next/link'
 import { MapPin, Search, Loader2, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,8 @@ import type { Movie } from '@/types/movie'
 import { useSchedules } from '@/lib/api/schedules'
 import { VIETNAM_CITIES } from '@/constants/location'
 import MovieShowtimeCard from '@/app/(client)/showtimes/components/MovieShowtimeCard'
+// Import Custom Hook
+import { useDebounce } from '@/hooks/useDebounce'
 
 interface ShowtimeSectionProps {
   cinemas: Theater[]
@@ -29,10 +31,26 @@ interface ShowtimeSectionProps {
 export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
   // --- 1. STATES ---
   const [selectedCity, setSelectedCity] = useState('Hà Nội')
+  
+  // State tìm kiếm raw (để binding vào input)
   const [searchCinema, setSearchCinema] = useState('')
-  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('')
+  // State tìm kiếm đã debounce (để dùng cho logic filter)
+  const debouncedSearchCinema = useDebounce(searchCinema, 300)
+const filteredCinemas = useMemo(() => {
+    if (!cinemas) return []
+
+    const lowerSearch = debouncedSearchCinema.toLowerCase()
+    
+    return cinemas.filter(
+      c => c.city === selectedCity && c.name.toLowerCase().includes(lowerSearch)
+    )
+  }, [cinemas, selectedCity, debouncedSearchCinema])
+   const defaultCinemaId = useMemo(() => {
+    return filteredCinemas.length > 0 ? filteredCinemas[0]._id : ''
+  }, [filteredCinemas])
+  const [selectedCinemaId, setSelectedCinemaId] = useState<string>(defaultCinemaId)
   const [selectedDate, setSelectedDate] = useState<string | undefined>(
-    new Date().toLocaleDateString('vi-VN')
+    () => new Date().toLocaleDateString('vi-VN') // Lazy initial state
   )
 
   // **THÊM: States cho drag to scroll**
@@ -41,76 +59,78 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
 
-  // **THÊM: Drag handlers**
-  const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
+  // --- 2. HANDLERS (Optimized with useCallback) ---
+
+  // Xử lý thay đổi input search
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchCinema(e.target.value)
+  }, [])
+
+  // Xử lý chọn thành phố
+  const handleCityChange = useCallback((city: string) => {
+    setSelectedCity(city)
+  }, [])
+
+  // Xử lý chọn rạp
+  const handleCinemaSelect = useCallback((id: string) => {
+    setSelectedCinemaId(id)
+  }, [])
+
+  // Xử lý chọn ngày
+  const handleDateSelect = useCallback((dateValue: string) => {
+    setSelectedDate(dateValue)
+  }, [])
+
+  // **Drag handlers (Optimized)**
+  const handleMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     if (!dateScrollRef.current) return
     setIsDragging(true)
     setStartX(e.pageX - dateScrollRef.current.offsetLeft)
     setScrollLeft(dateScrollRef.current.scrollLeft)
-  }
+  }, [])
 
-  const handleMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     if (!isDragging || !dateScrollRef.current) return
     e.preventDefault()
     const x = e.pageX - dateScrollRef.current.offsetLeft
     const walk = (x - startX) * 0.7 // Tốc độ scroll
     dateScrollRef.current.scrollLeft = scrollLeft - walk
-  }
+  }, [isDragging, startX, scrollLeft])
 
-  const handleMouseUpOrLeave = () => {
+  const handleMouseUpOrLeave = useCallback(() => {
     setIsDragging(false)
-  }
-
-  // --- 2. FILTER CINEMAS ---
-  const filteredCinemas = useMemo(() => {
-    return cinemas.filter(
-      c => c.city === selectedCity && c.name.toLowerCase().includes(searchCinema.toLowerCase())
-    )
-  }, [cinemas, selectedCity, searchCinema])
-
-  // Auto select rạp đầu tiên khi đổi thành phố
-  useEffect(() => {
-    async function setCondition() {
-      if (filteredCinemas.length > 0) {
-        await setSelectedCinemaId(filteredCinemas[0]._id)
-      } else {
-        await setSelectedCinemaId('')
-      }
-    }
-    setCondition()
-  }, [selectedCity, filteredCinemas.length])
-
-  // --- 3. FETCH SCHEDULES ---
+  }, [])
+  
+  // --- 4. FETCH SCHEDULES ---
   const { data: scheduleData, isFetching: isLoadingSchedules } = useSchedules({
     theaterId: selectedCinemaId,
   })
 
-  const schedules = scheduleData?.schedules || []
+  const schedules = useMemo(()=>{return scheduleData?.schedules || []},[scheduleData])
 
-  // --- 4. GROUP SCHEDULES BY MOVIE ---
+  // --- 5. GROUP SCHEDULES BY MOVIE ---
   const groupedData = useMemo(() => {
-    if (!schedules) return []
+    if (!schedules || schedules.length === 0) return []
 
-    // 1. Lọc theo ngày (nếu người dùng có chọn ngày trên DateSelector)
+    // 1. Lọc theo ngày
     let filtered = schedules
     if (selectedDate) {
       filtered = schedules.filter(s => s.showDate.startsWith(selectedDate))
     }
+
     interface GroupedMovieSchedule {
       uniqueKey: string
       date: string
       movie: Movie
       schedules: Schedule[]
     }
-    // 2. Gom nhóm theo: MOVIE_ID + DATE
+
+    // 2. Gom nhóm
     const groups: Record<string, GroupedMovieSchedule> = {}
 
     filtered.forEach(schedule => {
-      // Lấy phần ngày (bỏ giờ). Giả sử showDate là ISO string "2024-11-28T10:00..." hoặc "2024-11-28"
       const dateKey = schedule.showDate.split('T')[0]
       const movieId = schedule.movie._id
-
-      // Tạo key duy nhất kết hợp giữa phim và ngày
       const uniqueKey = `${movieId}_${dateKey}`
 
       if (!groups[uniqueKey]) {
@@ -127,18 +147,17 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
     return Object.values(groups)
   }, [schedules, selectedDate])
 
-  // --- 5. GENERATE DATES (14 days) ---
+  // --- 6. GENERATE DATES (Static calculation) ---
   const dates = useMemo(() => {
     const days = []
     const today = new Date()
 
-    // Thêm option "Tất cả" với value là undefined hoặc empty string
-    days.push({ label: 'Tất cả', displayDate: 'All', value: '' }) // Đổi từ undefined sang ""
+    days.push({ label: 'Tất cả', displayDate: 'All', value: '' })
 
     for (let i = 0; i < 12; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
-      const value = date.toLocaleDateString('en-CA')
+      const value = date.toLocaleDateString('en-CA') // YYYY-MM-DD format
       const label =
         i === 0 ? 'Hôm nay' : new Intl.DateTimeFormat('vi-VN', { weekday: 'short' }).format(date)
       const displayDate = new Intl.DateTimeFormat('vi-VN', {
@@ -148,7 +167,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
       days.push({ value, label, displayDate })
     }
     return days
-  }, [])
+  }, []) // Empty dependency array: chỉ chạy 1 lần khi mount
 
   return (
     <section className="py-16 bg-background text-foreground overflow-hidden">
@@ -160,7 +179,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
           <div className="flex flex-col md:flex-row flex-wrap gap-4 mb-6 pb-6 border-b border-border">
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-muted-foreground shrink-0" />
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
+              <Select value={selectedCity} onValueChange={handleCityChange}>
                 <SelectTrigger className="w-[160px] sm:w-[180px] rounded-2xl border-border bg-muted">
                   <SelectValue placeholder="Chọn thành phố" />
                 </SelectTrigger>
@@ -180,8 +199,8 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
                 <Input
                   type="text"
                   placeholder="Tìm theo tên rạp..."
-                  value={searchCinema}
-                  onChange={e => setSearchCinema(e.target.value)}
+                  value={searchCinema} // Binding vào raw state
+                  onChange={handleSearchChange} // Update raw state
                   className="w-full bg-muted border-border rounded-full pl-10"
                 />
               </div>
@@ -193,7 +212,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
             {VIETNAM_CITIES.slice(0, 5).map(city => (
               <button
                 key={city}
-                onClick={() => setSelectedCity(city)}
+                onClick={() => handleCityChange(city)}
                 className={`px-4 sm:px-6 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
                   selectedCity === city
                     ? 'bg-primary text-primary-foreground shadow'
@@ -213,7 +232,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
                 filteredCinemas.map(cinema => (
                   <button
                     key={cinema._id}
-                    onClick={() => setSelectedCinemaId(cinema._id)}
+                    onClick={() => handleCinemaSelect(cinema._id)}
                     className={`w-full text-left p-3 sm:p-4 rounded-2xl transition-all border-2 ${
                       selectedCinemaId === cinema._id
                         ? 'bg-primary/5 border-primary shadow-sm'
@@ -252,7 +271,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
 
             {/* Right Column: Date & Showtimes */}
             <div className="space-y-6 min-w-0">
-              {/* Date Selector - THÊM drag to scroll */}
+              {/* Date Selector */}
               <div
                 ref={dateScrollRef}
                 onMouseDown={handleMouseDown}
@@ -266,7 +285,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
                 {dates.map(date => (
                   <button
                     key={date.value}
-                    onClick={() => setSelectedDate(date.value)}
+                    onClick={() => handleDateSelect(date.value)}
                     className={`flex-shrink-0 w-16 sm:w-20 py-2 sm:py-3 rounded-xl text-center transition-all border ${
                       selectedDate === date.value
                         ? 'bg-primary text-primary-foreground border-primary shadow'
@@ -288,7 +307,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
                       <p>Đang tải lịch chiếu...</p>
                     </div>
                   ) : groupedData.length > 0 ? (
-                    groupedData.map(({ movie, schedules, uniqueKey }) => (
+                    groupedData.map(({ uniqueKey, movie, schedules }) => (
                       <MovieShowtimeCard key={uniqueKey} movie={movie} schedules={schedules} />
                     ))
                   ) : (
@@ -312,7 +331,7 @@ export function ShowtimeSection({ cinemas }: ShowtimeSectionProps) {
           <div className="text-center mt-8 sm:mt-10">
             <Button
               asChild
-              className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 rounded-full px-8 sm:px-10 py-5 sm:py-6 text-base sm:text-lg shadow-md"
+              className="bg-linear-to-r from-primary to-accent text-primary-foreground hover:opacity-90 rounded-full px-8 sm:px-10 py-5 sm:py-6 text-base sm:text-lg shadow-md"
             >
               <Link href="/showtimes">Xem tất cả lịch chiếu</Link>
             </Button>

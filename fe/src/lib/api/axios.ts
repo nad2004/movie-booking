@@ -27,8 +27,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isLoginRequest = originalRequest.url && originalRequest.url.includes('/auth/login');
+    const isStaffProfileRequest = originalRequest.url && originalRequest.url.includes('/staff/profile');
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
+    // Không xử lý 401 cho login request và staff profile request
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest && !isStaffProfileRequest) {
       originalRequest._retry = true;
 
       Cookies.remove("authToken");

@@ -6,10 +6,14 @@ import Cookies from 'js-cookie'
 interface UserState {
   user: User | null
   isAuthenticated: boolean
-  _hasHydrated: boolean // <--- 1. Thêm cờ kiểm tra
+  staffTheaterId: string | null 
+  staffTheaterName: string | null
+  _hasHydrated: boolean
   setUser: (user: User | null) => void
+  setStaffTheater: (theaterId: string | null) => void 
+  setStaffTheaterName: (theaterName: string | null) => void 
   logout: () => void
-  setHasHydrated: (state: boolean) => void // <--- 2. Hàm set cờ
+  setHasHydrated: (state: boolean) => void
 }
 
 export const useUserStore = create<UserState>()(
@@ -17,20 +21,29 @@ export const useUserStore = create<UserState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      _hasHydrated: false, // Mặc định là chưa load xong
+      staffTheaterId: null,
+      staffTheaterName: null,
+      _hasHydrated: false,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       
+      setStaffTheater: (theaterId) => set({ staffTheaterId: theaterId }),
+      setStaffTheaterName: (theaterName) => set({ staffTheaterName: theaterName }),
+
       logout: () => {
         Cookies.remove('authToken')
-        set({ user: null, isAuthenticated: false })
+        set({ 
+          user: null, 
+          isAuthenticated: false,
+          staffTheaterId: null,
+          staffTheaterName: null
+        })
       },
 
       setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: 'user-storage',
-      // 3. Sự kiện này chạy khi Zustand bắt đầu/kết thúc đọc localStorage
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },

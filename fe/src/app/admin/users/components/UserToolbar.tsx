@@ -8,9 +8,16 @@ interface UserToolbarProps {
   onSearchChange: (val: string) => void;
   typeUser: string;
   onTabChange: (val: string) => void;
+  onAddStaff: () => void;
 }
 
-export function UserToolbar({ search, onSearchChange, typeUser, onTabChange }: UserToolbarProps) {
+export function UserToolbar({ 
+  search, 
+  onSearchChange, 
+  typeUser, 
+  onTabChange,
+  onAddStaff 
+}: UserToolbarProps) {
   return (
     <div className="space-y-4">
       {/* Tabs Switcher */}
@@ -36,7 +43,7 @@ export function UserToolbar({ search, onSearchChange, typeUser, onTabChange }: U
       {/* Search Bar */}
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5  " />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input
             placeholder="Tìm kiếm theo tên, email, số điện thoại..."
             className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
@@ -44,9 +51,14 @@ export function UserToolbar({ search, onSearchChange, typeUser, onTabChange }: U
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
-        <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6">
-           <UserPlus className="w-4 h-4 mr-2" /> Thêm mới
-        </Button>
+        {typeUser === "staff" && (
+          <Button 
+            onClick={onAddStaff}
+            className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6"
+          >
+            <UserPlus className="w-4 h-4 mr-2" /> Thêm mới
+          </Button>
+        )}
       </div>
     </div>
   );

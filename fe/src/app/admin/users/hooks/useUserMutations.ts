@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateUserRole, deleteUser, UpdateRoleDTO } from '@/lib/api/user'
+import { updateUserRole, deleteUser, UpdateRoleDTO, createStaff } from '@/lib/api/user'
 import { useNotification } from '@/providers/NotificationProvider'
 
 export function useUserMutations() {
@@ -25,4 +25,16 @@ export function useUserMutations() {
   })
 
   return { updateRoleMutation, deleteMutation }
+}
+export function useCreateStaff() {
+  const queryClient = useQueryClient();
+  const { showSuccess, showError } = useNotification()
+  return useMutation({
+    mutationFn: createStaff,
+    onSuccess: () => {
+      showSuccess('Thêm thành công!')
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  });
 }

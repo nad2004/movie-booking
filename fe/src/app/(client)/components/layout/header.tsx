@@ -1,21 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import {
-  Moon,
-  Sun,
-  Search,
-  User as UserIcon,
-  ChevronDown,
-  Ticket,
-  Settings,
-  X,
-  Loader2,
-  Clock,
-  Star,
-} from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
+import {
+  Moon, Sun, Search, User as UserIcon, ChevronDown,
+  Ticket, Settings, X, Loader2, Clock, Star
+} from 'lucide-react'
+
+// UI Components
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -28,351 +23,345 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+
+// Logic & Store
 import { useUserStore } from '@/store/userStore'
 import { cn } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useState, useEffect, useRef } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useMounted } from '@/hooks/useMounted' // Import custom hook
+import { useMounted } from '@/hooks/useMounted'
 import { useMovies } from '@/lib/api/movies'
+import { LogoutButton } from '@/app/components/shared/LogoutButton'
 import type { Genre } from '@/types/genre'
-import Image from 'next/image'
-import { LogoutButton } from '@/app/components/shared/LogoutButton' 
 
-interface NavLink {
-  href: string
-  label: string
-  subLinks?: { href: string; label: string }[]
-}
-
-const navLinks: NavLink[] = [
+// --- CONSTANTS ---
+const NAV_LINKS = [
   { href: '/', label: 'Trang chủ' },
   { label: 'Lịch Chiếu', href: '/showtimes' },
   { href: '/movies', label: 'Phim' },
 ]
 
-export function Header() {
+// --- SUB-COMPONENTS ---
+
+// 1. Navigation Component
+const MainNav = memo(({ className }: { className?: string }) => {
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
-  const { user, isAuthenticated } = useUserStore()
 
-  // FIX HYDRATION: Sử dụng custom hook
-  const isMounted = useMounted()
+  return (
+    <nav className={cn("flex items-center gap-8", className)}>
+      {NAV_LINKS.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className={cn(
+            'text-sm font-medium transition-colors hover:text-primary',
+            pathname === link.href ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          {link.label}
+        </Link>
+      ))}
+    </nav>
+  )
+})
+MainNav.displayName = 'MainNav'
 
-  // --- SEARCH LOGIC ---
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const searchContainerRef = useRef<HTMLDivElement>(null)
+// 2. Search Component
+interface SearchBarProps {
+  isOpen: boolean
+  onToggle: (open: boolean) => void
+  className?: string
+}
 
-  const debouncedSearch = useDebounce(searchQuery, 500)
+const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
+  const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  const debouncedSearch = useDebounce(query, 500)
 
+  // Chỉ fetch khi có ít nhất 2 ký tự để tối ưu API call
+  const shouldFetch = debouncedSearch.length >= 2
   const { data: movieData, isLoading: isSearching } = useMovies({
-    search: debouncedSearch,
+    search: shouldFetch ? debouncedSearch : '',
     limit: 5,
     status: '',
   })
 
   const movies = movieData?.movies || []
 
+  // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchOpen(false)
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (isOpen) {
+          onToggle(false)
+          setQuery('') // Optional: clear query on close
+        }
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [isOpen, onToggle])
 
+  // Auto focus logic
   useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      searchInputRef.current.focus()
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus()
     }
-  }, [isSearchOpen])
+  }, [isOpen])
 
-  const handleCloseSearch = () => {
-    setIsSearchOpen(false)
-    setSearchQuery('')
-  }
+  const handleClose = useCallback(() => {
+    onToggle(false)
+    setQuery('')
+  }, [onToggle])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div
-        className={cn(
-          'flex items-center justify-between w-full border-b border-border',
-          'h-[72px] md:h-[82px] xl:h-[65px]',
-          'px-[5px] py-[17px]',
-          'md:px-6 md:py-4',
-          'xl:px-[86px] xl:py-[15px]'
-        )}
-      >
-        {/* LEFT: Logo + Nav */}
-        <div
-          className={cn(
-            'flex items-center gap-10 transition-all duration-300',
-            isSearchOpen ? 'hidden md:flex' : 'flex'
-          )}
-        >
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <rect x="3" y="4" width="18" height="16" rx="2" ry="2" strokeWidth="1.5" />
-                <path d="M3 10h18M10 4v16" strokeWidth="1.5" />
-              </svg>
-            </div>
-            <span className="text-lg font-semibold hidden xl:block">CineBooking</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map(link =>
-              link.subLinks ? (
-                <DropdownMenu key={link.label}>
-                  <DropdownMenuTrigger
-                    className={cn(
-                      'text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 focus-visible:outline-none',
-                      pathname.startsWith(link.href)
-                        ? 'text-primary'
-                        : 'text-muted-foreground'
-                    )}
-                  >
-                    {link.label}
-                    <ChevronDown className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {link.subLinks.map(subLink => (
-                      <DropdownMenuItem key={subLink.href} asChild>
-                        <Link href={subLink.href}>{subLink.label}</Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'text-sm font-medium transition-colors hover:text-primary',
-                    pathname === link.href ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
-                  {link.label}
-                </Link>
-              )
-            )}
-          </nav>
-        </div>
-
-        {/* RIGHT: Actions */}
-        <div
-          className={cn('flex items-center gap-2 relative', isSearchOpen ? 'w-full md:w-auto' : '')}
-        >
-          {/* --- SEARCH BOX --- */}
-          <div
-            ref={searchContainerRef}
-            className={cn(
-              'relative transition-all duration-300',
-              isSearchOpen ? 'w-full md:w-[400px]' : 'w-auto'
-            )}
-          >
-            {isSearchOpen ? (
-              <div className="relative flex items-center animate-in fade-in zoom-in duration-200 z-50">
-                <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  ref={searchInputRef}
-                  placeholder="Tìm tên phim, đạo diễn, diễn viên..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="h-10 pl-9 pr-8 rounded-xl bg-background border-primary ring-1 ring-primary focus-visible:ring-primary w-full"
-                  onKeyDown={e => e.key === 'Escape' && handleCloseSearch()}
-                />
-                <div className="absolute right-2 flex items-center">
-                  {isSearching ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 rounded-full hover:bg-muted"
-                      onClick={handleCloseSearch}
-                    >
-                      <X className="h-3 w-3 text-muted-foreground" />
-                    </Button>
-                  )}
-                </div>
-
-                {/* --- SEARCH RESULTS DROPDOWN --- */}
-                {searchQuery.trim() && (
-                  <div className="absolute top-full left-0 w-full mt-2 bg-surface border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-60">
-                    {movies.length > 0 ? (
-                      <div className="max-h-[400px] overflow-y-auto py-2">
-                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Phim gợi ý
-                        </div>
-                        {movies.map(movie => (
-                          <Link
-                            key={movie._id}
-                            href={`/movies/${movie._id}`}
-                            onClick={handleCloseSearch}
-                            className="flex items-start gap-3 px-3 py-2 hover:bg-muted/50 transition-colors group"
-                          >
-                            <div className="relative w-10 h-14 shrink-0 rounded overflow-hidden bg-gray-100 shadow-sm">
-                              <Image
-                                src={movie.posterUrl || '/placeholder-movie.png'}
-                                alt={movie.title}
-                                fill
-                                className="object-cover"
-                                sizes="40px"
-                              />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start">
-                                <p className="text-sm font-medium text-text-primary truncate group-hover:text-primary transition-colors">
-                                  {movie.title}
-                                </p>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] h-5 px-1 bg-background whitespace-nowrap ml-2"
-                                >
-                                  {movie.status}
-                                </Badge>
-                              </div>
-
-                              <div className="flex items-center gap-2 text-xs text-text-secondary mt-1">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {movie.duration} phút
-                                </span>
-                                <span>•</span>
-                                <span className="flex items-center gap-1 text-accent">
-                                  <Star className="h-3 w-3 fill-accent" />
-                                  {movie.averageRating.toFixed(1)}
-                                </span>
-                              </div>
-
-                              <div className="text-[10px] text-text-secondary mt-1 truncate">
-                                {movie.genres?.map((g: Genre) => g.name).join(', ')}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-
-                        <div className="border-t border-border mt-2 pt-2 px-2">
-                          <Link
-                            href={`/movies?search=${encodeURIComponent(searchQuery)}`}
-                            onClick={handleCloseSearch}
-                            className="block text-center text-xs text-primary hover:underline py-1"
-                          >
-                            Xem tất cả kết quả cho &quot;{searchQuery}&quot;
-                          </Link>
-                        </div>
-                      </div>
-                    ) : (
-                      !isSearching && (
-                        <div className="p-6 text-center">
-                          <p className="text-sm text-muted-foreground">Không tìm thấy phim nào.</p>
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative transition-all duration-300 ease-in-out',
+        isOpen ? 'w-full md:w-[400px]' : 'w-auto',
+        className
+      )}
+    >
+      {isOpen ? (
+        <div className="relative flex items-center animate-in fade-in zoom-in duration-200 z-50">
+          <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            ref={inputRef}
+            placeholder="Tìm tên phim, đạo diễn..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-10 pl-9 pr-8 rounded-xl bg-background border-primary/50 ring-1 ring-primary/20 focus-visible:ring-primary w-full shadow-sm"
+            onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+          />
+          <div className="absolute right-2 flex items-center">
+            {isSearching ? (
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
             ) : (
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full"
-                onClick={() => setIsSearchOpen(true)}
+                className="h-6 w-6 rounded-full hover:bg-muted"
+                onClick={handleClose}
               >
-                <Search className="h-[18px] w-[18px]" />
+                <X className="h-3 w-3 text-muted-foreground" />
               </Button>
             )}
           </div>
 
-          {/* User Section & Actions */}
-          <div className={cn('flex items-center gap-2', isSearchOpen ? 'hidden md:flex' : 'flex')}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
+          {/* RESULTS DROPDOWN */}
+          {query.trim() && (
+            <div className="absolute top-full left-0 w-full mt-2 bg-popover border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
+              {movies.length > 0 ? (
+                <div className="max-h-[60vh] overflow-y-auto py-2">
+                  <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Phim gợi ý
+                  </div>
+                  {movies.map((movie) => (
+                    <Link
+                      key={movie._id}
+                      href={`/movies/${movie._id}`}
+                      onClick={handleClose}
+                      className="flex items-start gap-3 px-3 py-2 hover:bg-accent/50 transition-colors group"
+                    >
+                      <div className="relative w-10 h-14 shrink-0 rounded overflow-hidden bg-muted shadow-sm">
+                        <Image
+                          src={movie.posterUrl || '/placeholder-movie.png'}
+                          alt={movie.title}
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                            {movie.title}
+                          </p>
+                          <Badge variant="outline" className="text-[10px] h-5 px-1 shrink-0">
+                            {movie.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <span className="flex items-center gap-0.5">
+                            <Clock className="h-3 w-3" /> {movie.duration}
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-0.5 text-yellow-500">
+                            <Star className="h-3 w-3 fill-yellow-500" />
+                            {movie.averageRating?.toFixed(1) || 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                  <div className="border-t border-border mt-2 pt-2 px-2">
+                    <Link
+                      href={`/movies?search=${encodeURIComponent(query)}`}
+                      onClick={handleClose}
+                      className="block text-center text-xs text-primary hover:underline py-1 font-medium"
+                    >
+                      Xem tất cả kết quả
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                !isSearching && (
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">Không tìm thấy phim.</p>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full hover:bg-muted"
+          onClick={() => onToggle(true)}
+        >
+          <Search className="h-[18px] w-[18px]" />
+          <span className="sr-only">Tìm kiếm</span>
+        </Button>
+      )}
+    </div>
+  )
+}
 
-            {/* FIX: Hiển thị Skeleton cho đến khi component mount */}
-            {!isMounted ? (
-              <Skeleton className="h-10 w-10 rounded-full bg-muted" />
-            ) : isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10 border border-border">
-                      <AvatarImage src={user.profilePicture || ''} alt={user.fullName} />
-                      <AvatarFallback>
-                        {user.fullName?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.fullName}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>Hồ sơ cá nhân</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/order-history" className="cursor-pointer">
-                      <Ticket className="mr-2 h-4 w-4" />
-                      <span>Vé của tôi</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  {user.role === 'admin' && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin" className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Trang quản trị</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                 <DropdownMenuItem
-                className="p-0! focus:bg-transparent!" 
-                onSelect={(e) => {
-                  e.preventDefault() // QUAN TRỌNG: Ngăn Dropdown đóng ngay lập tức
-                }}
-              >
-                <LogoutButton className='w-full bg-bg-primary! text-text-primary! hover:bg-accent! hover:text-red-600!  shadow-none justify-start' />
+// 3. User Navigation Component
+const UserNav = () => {
+  const { user, isAuthenticated } = useUserStore()
+  const { theme, setTheme } = useTheme()
+  const isMounted = useMounted()
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      >
+        <Sun className="h-[18px] w-[18px] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-[18px] w-[18px] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <span className="sr-only">Đổi giao diện</span>
+      </Button>
+
+      {!isMounted ? (
+        <Skeleton className="h-10 w-10 rounded-full" />
+      ) : isAuthenticated && user ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-transparent hover:ring-primary/20 transition-all">
+              <Avatar className="h-10 w-10 border border-border">
+                <AvatarImage src={user.profilePicture || ''} alt={user.fullName} className="object-cover"/>
+                <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                  {user.fullName?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none truncate">{user.fullName}</p>
+                <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="cursor-pointer">
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Hồ sơ cá nhân</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/order-history" className="cursor-pointer">
+                <Ticket className="mr-2 h-4 w-4" />
+                <span>Vé của tôi</span>
+              </Link>
+            </DropdownMenuItem>
+            {user.role === 'admin' && (
+              <DropdownMenuItem asChild>
+                <Link href="/admin" className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Trang quản trị</span>
+                </Link>
               </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button
-                asChild
-                className="bg-primary hover:bg-primary/90 text-white rounded-xl px-4"
-              >
-                <Link href="/login">Đăng nhập</Link>
-              </Button>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="p-0 focus:bg-transparent"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <LogoutButton className="w-full justify-start rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 hover:text-destructive text-foreground shadow-none" />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button asChild className="rounded-xl px-4 font-semibold shadow-md">
+          <Link href="/login">Đăng nhập</Link>
+        </Button>
+      )}
+    </div>
+  )
+}
+
+// --- MAIN HEADER ---
+
+export function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className={cn(
+        'flex items-center justify-between w-full',
+        'h-[72px] md:h-[82px] xl:h-[70px]',
+        'px-4 md:px-6 xl:px-[86px]'
+      )}>
+        
+        {/* LEFT: Logo + Nav */}
+        <div className={cn(
+          'flex items-center gap-10 transition-all duration-300',
+          isSearchOpen ? 'hidden md:flex' : 'flex'
+        )}>
+          <Link href="/" className="flex items-center gap-2 shrink-0 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/30 transition-transform group-hover:scale-105">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <rect x="3" y="4" width="18" height="16" rx="2" ry="2" strokeWidth="2" />
+                <path d="M3 10h18M10 4v16" strokeWidth="2" />
+              </svg>
+            </div>
+            <span className="text-xl font-bold tracking-tight hidden xl:block bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+              CineBooking
+            </span>
+          </Link>
+
+          <div className="hidden md:block">
+            <MainNav />
+          </div>
+        </div>
+
+        {/* RIGHT: Actions */}
+        <div className={cn(
+          'flex items-center gap-2 md:gap-4',
+          isSearchOpen ? 'w-full md:w-auto justify-end' : ''
+        )}>
+          {/* Search Box */}
+          <SearchBar 
+            isOpen={isSearchOpen} 
+            onToggle={setIsSearchOpen} 
+          />
+
+          {/* User & Theme Actions */}
+          <div className={cn(
+            isSearchOpen ? 'hidden md:block' : 'block'
+          )}>
+            <UserNav />
           </div>
         </div>
       </div>

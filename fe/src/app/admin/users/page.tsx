@@ -1,12 +1,14 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useUsers } from '@/lib/api/user'
 import { useUserMutations } from './hooks/useUserMutations'
 import { UserTable } from './components/UserTable'
 import { UserToolbar } from './components/UserToolbar'
 import { UserDetailSheet } from './components/UserDetailSheet'
+import { CreateStaffModal } from './components/CreateStaffModal'
 import { useDebounce } from '@/hooks/useDebounce'
+import { LoadingOverlay, TableSkeleton } from '@/app/components/shared/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,11 +35,13 @@ export default function UserManagementPage() {
   // State
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 500)
-  const [typeUser, setTypeUser] = useState(typeUserFromUrl) // 'customer' | 'staff'
+  const [typeUser, setTypeUser] = useState(typeUserFromUrl)
 
   // Dialog State
   const [viewUserId, setViewUserId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [showCreateStaffModal, setShowCreateStaffModal] = useState(false)
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setCurrentPage(pageFromUrl)
@@ -45,9 +49,9 @@ export default function UserManagementPage() {
     }, 0)
     return () => clearTimeout(timer)
   }, [pageFromUrl, typeUserFromUrl])
+
   // Fetch API
-  // API backend của bạn cần hỗ trợ param 'role' để lọc
-  const { data: userData, isLoading } = useUsers({
+  const { data: userData, isLoading, isFetching } = useUsers({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch,
@@ -57,6 +61,8 @@ export default function UserManagementPage() {
   const totalPages = userData?.pagination?.totalPages || 1
   const totalBookings = userData?.pagination.totalItems || 0
   const { deleteMutation } = useUserMutations()
+  const isTransitioning = useMemo(()=> {return !isLoading && isFetching}, [isLoading, isFetching])
+
   const updateUrlParams = (newPage: number, newTypeUser: string) => {
     const params = new URLSearchParams()
     params.set('page', newPage.toString())
@@ -65,22 +71,31 @@ export default function UserManagementPage() {
     }
     router.push(`?${params.toString()}`, { scroll: false })
   }
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     updateUrlParams(page, typeUser)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
   const handleDelete = () => {
     if (deleteId) {
       deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })
     }
   }
+
   const handleTypeUserChange = (newTypeUser: string) => {
-    console.log(newTypeUser)
     setTypeUser(newTypeUser)
     setCurrentPage(1)
     updateUrlParams(1, newTypeUser)
   }
+
+  const handleOpenCreateStaffModal = () => {
+    setShowCreateStaffModal(true)
+  }
+
+ 
+
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
       <div className="max-w-[1440px] mx-auto space-y-6">
@@ -91,38 +106,63 @@ export default function UserManagementPage() {
           onSearchChange={setSearch}
           typeUser={typeUser}
           onTabChange={handleTypeUserChange}
+          onAddStaff={handleOpenCreateStaffModal}
         />
-        {isLoading ? (
-          <div className="text-center py-10">Đang tải...</div>
-        ) : (
-          <UserTable
-            users={users || []}
-            onViewDetail={user => setViewUserId(user._id)}
-            onDelete={id => setDeleteId(id)}
-          />
+
+        {/* Table with loading states */}
+        <div className="relative">
+          {isLoading ? (
+            // Initial loading - show full skeleton
+            <TableSkeleton />
+          ) : (
+            <>
+              {/* Show content */}
+              <UserTable
+                users={users || []}
+                onViewDetail={user => setViewUserId(user._id)}
+                onDelete={id => setDeleteId(id)}
+              />
+              
+              {/* Show overlay during transitions (page change, tab change) */}
+              {isTransitioning && <LoadingOverlay />}
+            </>
+          )}
+        </div>
+
+        {/* Only show pagination when data is loaded */}
+        {!isLoading && (
+          <>
+            <PaginationInfo
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalBookings}
+              itemsPerPage={itemsPerPage}
+            />
+
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              showPageNumbers={5}
+            />
+          </>
         )}
       </div>
-      <PaginationInfo
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalBookings}
-        itemsPerPage={itemsPerPage}
-      />
 
-      <CustomPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        showPageNumbers={5}
-      />
-      {/* Components Dialog / Sheet */}
+      {/* User Detail Sheet */}
       <UserDetailSheet
         open={!!viewUserId}
         onOpenChange={() => setViewUserId(null)}
         userId={viewUserId}
       />
 
+      {/* Create Staff Modal */}
+      <CreateStaffModal 
+        open={showCreateStaffModal}
+        onOpenChange={setShowCreateStaffModal}
+      />
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-gray-50 text-gray-900">
           <AlertDialogHeader>

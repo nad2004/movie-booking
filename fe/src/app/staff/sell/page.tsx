@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useMovies } from '@/lib/api/movies'
+import { useSchedules } from '@/lib/api/schedules'
 import { useBooking } from '@/hooks/useBooking'
 import { useStaffCreateBooking } from '@/hooks/useCreateBooking'
 import { toast } from 'sonner'
@@ -15,25 +16,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { User, Mail, ArrowRight, ArrowLeft } from 'lucide-react'
+import { User, Mail, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react'
 import { useNotification } from '@/providers/NotificationProvider'
 import { useQueryClient } from '@tanstack/react-query'
-// 1. Định nghĩa Schema Validation với Zod
+import { useUserStore } from '@/store/userStore'
+
 const customerSchema = z.object({
   fullName: z.string().min(2, 'Tên khách hàng phải có ít nhất 2 ký tự'),
-  email: z.string().email('Email không hợp lệ').or(z.literal('')), // Email có thể để trống nếu muốn, hoặc bỏ .or(z.literal('')) nếu bắt buộc
+  email: z.string().email('Email không hợp lệ').or(z.literal('')),
 })
 
 type CustomerFormData = z.infer<typeof customerSchema>
 
 export default function TicketSales() {
+  // Lấy theaterId từ store
+  const staffTheaterId = useUserStore(state => state.staffTheaterId)
+  const _hasHydrated = useUserStore(state => state._hasHydrated)
+  
   // State UI
-  const [selectedMovieId, setSelectedMovieId] = useState<string>('')
+  const [selectedMovieId, setSelectedMovieId] = useState<string>('ALL') // 'ALL' = tất cả phim
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA'))
+  const [showAllDates, setShowAllDates] = useState<boolean>(false)
   const [paymentMethod, setPaymentMethod] = useState<string>('cash')
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   const queryClient = useQueryClient()
-  // State lưu thông tin khách hàng sau khi submit form
   const [customerInfo, setCustomerInfo] = useState<CustomerFormData | null>(null)
 
   // React Hook Form Setup
@@ -50,27 +56,34 @@ export default function TicketSales() {
     },
   })
 
-  // Fetch Movies
+  // Fetch Movies (tất cả phim đang chiếu)
   const { data: movieData } = useMovies({ status: 'Đang chiếu', limit: 100 })
   const movies = movieData?.movies || []
 
+  // Fetch Schedules theo 3 params: theaterId, movieId (nếu không phải ALL), date (nếu không showAllDates)
+  const { data: schedulesData, isLoading: isLoadingSchedules } = useSchedules({
+    theaterId: staffTheaterId || undefined,
+    movieId: selectedMovieId !== 'ALL' ? selectedMovieId : undefined,
+    date: !showAllDates ? selectedDate : undefined,
+  })
+
+  const schedules = schedulesData?.schedules || []
+
   // Sử dụng Hook useBooking
   const {
-    schedules,
-    isLoadingSchedules,
     selectedSchedule,
     setSelectedSchedule,
     selectedSeats,
     handleSeatClick,
     totalAmount,
-  } = useBooking({ movieId: selectedMovieId })
+  } = useBooking({ movieId: selectedMovieId === 'ALL' ? '' : selectedMovieId })
 
-  const filteredSchedules = schedules.filter(s => s.showDate.startsWith(selectedDate))
   const { mutate: staffCreateBooking, isPending } = useStaffCreateBooking()
 
+  // Reset selected schedule khi đổi params
   useEffect(() => {
     setSelectedSchedule(null)
-  }, [selectedMovieId, selectedDate])
+  }, [selectedMovieId, selectedDate, showAllDates, setSelectedSchedule])
 
   // Xử lý submit form khách hàng
   const onCustomerSubmit = (data: CustomerFormData) => {
@@ -83,7 +96,6 @@ export default function TicketSales() {
     if (confirm('Quay lại sẽ xóa các ghế đang chọn. Bạn chắc chắn chứ?')) {
       setCustomerInfo(null)
       setSelectedSchedule(null)
-      // selectedSeats nên được reset ở đây nếu có thể
     }
   }
 
@@ -91,6 +103,7 @@ export default function TicketSales() {
     if (!selectedSchedule) return toast.error('Chưa chọn suất chiếu')
     if (selectedSeats.length === 0) return toast.error('Chưa chọn ghế')
     if (!customerInfo) return toast.error('Thiếu thông tin khách hàng')
+    
     const payload = {
       scheduleId: selectedSchedule._id,
       seats: selectedSeats.map(s => ({
@@ -100,9 +113,9 @@ export default function TicketSales() {
       })),
       customerInfo: {
         fullName: customerInfo.fullName,
-        email: customerInfo.email || 'no-email@example.com', // Fallback nếu email rỗng
+        email: customerInfo.email || 'no-email@example.com',
       },
-      paymentMethod: paymentMethod, // Thêm paymentMethod vào payload nếu API hỗ trợ
+      paymentMethod: paymentMethod,
       cashReceived: 0,
     }
 
@@ -112,9 +125,37 @@ export default function TicketSales() {
         showSuccess('Tạo đơn thành công!')
         setSelectedSchedule(null)
         setCustomerInfo(null)
-        reset() // Reset form
+        reset()
       },
+      onError: (error: any) => {
+        showError('Lỗi', error?.response?.data?.message || 'Không thể tạo đơn')
+      }
     })
+  }
+
+  // Loading state khi chưa hydrate
+  if (!_hasHydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // Kiểm tra staff có theaterId không
+  if (!staffTheaterId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-6 max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-600">Không có quyền truy cập</CardTitle>
+            <CardDescription>
+              Bạn chưa được gán rạp chiếu. Vui lòng liên hệ quản trị viên.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
   }
 
   // VIEW 1: FORM NHẬP THÔNG TIN KHÁCH HÀNG
@@ -175,10 +216,10 @@ export default function TicketSales() {
     )
   }
 
-  // VIEW 2: GIAO DIỆN BÁN VÉ CHÍNH (Chỉ hiện khi đã có customerInfo)
+  // VIEW 2: GIAO DIỆN BÁN VÉ CHÍNH
   return (
     <div className="h-full pb-4 flex flex-col gap-4">
-      {/* Header Bar hiển thị thông tin khách đang phục vụ */}
+      {/* Header Bar */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           <div className="bg-primary/10 p-2 rounded-full">
@@ -215,10 +256,12 @@ export default function TicketSales() {
             onSelectMovie={setSelectedMovieId}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
+            showAllDates={showAllDates}
+            onToggleAllDates={setShowAllDates}
           />
 
           <SeatSelector
-            schedules={filteredSchedules}
+            schedules={schedules}
             isLoadingSchedules={isLoadingSchedules}
             selectedSchedule={selectedSchedule}
             onSelectSchedule={setSelectedSchedule}

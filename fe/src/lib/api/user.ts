@@ -1,5 +1,5 @@
 import { User, UserListResponse } from "@/types/user";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
 import { ApiResponse } from "@/types/apiTemplate";
 
@@ -13,6 +13,14 @@ export interface GetUsersParams {
 
 export interface UpdateRoleDTO {
   role: "customer" | "staff" | "admin";
+}
+
+export interface CreateStaffDTO {
+  email: string;
+  password: string;
+  fullName: string;
+  phoneNumber: string;
+  assignedTheater: string;
 }
 
 // --- API Functions ---
@@ -33,24 +41,29 @@ export async function getUsers(params: GetUsersParams = {}) {
 
 // 2. Get Detail
 export async function getUserDetail(id: string) {
-  // Dựa theo ảnh: GET /admin/users/{id}
   const res = await api.get<ApiResponse<User>>(`/admin/users/${id}`);
   return res.data.data;
 }
 
 // 3. Update Role
 export async function updateUserRole(id: string, data: UpdateRoleDTO) {
-  // Dựa theo ảnh: PUT /admin/users/{id}/role
   const res = await api.put(`/admin/users/${id}/role`, data);
   return res.data;
 }
 
 // 4. Delete User
 export async function deleteUser(id: string) {
-  // Dựa theo ảnh: DELETE /admin/users/{id}
   const res = await api.delete(`/admin/users/${id}`);
   return res.data;
 }
+
+// 5. Create Staff
+export async function createStaff(data: CreateStaffDTO) {
+  const res = await api.post<ApiResponse<User>>("/admin/staff/create", data);
+  return res.data.data;
+}
+
+// --- React Query Hooks ---
 
 export function useUsers(params: GetUsersParams) {
   return useQuery({
@@ -65,18 +78,7 @@ export function useUserDetail(id: string | null) {
   return useQuery({
     queryKey: ["user-detail", id],
     queryFn: () => getUserDetail(id!),
-    enabled: !!id, // Chỉ fetch khi có ID
+    enabled: !!id,
   });
 }
 
-/**
- * Hook lấy staff theo theater
- * Wrapper tiện lợi cho useUsers với filter theaterId
- */
-// export function useTheaterStaff(theaterId: string) {
-//   return useUsers({
-//     theaterId,
-//     role: 'staff',
-//     status: 'active',
-//   });
-// }

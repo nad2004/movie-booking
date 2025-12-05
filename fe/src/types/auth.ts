@@ -11,7 +11,7 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
-    token: string;
+    accessToken: string;
     user: User; // User này phải khớp với interface trong userStore của bạn
   };
 }
@@ -59,4 +59,25 @@ export interface GoogleLoginRequest {
   email: string;
   fullName: string;
   profilePicture: string;
+}
+
+export interface StaffTheaterInfo {
+  _id: string
+  name: string
+  address: string
+  city: string
+}
+
+export interface StaffInfo {
+  assignedTheater: StaffTheaterInfo
+  isActive: boolean
+  permissions: string[]
+}
+
+export interface StaffProfileResponse {
+  success: boolean
+  message: string
+  data: {
+    staffInfo: StaffInfo
+  }
 }
