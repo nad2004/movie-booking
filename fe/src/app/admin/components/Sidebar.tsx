@@ -13,6 +13,7 @@ import {
   Ticket,
   Settings,
   Clock,
+  Hamburger
 } from 'lucide-react'
 import { LogoutButton } from '@/app/components/shared/LogoutButton' 
 import Link from 'next/link'
@@ -25,6 +26,7 @@ export function Sidebar() {
     { icon: LayoutDashboard, label: 'Tổng Quan', path: '/admin' },
     { icon: BarChart3, label: 'Báo Cáo Thống Kê', path: '/admin/reports' },
     { icon: Film, label: 'Quản Lý Phim', path: '/admin/movies' },
+    { icon: Hamburger, label: 'Quản Lý Đồ Ăn', path: '/admin/products' },
     { icon: Users, label: 'Quản Lý Người Dùng', path: '/admin/users' },
     { icon: MapPin, label: 'Quản Lý Rạp', path: '/admin/theaters' },
     { icon: Armchair, label: 'Quản Lý Phòng Chiếu', path: '/admin/screening-rooms' },

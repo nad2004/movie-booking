@@ -91,7 +91,7 @@ export default function PlanningCalendar({
                   >
                     <div className="font-bold truncate">{sch.shiftTemplateId.name}</div>
                     <div className="opacity-80 text-[10px] mt-0.5">
-                      {sch.shiftTemplateId.startTime} - {sch.shiftTemplateId.endTime}
+                      {sch.startTime} - {sch.endTime}
                     </div>
 
                     {/* Delete Button */}

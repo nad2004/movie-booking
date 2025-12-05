@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAdminBookings } from '@/lib/api/booking'
 import { useTicketMutations } from './hooks/useTicketMutations'
 import { TicketTable } from './components/TicketTable'
@@ -20,8 +20,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { DEFAULT_BOOKING_LIST } from '@/constants'
-import { GetAdminBookingsParams } from "@/lib/api/booking"
+import { GetAdminBookingsParams } from '@/lib/api/booking'
 import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
+import { LoadingOverlay, TableSkeleton } from '@/app/components/shared/skeleton'
 
 export default function TicketManagementPage() {
   const router = useRouter()
@@ -33,7 +34,7 @@ export default function TicketManagementPage() {
   // State
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 500)
-  
+
   const [params, setParams] = useState<GetAdminBookingsParams>({
     page: pageFromUrl,
     limit: itemsPerPage,
@@ -51,11 +52,11 @@ export default function TicketManagementPage() {
   }, [pageFromUrl])
 
   // API
-  const { data: bookingData = DEFAULT_BOOKING_LIST, isLoading } = useAdminBookings({
+  const { data: bookingData = DEFAULT_BOOKING_LIST, isLoading, isFetching } = useAdminBookings({
     ...params,
     search: debouncedSearch,
   })
-  
+
   const totalPages = bookingData?.pagination?.totalPages || 1
   const totalItems = bookingData?.pagination?.totalItems || 0
 
@@ -92,7 +93,7 @@ export default function TicketManagementPage() {
       ...prev,
       ...newParams,
       search: undefined,
-      page: shouldResetPage ? 1 : prev.page
+      page: shouldResetPage ? 1 : prev.page,
     }))
 
     // 3. Thực hiện Side Effect (Update URL) SAU và NGOÀI setParams
@@ -106,23 +107,34 @@ export default function TicketManagementPage() {
       deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })
     }
   }
+  const isTransitioning = useMemo(() => {
+    return !isLoading && isFetching
+  }, [isLoading, isFetching])
 
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <h1 className="text-gray-900 text-3xl font-bold">Quản Lý Vé</h1>
 
-        <TicketToolbar
-          params={{ ...params, search }}
-          setParams={handleFilterChange}
-        />
+        <TicketToolbar params={{ ...params, search }} setParams={handleFilterChange} />
+        <div className="relative">
+          {isLoading ? (
+            // Initial loading - show full skeleton
+            <TableSkeleton />
+          ) : (
+            <>
+              <TicketTable
+                bookings={bookingData?.bookings || []}
+                isLoading={isLoading}
+                onEditStatus={setEditTicket}
+                onDelete={setDeleteId}
+              />
 
-        <TicketTable
-          bookings={bookingData?.bookings || []}
-          isLoading={isLoading}
-          onEditStatus={setEditTicket}
-          onDelete={setDeleteId}
-        />
+              {/* Show overlay during transitions (page change, tab change) */}
+              {isTransitioning && <LoadingOverlay />}
+            </>
+          )}
+        </div>
 
         <PaginationInfo
           currentPage={params.page || 1}
@@ -152,7 +164,9 @@ export default function TicketManagementPage() {
             <AlertDialogDescription>Hành động này không thể hoàn tác.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="hover:bg-gray-300! hover:text-gray-800!">Hủy</AlertDialogCancel>
+            <AlertDialogCancel className="hover:bg-gray-300! hover:text-gray-800!">
+              Hủy
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
               Xóa
             </AlertDialogAction>

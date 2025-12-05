@@ -11,10 +11,9 @@ interface StepComboProps {
 
 export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
   // 1. Fetch data từ API
-  const { data: products = [], isLoading } = useProducts()
-
+  const { data: products = null, isLoading } = useProducts({})
   const formatPrice = (price: number) => price.toLocaleString('vi-VN') + ' đ'
-
+  
   // 2. Hàm render ảnh (Ưu tiên ảnh thật -> Fallback icon)
   const renderProductImage = (product: Product) => {
     // Nếu có link ảnh hợp lệ
@@ -70,7 +69,10 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
       </div>
     )
   }
-
+  if(!products){
+    return <>No data
+    </>
+  }
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <h2 className="mb-6 text-text-primary text-xl font-bold">Bắp nước & Combo</h2>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation' // [Mới]
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-// [Mới] Import components phân trang
+import { LoadingOverlay, TableSkeleton } from '@/app/components/shared/skeleton'
 import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 export default function ScheduleManagementPage() {
@@ -51,7 +51,11 @@ export default function ScheduleManagementPage() {
   const formattedDate = date ? date.toLocaleDateString('en-CA') : undefined
 
   // Fetch API
-  const { data: scheduleData, isLoading } = useSchedules({
+  const {
+    data: scheduleData,
+    isLoading,
+    isFetching,
+  } = useSchedules({
     date: formattedDate,
     page: currentPage, // [Mới]
     limit: itemsPerPage, // [Mới]
@@ -102,6 +106,9 @@ export default function ScheduleManagementPage() {
       deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })
     }
   }
+  const isTransitioning = useMemo(() => {
+    return !isLoading && isFetching
+  }, [isLoading, isFetching])
 
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
@@ -140,20 +147,30 @@ export default function ScheduleManagementPage() {
 
           {/* Cột Phải: Bảng Lịch Chiếu */}
           <div className="lg:col-span-3 space-y-4">
-            <Card className="bg-white border-gray-200 shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-gray-900 font-bold">
-                  Danh sách lịch chiếu {date ? `- ${date.toLocaleDateString('vi-VN')}` : ''}
-                </h3>
-              </div>
-              <ScheduleTable
-                schedules={scheduleData?.schedules || []}
-                isLoading={isLoading}
-                onEdit={handleEdit}
-                onDelete={id => setDeleteId(id)}
-              />
-            </Card>
+            {isLoading ? (
+              // Initial loading - show full skeleton
+              <TableSkeleton />
+            ) : (
+              <>
+                {/* Show content */}
+                <Card className="bg-white border-gray-200 shadow-sm">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-gray-900 font-bold">
+                      Danh sách lịch chiếu {date ? `- ${date.toLocaleDateString('vi-VN')}` : ''}
+                    </h3>
+                  </div>
+                  <ScheduleTable
+                    schedules={scheduleData?.schedules || []}
+                    isLoading={isLoading}
+                    onEdit={handleEdit}
+                    onDelete={id => setDeleteId(id)}
+                  />
+                </Card>
 
+                {/* Show overlay during transitions (page change, tab change) */}
+                {isTransitioning && <LoadingOverlay />}
+              </>
+            )}
             {/* [Mới] Phần phân trang */}
             <div className="pt-4">
               <PaginationInfo

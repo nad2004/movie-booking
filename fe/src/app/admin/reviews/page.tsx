@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation' // [Import mới]
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useReviews } from '@/lib/api/reviews'
 import { useReviewMutations } from './hooks/useReviewMutations'
 import { ReviewToolbar } from './components/ReviewToolbar'
@@ -22,6 +22,7 @@ import { GetReviewsParams } from '@/lib/api/reviews'
 import { DEFAULT_REVIEWS_LIST } from '@/constants'
 // [Import mới] Component phân trang
 import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
+import { LoadingOverlay, TableSkeleton } from '@/app/components/shared/skeleton'
 
 export default function ReviewManagementPage() {
   const router = useRouter()
@@ -52,7 +53,7 @@ export default function ReviewManagementPage() {
   }, [pageFromUrl])
 
   // Fetch Data
-  const { data: reviewData = DEFAULT_REVIEWS_LIST, isLoading } = useReviews({
+  const { data: reviewData = DEFAULT_REVIEWS_LIST, isLoading, isFetching } = useReviews({
     ...params,
     search: debouncedSearch,
   })
@@ -112,7 +113,8 @@ export default function ReviewManagementPage() {
       })
     }
   }
-
+    const isTransitioning = useMemo(()=> {return !isLoading && isFetching}, [isLoading, isFetching])
+  
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -122,14 +124,25 @@ export default function ReviewManagementPage() {
           params={{ ...params, search }}
           setParams={handleFilterChange}
         />
-
-        <ReviewTable
+        {isLoading ? (
+                    // Initial loading - show full skeleton
+                    <TableSkeleton />
+                  ) : (
+                    <>
+                      {/* Show content */}
+                      <ReviewTable
           reviews={reviewData.reviews}
           isLoading={isLoading}
           onApprove={handleApprove}
           onRejectClick={setRejectId}
           onDeleteClick={setDeleteId}
         />
+                      
+                      {/* Show overlay during transitions (page change, tab change) */}
+                      {isTransitioning && <LoadingOverlay />}
+                    </>
+                  )}
+        
 
         {/* [UI Mới] Phần phân trang */}
         <PaginationInfo

@@ -25,6 +25,8 @@ export interface WorkSchedule {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  startTime: string;
+  endTime: string;
 }
 
 // 3. DTO cho API Generate (Dựa trên ảnh Swagger POST)

@@ -79,7 +79,7 @@ export function HeroSection({ movies}: MovieSectionProps) {
                 <span className="text-muted-foreground">•</span>
                 <span className="uppercase">Đánh giá</span>
                 <span className="flex items-center gap-1 text-[hsl(var(--accent))] font-semibold">
-                  <Star className="h-4 w-4 fill-[hsl(var(--accent))]" /> {currentMovie.rating}/10
+                  <Star className="h-4 w-4 fill-[hsl(var(--accent))]" /> {currentMovie.averageRating}/5
                 </span>
               </motion.div>
 
@@ -103,7 +103,7 @@ export function HeroSection({ movies}: MovieSectionProps) {
                 <Button
                   size="lg"
                   asChild
-                  className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-xl"
+                  className="bg-primary hover:bg-primary/90 text-white rounded-xl"
                 >
                   <Link href={`/movies/${currentMovie._id}`}>
                     <Play className="mr-2 h-5 w-5" />

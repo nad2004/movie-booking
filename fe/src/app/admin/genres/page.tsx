@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation' // [Mới] Import router
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useGenres } from '@/lib/api/genres'
 import { useGenreMutations } from './hooks/useGenreMutations'
 import { GenreTable } from './components/GenreTable'
@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useDebounce } from '@/hooks/useDebounce'
-// [Mới] Import component phân trang
+import { LoadingOverlay, TableSkeleton } from '@/app/components/shared/skeleton'
 import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 export default function GenreManagementPage() {
@@ -56,7 +56,11 @@ export default function GenreManagementPage() {
   }, [debouncedSearch])
 
   // --- Data Fetching ---
-  const { data: genreData, isLoading } = useGenres({
+  const {
+    data: genreData,
+    isLoading,
+    isFetching,
+  } = useGenres({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch,
@@ -71,7 +75,7 @@ export default function GenreManagementPage() {
   const { deleteMutation } = useGenreMutations()
 
   // --- Handlers ---
-  
+
   // [Mới] Hàm cập nhật URL
   const updateUrlParams = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -103,6 +107,9 @@ export default function GenreManagementPage() {
       })
     }
   }
+  const isTransitioning = useMemo(() => {
+    return !isLoading && isFetching
+  }, [isLoading, isFetching])
 
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
@@ -129,14 +136,24 @@ export default function GenreManagementPage() {
             </Button>
           </div>
         </Card>
+        {isLoading ? (
+          // Initial loading - show full skeleton
+          <TableSkeleton />
+        ) : (
+          <>
+            {/* Show content */}
+            <GenreTable
+              genres={genres}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onDelete={id => setDeleteId(id)}
+            />
 
+            {/* Show overlay during transitions (page change, tab change) */}
+            {isTransitioning && <LoadingOverlay />}
+          </>
+        )}
         {/* Table */}
-        <GenreTable
-          genres={genres}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onDelete={id => setDeleteId(id)}
-        />
 
         {/* [Mới] Pagination UI */}
         <PaginationInfo

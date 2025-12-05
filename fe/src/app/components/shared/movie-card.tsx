@@ -22,7 +22,7 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
     >
       <Link href={`/movies/${movie._id}`} className="block relative overflow-hidden rounded-2xl">
         {/* Poster */}
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl">
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl">
           <ImageWithFallback
             src={movie.posterUrl}
             alt={movie.title}
@@ -30,12 +30,12 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
           />
 
           {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
           {/* Rating */}
           <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 backdrop-blur-sm rounded-lg flex items-center gap-1 text-sm">
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-white font-medium">{movie.rating}</span>
+            <span className="text-white font-medium">{movie.averageRating}</span>
           </div>
 
           {/* Info text */}

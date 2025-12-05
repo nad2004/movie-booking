@@ -1,11 +1,16 @@
-import type { ApiResponse } from './apiTemplate'
-import type { Pagination } from './apiTemplate'
+import type { ApiResponse, Pagination } from './apiTemplate';
 
+// ======================
+// COMBO ITEM INTERFACE
+// ======================
 export interface ComboItem {
-  product: Product; // ObjectId reference
+  product: string | Product; // ObjectId reference hoặc populated Product
   quantity: number;
 }
 
+// ======================
+// PRODUCT INTERFACE
+// ======================
 export interface Product {
   _id: string;
 
@@ -65,7 +70,32 @@ export interface Product {
   __v?: number;
 }
 
+// ======================
+// PRODUCT DTOs
+// ======================
+export interface ProductCreateDTO {
+  name: string;
+  slug: string;
+  description?: string;
+  category: "Popcorn" | "Drink" | "Combo" | "Snack";
+  price: number;
+  originalPrice?: number;
+  discount?: number;
+  imageUrl?: string;
+  size?: "S" | "M" | "L" | "XL" | "N/A";
+  inStock?: boolean;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  comboItems?: ComboItem[];
+  calories?: number;
+  allergens?: string[];
+  featured?: boolean;
+  tags?: string[];
+  isActive?: boolean;
+}
+
+export type ProductUpdateDTO = ProductCreateDTO
 
 
-export type ProductsResponse = ApiResponse<Product[]>;
-
+export type ProductListResponse = ApiResponse<Product[]>;
+export type ProductDetailResponse = ApiResponse<Product>;
