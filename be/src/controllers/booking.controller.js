@@ -804,6 +804,8 @@ const bookingController = {
       const cleanBooking = {
         _id: b._id,
         bookingCode: b.bookingCode,
+        showTime: b.showTime,
+        roomName: b.roomName,
         customer: b.customer,
         schedule: b.schedule && {
           _id: b.schedule._id,

@@ -384,6 +384,28 @@ const shiftAssignmentController = {
       return errorResponse(res, "Lỗi server", 500);
     }
   },
+
+  remove: async (req, res) => {
+    try {
+      const { id } = req.params;
+      // 1. Tìm phân công
+      const assignment = await ShiftAssignment.findById(id);
+      if (!assignment) {
+        return errorResponse(res, "Không tìm thấy phân công", 404);
+      }
+      // 2. Kiểm tra điều kiện an toàn
+      // Nếu nhân viên đã check-in hoặc đang làm, không cho xóa cứng để bảo toàn lịch sử lương
+      if (assignment.checkInTime || assignment.status === "active" || assignment.status === "completed") {
+        return errorResponse(res, "Không thể hủy phân công này vì nhân viên đã check-in hoặc hoàn thành ca.", 400);
+      }
+      // 3. Xóa
+      await ShiftAssignment.findByIdAndDelete(id);
+      return successResponse(res, null, "Đã hủy phân công thành công");
+    } catch (err) {
+      console.error("Remove assignment error:", err);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
 };
 
 export default shiftAssignmentController;

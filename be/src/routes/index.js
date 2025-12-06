@@ -432,6 +432,12 @@ router.post(
   authorize("admin", "manager"),
   shiftAssignmentController.bulkAssign
 );
+router.delete(
+  "/assignments/:id",
+  authenticateToken,
+  authorize("admin", "manager"),
+  shiftAssignmentController.remove
+);
 router.get(
   "/schedules/:scheduleId/assignments",
   authenticateToken,

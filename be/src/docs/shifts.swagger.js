@@ -431,6 +431,44 @@
 
 /**
  * @swagger
+ * /assignments/{id}:
+ *   delete:
+ *     tags: [ShiftAssignments]
+ *     summary: Hủy phân công (Xóa nhân viên khỏi ca)
+ *     description: Chỉ có thể hủy các phân công ở trạng thái 'pending' hoặc 'no_show'. Không thể hủy nếu nhân viên đã check-in.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của assignment cần hủy
+ *     responses:
+ *       200:
+ *         description: Hủy thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Đã hủy phân công thành công"
+ *       400:
+ *         description: Lỗi logic (Ví dụ nhân viên đã check-in rồi nên không cho xóa)
+ *       404:
+ *         description: Không tìm thấy assignment
+ *       500:
+ *         description: Lỗi server
+ */
+
+/**
+ * @swagger
  * /schedules/{scheduleId}/assignments:
  *   get:
  *     tags: [ShiftAssignments]
