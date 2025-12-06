@@ -7,6 +7,7 @@ import {
   CreateAssignmentDTO,
   UpdateAssignmentDTO,
   BulkAssignmentDTO,
+  AssignedEmployee,
 } from '@/types/shift'
 import { useNotification } from '@/providers/NotificationProvider'
 
@@ -24,7 +25,7 @@ export async function getDailyRoster(params: GetDailyRosterParams) {
       params: {
         theaterId: params.theaterId,
         date: params.date,
-        shiftCode: params.shiftCode, // optional
+        shiftCode: params.shiftCode,
       },
     })
     return res.data.data
@@ -37,7 +38,6 @@ export async function getDailyRoster(params: GetDailyRosterParams) {
 /**
  * POST /assignments/bulk
  * Phân công nhân sự hàng loạt
- * Body: { theaterId, assignments: [{ workScheduleId, userId, role }] }
  */
 export async function bulkAssignStaff(data: BulkAssignmentDTO) {
   const res = await api.post('/assignments/bulk', data)
@@ -55,7 +55,7 @@ export async function createAssignment(data: CreateAssignmentDTO) {
 
 /**
  * PUT /assignments/:id
- * Cập nhật thông tin phân công (role, checkIn/Out, status)
+ * Cập nhật thông tin phân công
  */
 export async function updateAssignment(id: string, data: UpdateAssignmentDTO) {
   const res = await api.put(`/assignments/${id}`, data)
@@ -64,7 +64,7 @@ export async function updateAssignment(id: string, data: UpdateAssignmentDTO) {
 
 /**
  * DELETE /assignments/:id
- * Xóa phân công (hủy nhân viên khỏi ca)
+ * Xóa phân công
  */
 export async function deleteAssignment(id: string) {
   const res = await api.delete(`/assignments/${id}`)
@@ -72,21 +72,44 @@ export async function deleteAssignment(id: string) {
 }
 
 /**
- * POST /assignments/:id/check-in
+ * POST /assignments/check-in
  * Nhân viên check-in vào ca
+ * Body: { workScheduleId: string }
  */
-export async function checkInAssignment() {
-  const res = await api.post(`/assignments/check-in`)
+export async function checkInAssignment(workScheduleId: string) {
+  const res = await api.post('/assignments/check-in', { workScheduleId })
   return res.data
 }
 
 /**
- * POST /assignments/:id/check-out
+ * POST /assignments/check-out
  * Nhân viên check-out khỏi ca
+ * Body: { workScheduleId: string }
  */
-export async function checkOutAssignment() {
-  const res = await api.post(`/assignments/check-out`)
+export async function checkOutAssignment(workScheduleId: string) {
+  const res = await api.post('/assignments/check-out', { workScheduleId })
   return res.data
+}
+
+/**
+ * GET /assignments/of-user/{userId}
+ * Lấy danh sách ca làm của một nhân viên
+ * Hỗ trợ lọc theo ngày hoặc khoảng thời gian
+ */
+export async function getUserAssignments(userId: string, params?: { 
+  from?: string
+  to?: string
+  date?: string
+  page?: number
+  limit?: number
+}) {
+  try {
+    const res = await api.get(`/assignments/of-user/${userId}`, { params })
+    return res.data.data
+  } catch (error) {
+    console.error('Failed to fetch user assignments', error)
+    return { assignments: [], pagination: null }
+  }
 }
 
 // ========================================
@@ -95,15 +118,14 @@ export async function checkOutAssignment() {
 
 /**
  * Hook lấy daily roster (GET)
- * Tự động refetch khi params thay đổi
  */
 export function useDailyRoster(params: GetDailyRosterParams) {
   return useQuery({
     queryKey: ['daily-roster', params],
     queryFn: () => getDailyRoster(params),
-    staleTime: 1000 * 60 * 2, // Cache 2 phút (data thay đổi thường xuyên)
+    staleTime: 1000 * 60 * 2,
     retry: 2,
-    enabled: !!params.theaterId && !!params.date, // Chỉ fetch khi có đủ params
+    enabled: !!params.theaterId && !!params.date,
   })
 }
 
@@ -116,6 +138,7 @@ export function useAssignmentMutations() {
     mutationFn: (data: CreateAssignmentDTO) => createAssignment(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-roster'] })
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] })
       showSuccess('Phân công thành công')
     },
     onError: (error: any) => {
@@ -128,10 +151,11 @@ export function useAssignmentMutations() {
     mutationFn: (data: BulkAssignmentDTO) => bulkAssignStaff(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-roster'] })
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] })
       showSuccess('Phân công thành công')
     },
     onError: (error: any) => {
-      showError('Lỗi phân công !', error.response?.data?.message || 'Vui lòng thử lại')
+      showError('Lỗi phân công!', error.response?.data?.message || 'Vui lòng thử lại')
     },
   })
 
@@ -141,6 +165,7 @@ export function useAssignmentMutations() {
       updateAssignment(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-roster'] })
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] })
       showSuccess('Cập nhật thành công')
     },
     onError: (error: any) => {
@@ -153,6 +178,7 @@ export function useAssignmentMutations() {
     mutationFn: (id: string) => deleteAssignment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-roster'] })
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] })
       showSuccess('Xóa phân công thành công')
     },
     onError: (error: any) => {
@@ -160,11 +186,12 @@ export function useAssignmentMutations() {
     },
   })
 
-  // Check-in
+  // Check-in - now requires workScheduleId
   const checkInMutation = useMutation({
-    mutationFn: () => checkInAssignment(),
+    mutationFn: (workScheduleId: string) => checkInAssignment(workScheduleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-roster'] })
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] })
       showSuccess('Check-in thành công')
     },
     onError: (error: any) => {
@@ -172,11 +199,12 @@ export function useAssignmentMutations() {
     },
   })
 
-  // Check-out
+  // Check-out - now requires workScheduleId
   const checkOutMutation = useMutation({
-    mutationFn: () => checkOutAssignment(),
+    mutationFn: (workScheduleId: string) => checkOutAssignment(workScheduleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-roster'] })
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] })
       showSuccess('Check-out thành công')
     },
     onError: (error: any) => {
@@ -195,30 +223,26 @@ export function useAssignmentMutations() {
 }
 
 // ========================================
-// 3. OPTIONAL: HOOKS FOR SPECIFIC USE CASES
+// 3. HOOKS FOR SPECIFIC USE CASES
 // ========================================
 
 /**
  * Hook lấy assignments của 1 user cụ thể
- * GET /assignments?userId=xxx
+ * GET /assignments/of-user/{userId}
  */
-export function useUserAssignments(userId: string, params?: { from?: string; to?: string }) {
+export function useUserAssignments(
+  userId: string, 
+  params?: { 
+    from?: string
+    to?: string
+    date?: string
+    page?: number
+    limit?: number
+  }
+) {
   return useQuery({
     queryKey: ['user-assignments', userId, params],
-    queryFn: async () => {
-      try {
-        const res = await api.get('/assignments', {
-          params: {
-            userId,
-            ...params,
-          },
-        })
-        return res.data.data
-      } catch (error) {
-        console.error('Failed to fetch user assignments', error)
-        return []
-      }
-    },
+    queryFn: () => getUserAssignments(userId, params),
     staleTime: 1000 * 60 * 5,
     enabled: !!userId,
   })

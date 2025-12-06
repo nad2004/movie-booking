@@ -109,14 +109,14 @@ function TicketDetails({ ticket }: { ticket: Booking }) {
       <DetailRow
         icon={<Film className="w-5 h-5 text-muted-foreground mt-0.5" />}
         label="Tên phim"
-        value={ticket.movieTitle}
+        value={ticket.schedule.movie.title}
       />
 
       {/* Showtime */}
       <DetailRow
         icon={<Clock className="w-5 h-5 text-muted-foreground mt-0.5" />}
         label="Thời gian chiếu"
-        value={`${new Date(ticket.showDate).toLocaleDateString('vi-VN')} - ${new Date(ticket.showTime).toLocaleDateString('vi-VN')}`}
+        value={`${new Date(ticket.schedule.showDate).toLocaleDateString('vi-VN')} - ${new Date(ticket.showTime).toLocaleDateString('vi-VN')}`}
       />
 
       {/* Room */}

@@ -38,7 +38,6 @@ const setStaffTheaterName = useUserStore(state => state.setStaffTheaterName)
         try {
           const profileResponse = await api.get('/staff/profile')
           const staffInfo = profileResponse.data.data.staff.staffInfo
-          
           // Lưu theater ID vào store
           if (staffInfo && staffInfo.assignedTheater && staffInfo.assignedTheater._id) {
             setStaffTheater(staffInfo.assignedTheater._id)

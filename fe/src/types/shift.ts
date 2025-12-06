@@ -31,17 +31,24 @@ export interface ShiftAssignment {
 
 export type ShiftTemplateResponse = ApiResponse<ShiftTemplate[]>
 export interface AssignedEmployee {
-  assignmentId: string
-  userId: string
-  fullName: string
-  email: string
-  phoneNumber: string
-  avatar: string
-  role: string
-  status: 'active' | 'inactive'
+  _id: string,
+  role: string,
+  shiftTemplateId: string
+  theaterId: string
+  theaterName: string
+  workScheduleId: string
+  shiftName: string
+  shiftCode: string
+  startTime: string
+  endTime: string
+  color?: string
+  status: string
   checkInTime?: string // ISO string
   checkOutTime?: string // ISO string
   assignedAt: string // ISO string
+  date: string
+  startDateTime: string
+  endDateTime: string
 }
 // Shift with Employees
 export interface ShiftWithEmployees {

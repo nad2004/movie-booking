@@ -98,7 +98,7 @@ export default function FilterCard({
 
       <div className="space-y-8">
         {/* Grid Layout cho các nhóm filter nhỏ */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1  gap-8">
           
           {/* Cột 1 */}
           <div className="space-y-6">
