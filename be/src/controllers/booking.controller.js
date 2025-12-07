@@ -695,9 +695,9 @@ const bookingController = {
           .populate({
             path: "schedule",
             populate: [
-              { path: "movie", select: "title posterUrl duration genre rating" },
+              { path: "movie", select: "title posterUrl duration genres rating" },
               { path: "theater", select: "name address city" },
-              { path: "room", select: "name roomType" },
+              // { path: "room", select: "name roomType" },
             ],
           })
           .sort({ createdAt: -1 })
@@ -716,12 +716,14 @@ const bookingController = {
             _id: b.schedule?._id,
             showDate: b.schedule?.showDate,
             showTime: b.schedule?.showTime,
+            startTime: b.schedule?.startTime, 
+            endTime: b.schedule?.endTime, 
             movie: b.schedule?.movie && {
               _id: b.schedule.movie._id,
               title: b.schedule.movie.title,
               posterUrl: b.schedule.movie.posterUrl,
               duration: b.schedule.movie.duration,
-              genre: b.schedule.movie.genre,
+              genres: b.schedule.movie.genres,
               rating: b.schedule.movie.rating,
             },
             theater: b.schedule?.theater && {
@@ -731,9 +733,9 @@ const bookingController = {
               city: b.schedule.theater.city,
             },
             room: b.schedule?.room && {
-              _id: b.schedule.room._id,
-              name: b.schedule.room.name,
-              roomType: b.schedule.room.roomType,
+              _id: b.schedule?.room,  
+              name: b.schedule?.roomName,
+              roomType: b.schedule?.roomType,
             },
           },
           seats: b.seats,
