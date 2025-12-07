@@ -5,14 +5,17 @@ const genreController = {
   getAllGenres: async (req, res) => {
     try {
       const {
-        search, 
-        isActive, 
-        sortBy = "displayOrder", 
+        search,
+        isActive,
+        sortBy = "displayOrder",
         order = "asc",
+        page = 1, // Mặc định trang 1
+        limit = 10, // Mặc định 10 dòng/trang
       } = req.query;
 
       const query = {};
 
+      // 1. Xử lý Filter
       if (typeof isActive !== "undefined") {
         query.isActive = isActive === "true";
       }
@@ -23,14 +26,34 @@ const genreController = {
         query.$or = [{ name: regex }, { slug: regex }, { description: regex }];
       }
 
-      // Sắp xếp
+      // 2. Xử lý Sort
       const allowedSortFields = ["displayOrder", "name", "createdAt", "updatedAt"];
       const sortField = allowedSortFields.includes(sortBy) ? sortBy : "displayOrder";
       const sort = { [sortField]: order === "desc" ? -1 : 1 };
 
-      const genres = await Genre.find(query).sort(sort).lean();
+      // 3. Xử lý Pagination
+      const pageNum = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+      const limitNum = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+      const skip = (pageNum - 1) * limitNum;
 
-      return successResponse(res, genres);
+      // 4. Thực thi query (Song song: lấy data và đếm tổng số lượng)
+      const [genres, totalGenres] = await Promise.all([
+        Genre.find(query).sort(sort).skip(skip).limit(limitNum).lean(),
+        Genre.countDocuments(query),
+      ]);
+
+      // 5. Trả về kết quả kèm metadata phân trang
+      const responseData = {
+        items: genres,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalGenres / limitNum),
+          totalItems: totalGenres,
+          itemsPerPage: limitNum,
+        },
+      };
+
+      return successResponse(res, responseData);
     } catch (error) {
       console.error("Get all genres error:", error);
       return errorResponse(res, "Lỗi server", 500);

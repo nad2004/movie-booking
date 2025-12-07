@@ -4,7 +4,7 @@
  *   get:
  *     tags:
  *       - Genres
- *     summary: Lấy danh sách thể loại phim (có filter)
+ *     summary: Lấy danh sách thể loại phim (có filter & pagination)
  *     parameters:
  *       - in: query
  *         name: search
@@ -17,6 +17,18 @@
  *           type: string
  *           enum: [true, false]
  *         description: Lọc theo trạng thái hoạt động của thể loại
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Số trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Số lượng item trên một trang
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -33,7 +45,33 @@
  *         description: Thứ tự sắp xếp
  *     responses:
  *       200:
- *         description: Danh sách thể loại
+ *         description: Danh sách thể loại kèm thông tin phân trang
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Genre'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         currentPage:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                         totalItems:
+ *                           type: integer
+ *                         itemsPerPage:
+ *                           type: integer
  *       500:
  *         description: Lỗi server
  */

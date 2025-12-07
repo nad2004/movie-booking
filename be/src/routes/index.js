@@ -710,8 +710,8 @@ router.delete(
 // User management (Admin)
 router.get("/admin/users", authenticateToken, authorize("admin", "super-admin"), userController.getAllUsers);
 router.get("/admin/users/:id", authenticateToken, authorize("admin", "super-admin"), userController.getUserById);
-router.put("/admin/users/:id/role", authenticateToken, authorize("super-admin"), userController.updateUserRole);
-router.delete("/admin/users/:id", authenticateToken, authorize("super-admin"), userController.deleteUser);
+router.put("/admin/users/:id/role", authenticateToken, authorize("admin", "super-admin"), userController.updateUserRole);
+router.delete("/admin/users/:id", authenticateToken, authorize("admin", "super-admin"), userController.deleteUser);
 
 // Booking management (Admin)
 router.get("/admin/bookings", authenticateToken, authorize("admin", "super-admin"), bookingController.getAllBookings);
