@@ -72,7 +72,7 @@ function MovieCard({ movie, index }: { movie: Movie; index: number }) {
       className="group"
     >
       <Link href={`/movies/${movie._id}`} className="block">
-        <div className="relative overflow-hidden rounded-2xl aspect-[2/3] mb-3">
+        <div className="relative overflow-hidden rounded-2xl aspect-2/3 mb-3">
           <ImageWithFallback
             src={movie.posterUrl}
             alt={movie.title}
@@ -80,7 +80,7 @@ function MovieCard({ movie, index }: { movie: Movie; index: number }) {
           />
 
           {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <Button size="sm" className="w-full">
                 Đặt vé

@@ -6,6 +6,9 @@ export interface GetTheatersParams {
   limit?: number
   city?: string
   search?: string
+  isActive?: string
+  sortBy?: string
+  order?: string
 }
 export async function getTheaters(params: GetTheatersParams = {}) {
   try {

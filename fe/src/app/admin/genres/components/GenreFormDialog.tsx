@@ -54,7 +54,6 @@ export function GenreFormDialog({ open, onOpenChange, genreToEdit }: GenreFormDi
   }, [open, genreToEdit, setValue, reset]);
 
   const onSubmit = (data: GenreFormValues) => {
-    console.log("Form submitted with data:", data);
     if (isEditMode && genreToEdit) {
       updateMutation.mutate({ id: genreToEdit._id, data }, {
         onSuccess: () => onOpenChange(false)

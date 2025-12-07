@@ -19,7 +19,6 @@ export function ShowtimeSection() {
       </section>
     )
   }
-  console.log(showtimes)
   return (
     <section className="py-6">
       <h2 className="text-lg font-semibold mb-4">Lịch chiếu</h2>

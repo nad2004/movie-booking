@@ -19,7 +19,7 @@ export interface Movie {
   posterUrl?: string;
   posterPublicId?: string;
 
-  trailerUrl?: string;
+  trailerUrl: string;
 
   rating: "P" | "C13" | "C16" | "C18";
 

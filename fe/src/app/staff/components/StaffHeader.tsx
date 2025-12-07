@@ -1,6 +1,5 @@
 "use client"
 import { Bell } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,27 +15,16 @@ import { LogoutButton } from '@/app/components/shared/LogoutButton'
 
 export function StaffHeader() {
   const { user } = useUserStore()
-  const router = useRouter()
 
   return (
     <header className="bg-card border-b border-border px-8 py-4 flex items-center justify-between">
       <div className="flex-1 max-w-xl"></div>
 
       <div className="flex items-center gap-4">
-        {/* Ca làm việc */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-[10px]">
-          <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-          <span className="text-sm text-foreground font-medium">Ca 2 (14:00 - 22:00)</span>
-        </div>
-
-        {/* Thông báo */}
-        <button className="relative p-2 hover:bg-card-hover rounded-[10px] transition-colors">
-          <Bell className="w-5 h-5 text-muted-foreground" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
-        </button>
+        
 
         {/* Thông tin nhân viên */}
-        <div className="flex items-center gap-3 pl-4 border-l border-border">
+        <div className="flex items-center gap-3 pl-4">
           {user && <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">

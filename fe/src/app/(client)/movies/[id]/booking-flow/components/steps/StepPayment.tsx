@@ -2,6 +2,7 @@ import { Wallet, ExternalLink, Copy, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface StepPaymentProps {
   paymentUrl: string;
@@ -62,11 +63,11 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
           {/* QR Code generated from Payment URL */}
           <div className="relative w-48 h-48 mb-6 group">
             {paymentUrl ? (
-              // Dùng API QR Server để tạo QR từ link VNPAY (An toàn, không cần thư viện)
-              // eslint-disable-next-line @next/next/no-img-element
-              <img 
+              <Image 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`}
                 alt="Payment QR Code"
+                width={400}
+                height={400}
                 className="w-full h-full object-contain rounded-lg border border-gray-100"
               />
             ) : (

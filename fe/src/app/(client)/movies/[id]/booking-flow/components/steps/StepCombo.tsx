@@ -22,8 +22,8 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
         <Image
           src={product.imageUrl}
           alt={product.name}
-          width={80}
-          height={80}
+          width={400}
+          height={400}
           className="w-full h-full object-cover"
           onError={e => {
             // Fallback nếu ảnh lỗi (ẩn ảnh đi hiện icon)

@@ -20,7 +20,6 @@ export default function Customers() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Báo cáo sự cố:', formData);
     setDaGui(true);
     setTimeout(() => {
       setDaGui(false);

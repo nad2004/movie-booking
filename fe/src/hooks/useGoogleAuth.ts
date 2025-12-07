@@ -23,9 +23,9 @@ export const useGoogleAuth = () => {
     mutationFn: (data: GoogleLoginRequest) => googleLoginApi(data),
     
     onSuccess: (response) => {
-      const { token, user } = response.data;
+      const { accessToken, user } = response.data;
 
-      Cookies.set('authToken', token, { 
+      Cookies.set('authToken', accessToken, { 
         expires: 7, 
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict' 
