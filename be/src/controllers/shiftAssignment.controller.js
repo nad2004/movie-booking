@@ -11,67 +11,74 @@ const shiftAssignmentController = {
   bulkAssign: async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-    const results = { created: [], failed: [] };
+
     try {
       let { theaterId, assignments } = req.body;
 
       if (assignments && typeof assignments === "object" && !Array.isArray(assignments)) {
         assignments = Object.values(assignments);
-        req.body.assignments = assignments;
       }
 
-      if (!theaterId || !Array.isArray(assignments)) return errorResponse(res, "Invalid payload", 400);
+      if (!theaterId || !Array.isArray(assignments)) {
+        throw new Error("Dữ liệu gửi lên không hợp lệ");
+      }
 
-      if (assignments.length === 0) return errorResponse(res, "assignments cannot be empty", 400);
+      if (assignments.length === 0) {
+        throw new Error("Danh sách phân công không được để trống");
+      }
+
+      const createdResults = [];
 
       for (const item of assignments) {
-        try {
-          const schedule = await WorkSchedule.findById(item.workScheduleId).session(session);
-          if (!schedule) throw new Error("Schedule not found");
-          if (String(schedule.theaterId) !== String(theaterId)) throw new Error("Schedule theater mismatch");
-          if (schedule.status !== "open") throw new Error("Schedule not open");
+        // 1. Kiểm tra Schedule
+        const schedule = await WorkSchedule.findById(item.workScheduleId).session(session);
+        if (!schedule) throw new Error(`Không tìm thấy lịch làm việc (ID: ${item.workScheduleId})`);
+        if (String(schedule.theaterId) !== String(theaterId)) throw new Error("Lịch làm việc không thuộc rạp này");
+        if (schedule.status !== "open") throw new Error("Lịch làm việc chưa mở hoặc đã đóng");
 
-          // check overlap for the user
-          const existingAssignments = await ShiftAssignment.find({ userId: item.userId })
-            .populate({ path: "workScheduleId", select: "startDateTime endDateTime theaterId" })
-            .session(session);
+        // 2. Kiểm tra trùng lịch (Overlap)
+        const existingAssignments = await ShiftAssignment.find({ userId: item.userId })
+          .populate({ path: "workScheduleId", select: "startDateTime endDateTime theaterId" })
+          .session(session);
 
-          const hasOverlap = existingAssignments.some((ex) => {
-            if (!ex.workScheduleId) return false;
-            return intervalsOverlap(
-              schedule.startDateTime,
-              schedule.endDateTime,
-              ex.workScheduleId.startDateTime,
-              ex.workScheduleId.endDateTime
-            );
-          });
-
-          if (hasOverlap) throw new Error("User has overlapping assignment");
-
-          const created = await ShiftAssignment.create(
-            [
-              {
-                workScheduleId: item.workScheduleId,
-                userId: item.userId,
-                role: item.role,
-                assignedBy: req.userId,
-              },
-            ],
-            { session }
+        const hasOverlap = existingAssignments.some((ex) => {
+          if (!ex.workScheduleId) return false;
+          return intervalsOverlap(
+            schedule.startDateTime,
+            schedule.endDateTime,
+            ex.workScheduleId.startDateTime,
+            ex.workScheduleId.endDateTime
           );
+        });
 
-          results.created.push(created[0]);
-        } catch (innerErr) {
-          results.failed.push({ item, reason: innerErr.message });
+        if (hasOverlap) {
+          throw new Error("User has overlapping assignment");
         }
+
+        // 3. Tạo phân công
+        const [created] = await ShiftAssignment.create(
+          [
+            {
+              workScheduleId: item.workScheduleId,
+              userId: item.userId,
+              role: item.role,
+              assignedBy: req.userId,
+            },
+          ],
+          { session }
+        );
+
+        createdResults.push(created);
       }
 
       await session.commitTransaction();
-      return successResponse(res, results);
+      return successResponse(res, createdResults, "Phân công thành công");
     } catch (err) {
       await session.abortTransaction();
       console.error("Bulk assign error:", err);
-      return errorResponse(res, err.message || "Lỗi server", 500);
+
+      const statusCode = err.message.includes("trùng") || err.message.includes("không") ? 400 : 500;
+      return errorResponse(res, err.message, statusCode);
     } finally {
       session.endSession();
     }
@@ -343,7 +350,7 @@ const shiftAssignmentController = {
                 assignedAt: 1,
 
                 workScheduleId: "$schedule._id",
-                theaterId: "$theater._id", 
+                theaterId: "$theater._id",
                 shiftTemplateId: "$template._id",
 
                 date: "$schedule.date",
