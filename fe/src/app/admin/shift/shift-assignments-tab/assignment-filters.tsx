@@ -64,7 +64,7 @@ export default function AssignmentFilters({
           <SelectTrigger className="w-full md:w-[220px] rounded-xl bg-gray-50 border-gray-200">
             <SelectValue placeholder="Chọn rạp" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className='max-h-[300px] overflow-y-auto'>
             {theaters.map((t) => (
               <SelectItem key={t._id} value={t._id}>
                 {t.name}

@@ -24,7 +24,7 @@ import { WorkSchedule, DayWorkSchedule } from '@/types/work-schedule'
 import { useTheaters } from '@/lib/api/theaters'
 
 export default function WorkPlanningTab() {
-  const { data: theaters } = useTheaters({})
+  const { data: theaters } = useTheaters({limit: 100})
   const { remove } = useWorkScheduleMutations()
   const [isGenerateOpen, setGenerateOpen] = useState(false)
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false)

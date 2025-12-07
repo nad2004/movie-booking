@@ -74,7 +74,7 @@ export function UserTable({
                   {user.staffInfo?.assignedTheater ? (
                     <div className="flex flex-col">
                       <span className="font-medium">{user.staffInfo.assignedTheater.name}</span>
-                      <span className="text-xs text-gray-500">{user.staffInfo.assignedTheater.city}</span>
+                      {/* <span className="text-xs text-gray-500">{user.staffInfo.assignedTheater.name}</span> */}
                     </div>
                   ) : (
                     <span className="text-gray-400 italic">Chưa gắn</span>

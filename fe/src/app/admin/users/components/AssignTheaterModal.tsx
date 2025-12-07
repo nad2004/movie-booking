@@ -31,8 +31,8 @@ export function AssignTheaterModal({ open, onOpenChange, staff }: AssignTheaterM
   const { assignTheaterMutation } = useUserMutations()
 
   useEffect(() => {
-    if (open && staff?.staffInfo?.assignedTheater) {
-      setSelectedTheaterId(staff.staffInfo.assignedTheater)
+    if (open && staff?.staffInfo?.assignedTheater?._id) {
+      setSelectedTheaterId(staff.staffInfo.assignedTheater._id)
     } else {
       setSelectedTheaterId('')
     }
@@ -77,7 +77,7 @@ export function AssignTheaterModal({ open, onOpenChange, staff }: AssignTheaterM
 
           {staff?.staffInfo?.assignedTheater && (
             <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-              <strong>Rạp hiện tại:</strong> {staff.staffInfo.assignedTheater}
+              <strong>Rạp hiện tại:</strong> {staff.staffInfo.assignedTheater.name}
             </div>
           )}
         </div>

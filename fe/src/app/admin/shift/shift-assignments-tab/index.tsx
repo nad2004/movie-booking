@@ -22,7 +22,7 @@ import { useTheaters } from '@/lib/api/theaters'
 
 export default function ShiftAssignmentsTab() {
   // --- API Hooks (Fetch theaters first) ---
-  const { data: theatersData } = useTheaters({})
+  const { data: theatersData } = useTheaters({limit: 100})
   const { data: shiftTemplatesData } = useShiftTemplates({ isActive: true })
   const { remove } = useAssignmentMutations()
 
@@ -57,7 +57,7 @@ export default function ShiftAssignmentsTab() {
     date: selectedDate,
     shiftCode: selectedShiftCode === 'all' ? undefined : selectedShiftCode,
   })
-
+  console.log(rostersData)
   // --- Computed Data ---
   const { shifts, summary } = useMemo(() => {
     if (!rostersData) {

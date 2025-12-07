@@ -3,7 +3,10 @@ import type { Pagination } from './apiTemplate';
 
 export interface StaffInfo {
   staffId?: string;
-  assignedTheater?: string; // _id của Theater
+  assignedTheater?: {
+    name: string
+    _id: string
+  }; // _id của Theater
   position?: "cashier" | "usher" | "supervisor" | "manager";
   shift?: "morning" | "afternoon" | "evening" | "night";
   hireDate?: string | Date;

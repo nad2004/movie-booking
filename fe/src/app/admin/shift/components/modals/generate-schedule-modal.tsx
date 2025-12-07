@@ -65,7 +65,7 @@ export default function GenerateScheduleModal({
 }: GenerateScheduleModalProps) {
   // --- API Hooks ---
   const { data: templatesData, isLoading: isLoadingTemplates } = useShiftTemplates({ isActive: true })
-  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({})
+  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({limit: 100})
   const { generate } = useWorkScheduleMutations()
 
   // --- Memoized Data ---
@@ -187,7 +187,7 @@ export default function GenerateScheduleModal({
                     >
                       <SelectValue placeholder="Chọn rạp" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className='max-h-[300px] overflow-y-auto'>
                       {theaters && theaters.map(theater => (
                         <SelectItem key={theater._id} value={theater._id}>
                           {theater.name}
