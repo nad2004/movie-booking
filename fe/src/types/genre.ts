@@ -1,5 +1,6 @@
 import { Movie } from "./movie";
 import type { ApiResponse } from './apiTemplate'
+import { Pagination } from "./apiTemplate";
 // ======================
 // GENRE INTERFACE
 // ======================
@@ -24,7 +25,10 @@ export interface Genre {
   movieCount?: number;
 }
 
-
+export interface GenreListData {
+  items: Genre[];
+  pagination: Pagination;
+}
 
 export type GenreApiResponse = ApiResponse<Genre>;
-export type GenreListResponse = ApiResponse<Genre[]>;
+export type GenreListResponse = ApiResponse<GenreListData>;

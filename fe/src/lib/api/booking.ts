@@ -76,7 +76,7 @@ export function useMyBookings(params: GetMyBookingParams = {}) {
 // Get booking by bookingCode (public API - no auth required)
 export async function getBookingByCode(bookingCode: string) {
   try {
-    const res = await api.get<ApiResponse<Booking>>(`/bookings/code/${bookingCode}`);
+    const res = await api.get<ApiResponse<Booking>>(`/staff/tickets/check/${bookingCode}`);
     return res.data.data;
   } catch (error: any) {
     console.error("Failed to fetch booking by code", error);

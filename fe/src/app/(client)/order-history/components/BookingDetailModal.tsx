@@ -61,7 +61,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
               <div className="flex gap-4 md:gap-6">
                 <div className="relative w-28 h-40 md:w-32 md:h-48 shrink-0 rounded-lg shadow-md overflow-hidden bg-gray-100">
                     <Image
-                      src={booking.schedule?.movie?.posterUrl || "/placeholder-movie.png"}
+                      src={booking.schedule.movie.posterUrl || "/placeholder-movie.png"}
                       alt={booking.movieTitle}
                       fill
                       className="object-cover"
@@ -113,7 +113,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                 <DetailItem 
                     icon={<MapPin className="w-4 h-4"/>} 
                     label="Rạp chiếu" 
-                    value={booking.theaterName} 
+                    value={booking.schedule.theater.name} 
                 />
                 <DetailItem 
                     icon={<MonitorPlay className="w-4 h-4"/>} 
@@ -127,11 +127,9 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                     value={booking.seats.map(s => s.seatNumber).join(', ')} 
                     className="text-primary font-bold"
                 />
-                <DetailItem 
-                    icon={<CreditCard className="w-4 h-4"/>} 
-                    label="Thanh toán" 
-                    value={booking.paymentDetails.paymentMethod || "Chưa xác định"} 
-                />
+
+   
+               
                 <DetailItem 
                     icon={<Hash className="w-4 h-4"/>} 
                     label="Mã đặt vé" 

@@ -67,9 +67,9 @@ export default function GenreManagementPage() {
   })
   // [Mới] Lấy dữ liệu an toàn cho phân trang
   // Giả sử API trả về: { genres: [], pagination: { totalPages: number, totalItems: number } }
-  const genres = genreData ?? []
-  const totalPages = genreData ? Math.ceil(genreData.length / itemsPerPage) : 1
-  const totalItems = genreData ? genreData.length : 0
+  const genres = genreData?.items ?? []
+  const totalPages = genreData ? genreData.pagination.totalPages : 1
+  const totalItems = genreData ? genreData.pagination.totalItems : 0
 
   const { deleteMutation } = useGenreMutations()
 

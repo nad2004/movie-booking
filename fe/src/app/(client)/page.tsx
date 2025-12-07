@@ -43,7 +43,6 @@ export default function HomePage() {
   const handleCityChange = (city: string) => {
     setSelectedCity(city)
   }
-  
   return (
     <div className="flex flex-col w-full overflow-x-hidden">
       {loadingMovies ? (
@@ -89,7 +88,7 @@ export default function HomePage() {
             <span>Đang tải thể loại...</span>
           </div>
         ) : (
-          <GenreGrid genres={listGenres} />
+          <GenreGrid genres={listGenres.items} />
         )}
         
         {loadingTheater ? (

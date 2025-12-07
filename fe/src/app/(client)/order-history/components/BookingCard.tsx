@@ -48,9 +48,8 @@ export default function BookingCard({ booking, onClick }: BookingCardProps) {
         {/* Poster */}
         <div className="shrink-0 relative w-24 h-36">
              <Image 
-                // Lấy poster từ movie trong schedule, fallback nếu không có
-                src={booking.schedule?.movie?.posterUrl || "/placeholder-movie.png"} 
-                alt={booking.movieTitle} 
+                src={booking.schedule.movie.posterUrl || "/placeholder-movie.png"} 
+                alt={booking.movieTitle || 'ảnh'} 
                 fill
                 className="object-cover rounded-lg shadow-sm"
                 sizes="(max-width: 768px) 96px, 96px"
@@ -62,8 +61,8 @@ export default function BookingCard({ booking, onClick }: BookingCardProps) {
           <div>
             <div className="flex items-start justify-between mb-2 gap-2">
               <div className="min-w-0 flex-1">
-                <h4 className="text-text-primary font-semibold line-clamp-1" title={booking.movieTitle}>
-                    {booking.movieTitle}
+                <h4 className="text-text-primary font-semibold line-clamp-1" title={booking.schedule.movie.title}>
+                    {booking.schedule.movie.title}
                 </h4>
               </div>
 
@@ -85,7 +84,7 @@ export default function BookingCard({ booking, onClick }: BookingCardProps) {
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary shrink-0" />
                 <span className="line-clamp-1" title={`${booking.theaterName} - ${booking.roomName}`}>
-                  {booking.theaterName} - {booking.roomName}
+                  {booking.schedule.theater.name} - {booking.roomName}
                 </span>
               </div>
               

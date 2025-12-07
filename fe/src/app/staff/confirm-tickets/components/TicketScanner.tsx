@@ -108,7 +108,7 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
               const bookingCode = qrData.bookingCode || qrData._id
               
               if (bookingCode) {
-                fetchBookingData(bookingCode)
+                getBookingByCode(bookingCode)
                 stopCamera()
               } else {
                 showError('Lỗi!', 'Mã QR không hợp lệ')

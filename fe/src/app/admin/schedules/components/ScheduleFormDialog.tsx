@@ -111,7 +111,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
               <SelectTrigger>
                 <SelectValue placeholder="Chọn phim..." />
               </SelectTrigger>
-              <SelectContent className="bg-gray-100 text-gray-900/90">
+              <SelectContent className="bg-gray-100 text-gray-900/90 max-h-[300px] overflow-y-auto">
                 {moviesData?.movies.map(m => (
                   <SelectItem key={m._id} value={m._id}>{m.title}</SelectItem>
                 ))}
@@ -126,7 +126,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
               <SelectTrigger>
                 <SelectValue placeholder="Chọn rạp..." />
               </SelectTrigger>
-              <SelectContent className="bg-gray-100 text-gray-900/90">
+              <SelectContent className="bg-gray-100 text-gray-900/90 max-h-[300px] overflow-y-auto">
                 {theatersData?.theaters.map(t => (
                   <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
                 ))}
@@ -141,7 +141,7 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
               <SelectTrigger>
                 <SelectValue placeholder="Chọn phòng..." />
               </SelectTrigger>
-              <SelectContent className="bg-gray-100 text-gray-900/90">
+              <SelectContent className="bg-gray-100 text-gray-900/90 max-h-[300px] overflow-y-auto">
                 {rooms.length > 0 ? rooms.map((r: any) => (
                   <SelectItem key={r._id} value={r._id}>{r.roomName} ({r.roomType})</SelectItem>
                 )) : (
@@ -159,13 +159,13 @@ export function ScheduleFormDialog({ open, onOpenChange, scheduleToEdit }: Sched
             </div>
             <div className="space-y-2">
                <Label>Giờ Bắt Đầu</Label>
-               <Input className="bg-gray-100 text-gray-900! [color-scheme:light]" type="time" {...register("startTime")} />
+               <Input  type="time" {...register("startTime")} />
             </div>
           </div>
           
            <div className="space-y-2">
                <Label>Giờ Kết Thúc (Dự kiến)</Label>
-               <Input className="!bg-gray-100 !text-gray-900" type="time" {...register("endTime")} />
+               <Input  type="time" {...register("endTime")} />
             </div>
 
           {/* Giá Vé */}

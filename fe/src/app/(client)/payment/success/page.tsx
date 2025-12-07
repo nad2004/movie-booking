@@ -68,7 +68,7 @@ function PaymentResult() {
       <div className="max-w-lg w-full bg-surface p-8 rounded-3xl shadow-xl border border-border">
         <StepSuccess 
             bookingData={bookingResponseData} 
-            onClose={() => router.push('/')}
+            onClose={() => router.push('/order-history')}
         />
       </div>
     </div>

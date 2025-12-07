@@ -3,7 +3,7 @@ import { PaginatedTheaterResponse } from '@/types/theater'
 import { PaginatedReviewData } from '@/types/review'
 import { PaginatedScheduleData } from '@/types/schedule'
 import { PaginatedBookingData } from '@/types/booking'
-import { Genre } from '@/types/genre'
+import { GenreListData } from '@/types/genre'
 
 export const DEFAULT_MOVIE_LIST: MovieListData = {
   movies: [],
@@ -27,7 +27,10 @@ export const DEFAULT_THEATER_LIST: PaginatedTheaterResponse = {
   theaters: [],
   pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
 }
-export const DEFAULT_GENRE_LIST: Genre[] = [] as Genre[]
+export const DEFAULT_GENRE_LIST: GenreListData = {
+  items: [],
+  pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
+}
 export const DEFAULT_REVIEW_LIST: PaginatedReviewData = {
   reviews: [],
   pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
