@@ -9,19 +9,23 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Eye, Trash2 } from 'lucide-react'
+import { Eye, Trash2, Building2 } from 'lucide-react'
 import { User } from '@/types/user'
 
 interface UserTableProps {
   users: User[]
   onViewDetail: (user: User) => void
   onDelete: (id: string) => void
+  onAssignTheater?: (user: User) => void
+  showAssignTheater?: boolean
 }
 
 export function UserTable({
   users,
   onViewDetail,
   onDelete,
+  onAssignTheater,
+  showAssignTheater = false,
 }: UserTableProps) {
 
   if (users.length === 0)
@@ -36,6 +40,7 @@ export function UserTable({
             <TableHead>Email</TableHead>
             <TableHead>SĐT</TableHead>
             <TableHead>Vai Trò</TableHead>
+            {showAssignTheater && <TableHead>Rạp</TableHead>}
             <TableHead>Trạng Thái</TableHead>
             <TableHead className="text-right">Thao Tác</TableHead>
           </TableRow>
@@ -64,6 +69,18 @@ export function UserTable({
                   {user.role}
                 </Badge>
               </TableCell>
+              {showAssignTheater && (
+                <TableCell className="text-gray-600">
+                  {user.staffInfo?.assignedTheater ? (
+                    <div className="flex flex-col">
+                      <span className="font-medium">{user.staffInfo.assignedTheater.name}</span>
+                      <span className="text-xs text-gray-500">{user.staffInfo.assignedTheater.city}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 italic">Chưa gắn</span>
+                  )}
+                </TableCell>
+              )}
               <TableCell>
                 <Badge
                   className={
@@ -84,6 +101,17 @@ export function UserTable({
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
+                  {showAssignTheater && onAssignTheater && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-purple-600 hover:bg-purple-50"
+                      onClick={() => onAssignTheater(user)}
+                      title="Gắn rạp"
+                    >
+                      <Building2 className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     size="icon"
                     variant="ghost"

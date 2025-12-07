@@ -62,7 +62,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                 <div className="relative w-28 h-40 md:w-32 md:h-48 shrink-0 rounded-lg shadow-md overflow-hidden bg-gray-100">
                     <Image
                       src={booking.schedule.movie.posterUrl || "/placeholder-movie.png"}
-                      alt={booking.movieTitle}
+                      alt={booking.movieTitle || "ảnh"}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 112px, 128px"
@@ -108,7 +108,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                 <DetailItem 
                     icon={<Calendar className="w-4 h-4"/>} 
                     label="Thời gian" 
-                    value={`${booking.showTime || booking.schedule.startTime} - ${formatDate(booking.showDate)}`} 
+                    value={`${booking.schedule.startTime} - ${booking.schedule.endTime}`} 
                 />
                 <DetailItem 
                     icon={<MapPin className="w-4 h-4"/>} 
@@ -118,7 +118,7 @@ export default function BookingDetailModal({ booking, onClose }: BookingDetailMo
                 <DetailItem 
                     icon={<MonitorPlay className="w-4 h-4"/>} 
                     label="Phòng chiếu" 
-                    value={booking.roomName || "Đang cập nhật"} 
+                    value={booking.schedule.room.name || "Đang cập nhật"} 
                 />
                  <DetailItem 
                     icon={<Armchair className="w-4 h-4"/>} 

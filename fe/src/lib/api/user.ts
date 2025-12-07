@@ -23,6 +23,11 @@ export interface CreateStaffDTO {
   assignedTheater: string;
 }
 
+export interface AssignTheaterDTO {
+  staffId: string;
+  theaterId: string;
+}
+
 // --- API Functions ---
 
 // 1. Get List
@@ -63,6 +68,12 @@ export async function createStaff(data: CreateStaffDTO) {
   return res.data.data;
 }
 
+// 6. Assign Theater to Staff
+export async function assignTheaterToStaff(data: AssignTheaterDTO) {
+  const res = await api.post("/admin/staff/assign-theater", data);
+  return res.data;
+}
+
 // --- React Query Hooks ---
 
 export function useUsers(params: GetUsersParams) {
@@ -81,4 +92,3 @@ export function useUserDetail(id: string | null) {
     enabled: !!id,
   });
 }
-

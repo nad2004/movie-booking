@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   format,
   startOfMonth,
@@ -24,14 +24,22 @@ import { WorkSchedule, DayWorkSchedule } from '@/types/work-schedule'
 import { useTheaters } from '@/lib/api/theaters'
 
 export default function WorkPlanningTab() {
-  // --- 1. State Quản lý ---
+  const { data: theaters } = useTheaters({})
+  const { remove } = useWorkScheduleMutations()
   const [isGenerateOpen, setGenerateOpen] = useState(false)
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false)
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null)
 
-  // State Filter
-  const [selectedTheaterId, setSelectedTheaterId] = useState<string>('69198f14b80a32bf8ea5d91c')
+  // State Filter - khởi tạo với empty string
+  const [selectedTheaterId, setSelectedTheaterId] = useState<string>('')
   const [currentDate, setCurrentDate] = useState(new Date())
+
+  // Set theater đầu tiên khi data load xong
+  useEffect(() => {
+    if (theaters?.theaters && theaters.theaters.length > 0 && !selectedTheaterId) {
+      setSelectedTheaterId(theaters.theaters[0]._id)
+    }
+  }, [theaters, selectedTheaterId])
 
   // --- 2. Tính toán ngày tháng (useMemo) ---
   const { monthStart, calendarDays, apiFromDate, apiToDate } = useMemo(() => {
@@ -49,14 +57,12 @@ export default function WorkPlanningTab() {
     }
   }, [currentDate])
 
-  // --- 3. API Hooks ---
+  // Chỉ fetch khi đã có theaterId
   const { data: schedulesResponse, isLoading } = useWorkSchedules({
     theaterId: selectedTheaterId,
     from: apiFromDate,
     to: apiToDate,
   })
-  const { data: theaters } = useTheaters({})
-  const { remove } = useWorkScheduleMutations()
 
   // --- 4. Transform data (Container xử lý logic này) ---
   const schedulesByDate = useMemo(() => {

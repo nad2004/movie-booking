@@ -7,8 +7,10 @@ import { UserTable } from './components/UserTable'
 import { UserToolbar } from './components/UserToolbar'
 import { UserDetailSheet } from './components/UserDetailSheet'
 import { CreateStaffModal } from './components/CreateStaffModal'
+import { AssignTheaterModal } from './components/AssignTheaterModal'
 import { useDebounce } from '@/hooks/useDebounce'
 import { LoadingOverlay, TableSkeleton } from '@/app/components/shared/skeleton'
+import { User } from '@/types/user'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +43,7 @@ export default function UserManagementPage() {
   const [viewUserId, setViewUserId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [showCreateStaffModal, setShowCreateStaffModal] = useState(false)
+  const [assignTheaterStaff, setAssignTheaterStaff] = useState<User | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -94,7 +97,9 @@ export default function UserManagementPage() {
     setShowCreateStaffModal(true)
   }
 
- 
+  const handleAssignTheater = (user: User) => {
+    setAssignTheaterStaff(user)
+  }
 
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
@@ -121,6 +126,8 @@ export default function UserManagementPage() {
                 users={users || []}
                 onViewDetail={user => setViewUserId(user._id)}
                 onDelete={id => setDeleteId(id)}
+                onAssignTheater={handleAssignTheater}
+                showAssignTheater={typeUser === 'staff'}
               />
               
               {/* Show overlay during transitions (page change, tab change) */}
@@ -160,6 +167,13 @@ export default function UserManagementPage() {
       <CreateStaffModal 
         open={showCreateStaffModal}
         onOpenChange={setShowCreateStaffModal}
+      />
+
+      {/* Assign Theater Modal */}
+      <AssignTheaterModal
+        open={!!assignTheaterStaff}
+        onOpenChange={() => setAssignTheaterStaff(null)}
+        staff={assignTheaterStaff}
       />
 
       {/* Delete Confirmation Dialog */}

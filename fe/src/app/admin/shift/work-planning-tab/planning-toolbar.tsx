@@ -50,7 +50,7 @@ export default function PlanningToolbar({
             <SelectTrigger className="w-[220px] rounded-xl bg-gray-50 border-gray-200 focus:ring-[#6C63FF]">
               <SelectValue placeholder="Chọn rạp" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className='max-h-[300px] overflow-y-auto'>
               {theaters?.map((t: any) => (
                 <SelectItem key={t._id} value={t._id}>
                   {t.name}

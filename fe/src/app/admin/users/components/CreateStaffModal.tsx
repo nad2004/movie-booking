@@ -32,7 +32,7 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
   const createStaffMutation = useCreateStaff();
   
   // Fetch theaters
-  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({});
+  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({limit: 100});
   const theaters = useMemo(() => theatersData?.theaters || [], [theatersData]);
 
   const {
@@ -160,7 +160,7 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
                     >
                       <SelectValue placeholder="Chọn rạp chiếu phim" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
                       {theaters.map((theater) => (
                         <SelectItem key={theater._id} value={theater._id}>
                           {theater.name} - {theater.address}

@@ -18,7 +18,11 @@ export interface TicketPrices {
   vip?: number;
   couple?: number;
 }
-
+interface ScheduleRoom{
+_id: string,
+name: string
+roomType: string
+}
 
 // Dữ liệu 1 schedule
 export interface Schedule {
@@ -29,9 +33,7 @@ export interface Schedule {
 
   // Thông tin rạp & phòng
   theater: Theater;
-  room: string;
-  roomName: string;
-  roomType: "2D" | "3D" | "IMAX";
+  room: ScheduleRoom;
 
   // Thời gian
   showDate: string;
