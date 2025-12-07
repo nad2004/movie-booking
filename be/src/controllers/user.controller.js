@@ -104,7 +104,16 @@ const userController = {
 
       const skip = (page - 1) * limit;
       const [users, total] = await Promise.all([
-        User.find(query).select("-password").sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+        User.find(query)
+          .select("-password")
+          .populate({
+            path: "staffInfo.assignedTheater",
+            select: "name",
+          })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit))
+          .lean(),
         User.countDocuments(query),
       ]);
 
