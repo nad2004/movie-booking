@@ -65,7 +65,6 @@ export default function GenreManagementPage() {
     limit: itemsPerPage,
     search: debouncedSearch,
   })
-
   // [Mới] Lấy dữ liệu an toàn cho phân trang
   // Giả sử API trả về: { genres: [], pagination: { totalPages: number, totalItems: number } }
   const genres = genreData ?? []

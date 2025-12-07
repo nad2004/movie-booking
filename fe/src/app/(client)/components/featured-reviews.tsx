@@ -10,6 +10,7 @@ import { useMovies } from '@/lib/api/movies'
 import { useMovieReviews } from '@/lib/api/reviews'
 import type { Movie } from '@/types/movie'
 import { Skeleton } from '@/components/ui/skeleton'
+import Image from 'next/image'
 
 export function FeaturedReviews() {
   // 1. Lấy top 3 phim có rating cao nhất hoặc view cao nhất
@@ -48,20 +49,17 @@ export function FeaturedReviews() {
   )
 }
 
-// --- SUB COMPONENT: Card cho từng phim ---
 function FeaturedMovieCard({ movie }: { movie: Movie }) {
-  // 2. Lấy reviews cho từng phim
   const { data: reviewList, isLoading } = useMovieReviews(movie._id)
   
-  // Lấy 2 review mới nhất
   const reviews = reviewList?.reviews?.slice(0, 2) || []
 
   return (
     <Card className="rounded-2xl border border-border bg-surface shadow-sm hover:shadow-md transition-all overflow-hidden h-full flex flex-col">
-      {/* Movie Thumbnail */}
-      <div className="relative aspect-[16/9] group shrink-0">
-        <img
+      <div className="relative aspect-video group shrink-0">
+        <Image
           src={movie.posterUrl || "/placeholder-movie.png"}
+          fill
           alt={movie.title}
           className="w-full h-full object-cover"
         />

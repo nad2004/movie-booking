@@ -12,7 +12,6 @@ interface BookingDetailModalProps {
 }
 
 export default function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
-    console.log("Booking Detail Modal - booking:", booking);
   // Map status tiếng Việt sang Badge Style
   const getStatusBadge = (status: string) => {
     switch (status) {

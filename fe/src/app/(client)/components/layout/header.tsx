@@ -171,6 +171,8 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
                           src={movie.posterUrl || '/placeholder-movie.png'}
                           alt={movie.title}
                           fill
+                          width={400}
+                          height={400}
                           className="object-cover"
                           sizes="40px"
                         />
@@ -258,7 +260,7 @@ const UserNav = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-transparent hover:ring-primary/20 transition-all">
               <Avatar className="h-10 w-10 border border-border">
-                <AvatarImage src={user.profilePicture || ''} alt={user.fullName} className="object-cover"/>
+                <AvatarImage width={200} height={200} src={user.profilePicture || ''} alt={user.fullName} className="object-cover"/>
                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
                   {user.fullName?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
@@ -298,7 +300,7 @@ const UserNav = () => {
               className="p-0 focus:bg-transparent"
               onSelect={(e) => e.preventDefault()}
             >
-              <LogoutButton className="w-full justify-start rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 hover:text-destructive text-foreground shadow-none" />
+              <LogoutButton className="w-full bg-bg-primary justify-start rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 hover:text-destructive text-foreground shadow-none" />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

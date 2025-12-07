@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PageHeader from '@/app/(client)/movies/components/PageHeader'
 import FilterCard from '@/app/(client)/movies/components/FilterCard'
 import { TopMovieCarousel } from '@/app/(client)/components/topMovieCarousel'
-import { MovieSection } from '@/app/components/shared/movie-section'
+import { MovieList } from './components/MovieList'
 import { useMovies, GetMoviesParams } from '@/lib/api/movies'
 import { DEFAULT_MOVIE_LIST } from '@/constants'
 import { COUNTRIES } from '@/constants/location'
 import { useGenres } from '@/lib/api/genres'
 import { DEFAULT_GENRE_LIST } from '@/constants'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
 
 // --- CONSTANTS UI ---
 const movieTypes = ['Tất cả', 'Đang chiếu', 'Sắp chiếu']
@@ -17,6 +19,10 @@ const ratings = ['P', 'C13', 'C16', 'C18']
 const sortOptions = ['Mới nhất', 'Mới cập nhật', 'Điểm IMDb', 'Lượt xem']
 
 export default function PhimLoc() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 15)
+  const itemsPerPage = 15
   // --- 1. DRAFT STATE (Dữ liệu trên UI - Chưa gửi API) ---
   const [showFilters, setShowFilters] = useState(true)
   const [selectedCountry, setSelectedCountry] = useState('Tất cả')
@@ -27,16 +33,13 @@ export default function PhimLoc() {
   const [customYear, setCustomYear] = useState('')
   const [selectedSort, setSelectedSort] = useState('Mới nhất')
 
-  const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres()
+  const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres({})
 
   // Lấy danh sách thể loại unique
   const uniqueGenres = Array.from(new Set(listGenres.map(genre => genre.name)))
-
-  // --- 2. APPLIED STATE (Dữ liệu thật sự gửi đi API) ---
-  // Mặc định ban đầu là load trang 1, limit 12
   const [queryParams, setQueryParams] = useState<GetMoviesParams>({
-    page: 1,
-    limit: 12,
+    page: pageFromUrl,
+    limit: itemsPerPage,
     sortBy: 'releaseDate',
     order: 'desc',
   })
@@ -47,7 +50,8 @@ export default function PhimLoc() {
     isLoading, // Lấy trạng thái loading từ đây
     isFetching, // Lấy thêm isFetching để biết khi nào đang refetch lại
   } = useMovies(queryParams)
-
+  const totalPages = listMovies?.pagination?.totalPages || 1
+  const totalItems = listMovies?.pagination?.totalItems || 0
   const { data: topMoviesData = DEFAULT_MOVIE_LIST } = useMovies({
     page: 1,
     limit: 10,
@@ -140,7 +144,21 @@ export default function PhimLoc() {
       setSelectedGenres([...selectedGenres, genre])
     }
   }
+  useEffect(() => {
+    setQueryParams(prev => ({ ...prev, page: pageFromUrl }))
+  }, [pageFromUrl])
+  const updateUrlParams = (newPage: number) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString())
+    newSearchParams.set('page', newPage.toString())
+    router.push(`?${newSearchParams.toString()}`, { scroll: false })
+  }
 
+  // [Mới] Xử lý chuyển trang
+  const handlePageChange = (page: number) => {
+    setQueryParams(prev => ({ ...prev, page }))
+    updateUrlParams(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   return (
     <div className="min-h-screen bg-bg-primary">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
@@ -184,12 +202,26 @@ export default function PhimLoc() {
             <div className="text-white py-4 text-center animate-pulse">Đang lọc phim...</div>
           )}
 
-          <MovieSection
+          <MovieList
             title={`📽️ Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
             movies={listMovies.movies}
             viewAllHref="#"
           />
+          <div className="flex flex-col gap-4 mt-4">
+            <PaginationInfo
+              currentPage={queryParams.page || 1}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
 
+            <CustomPagination
+              currentPage={queryParams.page || 1}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              showPageNumbers={5}
+            />
+          </div>
           {!isLoading && !isFetching && listMovies.movies.length === 0 && (
             <div className="text-center py-10 text-gray-400">Không tìm thấy phim nào phù hợp.</div>
           )}

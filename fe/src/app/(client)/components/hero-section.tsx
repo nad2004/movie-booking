@@ -6,11 +6,11 @@ import { Play, Info, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Movie } from '@/types/movie'
+import Image from 'next/image'
 interface MovieSectionProps {
-  movies: Movie[] 
+  movies: Movie[]
 }
-export function HeroSection({ movies}: MovieSectionProps) {
- 
+export function HeroSection({ movies }: MovieSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
@@ -21,10 +21,8 @@ export function HeroSection({ movies}: MovieSectionProps) {
   }, [movies.length])
 
   const currentMovie = movies[currentIndex]
- if (movies.length === 0) {
-    return <div>
-      Không có thể loại nào để hiển thị.
-    </div>
+  if (movies.length === 0) {
+    return <div>Không có thể loại nào để hiển thị.</div>
   }
   return (
     <section className="relative h-[70vh] md:h-[80vh] overflow-hidden ">
@@ -38,15 +36,21 @@ export function HeroSection({ movies}: MovieSectionProps) {
           className="absolute inset-0"
         >
           {/* Background */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${currentMovie.posterUrl})`,
-            }}
-          >
-            {/* overlay gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 overflow-hidden aspect-2/3">
+            {/* Next.js Image as background */}
+            <Image
+              src={currentMovie.posterUrl || '/placeholder-poster.jpg'}
+              alt={currentMovie.title || 'Movie poster'}
+              fill
+              className="object-cover"
+              priority
+              quality={75}
+              sizes="100vw"
+            />
+
+            {/* Overlay gradients */}
+            <div className="absolute inset-0 bg-linear-to-r from-background via-background/85 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-background/60 via-transparent to-transparent" />
           </div>
 
           {/* Content */}
@@ -79,7 +83,8 @@ export function HeroSection({ movies}: MovieSectionProps) {
                 <span className="text-muted-foreground">•</span>
                 <span className="uppercase">Đánh giá</span>
                 <span className="flex items-center gap-1 text-[hsl(var(--accent))] font-semibold">
-                  <Star className="h-4 w-4 fill-[hsl(var(--accent))]" /> {currentMovie.averageRating}/5
+                  <Star className="h-4 w-4 fill-[hsl(var(--accent))]" />{' '}
+                  {currentMovie.averageRating}/5
                 </span>
               </motion.div>
 

@@ -22,25 +22,16 @@ export default function ConfirmTicket() {
 
   // Handle ticket scan - now receives full Booking object from API
   const handleScanTicket = async (ticketData: Booking) => {
-    // Ticket data is already fetched by TicketScanner component
     setTicketInfo(ticketData)
   }
 
   // Handle confirm entry
   const handleConfirmEntry = async () => {
     if (!ticketInfo) return
-    
     setIsConfirming(true)
-    
-    try {
-      // TODO: Call API to mark ticket as used
-      // await confirmTicketEntry(ticketInfo._id)
-      
+    try { 
       await new Promise(resolve => setTimeout(resolve, 800))
-      
       showSuccess('Đã xác nhận khách vào rạp!')
-      
-      // Reset form
       setTicketInfo(null)
     } catch (error) {
       console.error('Error confirming entry:', error)
@@ -66,7 +57,6 @@ export default function ConfirmTicket() {
         <TicketScanner 
           onScan={handleScanTicket}
         />
-        
         <TicketInfoDisplay 
           ticket={ticketInfo} 
           onConfirm={handleConfirmEntry}

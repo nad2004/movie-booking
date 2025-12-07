@@ -29,7 +29,6 @@ export async function getShiftTemplates(params: GetShiftTemplateParams = {}) {
     });
     return res.data.data; 
   } catch (error) {
-    console.log("Failed to fetch shift templates", error);
     return []; 
   }
 }

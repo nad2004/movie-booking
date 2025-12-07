@@ -85,7 +85,7 @@ export default function ShiftAssignmentsTab() {
       .map((shift) => ({
         ...shift,
         employees: shift.employees.filter((emp) =>
-          emp.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+          emp.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
         ),
       }))
       .filter((shift) => shift.employees.length > 0)

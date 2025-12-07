@@ -99,9 +99,7 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
         videoRef.current,
         (result, error) => {
           if (result) {
-            const scannedText = result.getText()
-            console.log('QR Code detected:', scannedText)
-            
+            const scannedText = result.getText()            
             try {
               // Try to parse as JSON (QR code contains full booking object)
               const qrData = JSON.parse(scannedText)

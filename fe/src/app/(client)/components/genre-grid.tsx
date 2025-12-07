@@ -15,7 +15,6 @@ interface GenresProps {
   genres: Genre[]
 }
 export function GenreGrid({ genres }: GenresProps) {
-  console.log(genres)
   if (genres.length === 0) {
     return <div>Không có thể loại nào để hiển thị.</div>
   }

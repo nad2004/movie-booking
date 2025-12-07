@@ -40,6 +40,7 @@ export interface AssignedEmployee {
   shiftName: string
   shiftCode: string
   startTime: string
+  assignmentId?: string
   endTime: string
   color?: string
   status: string
@@ -47,6 +48,7 @@ export interface AssignedEmployee {
   checkOutTime?: string // ISO string
   assignedAt: string // ISO string
   date: string
+  fullName?:string
   startDateTime: string
   endDateTime: string
 }

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ChevronRight } from 'lucide-react'
 import type { Movie } from '@/types/movie'
-import { MovieCard } from '@/app/components/shared/movie-card'
+import { MovieCard } from '@/app/(client)/components/movie-card'
 
 interface MovieSectionProps {
   title: string

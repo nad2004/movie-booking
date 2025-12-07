@@ -71,6 +71,7 @@ const config: Config = {
         xl: 'calc(var(--radius) + 4px)',
       },
       fontFamily: {
+        sans: ["var(--font-poppins)", "sans-serif"],
         poppins: ["'Poppins'", 'system-ui', 'sans-serif'],
       },
 

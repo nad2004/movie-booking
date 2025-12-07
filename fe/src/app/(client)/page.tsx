@@ -1,35 +1,65 @@
 'use client'
 import { HeroSection } from '@/app/(client)/components/hero-section'
 import { GenreGrid } from '@/app/(client)/components/genre-grid'
-import { MovieSection } from '@/app/components/shared/movie-section'
+import { MovieSection } from '@/app/(client)/components/movie-section'
 import { FeaturedReviews } from '@/app/(client)/components/featured-reviews'
+import { useState } from 'react'
 import { ShowtimeSection } from '@/app/(client)/components/showtimeSection'
+import { ShowtimeSectionSkeleton } from '@/app/(client)/components/ShowtimeSectionSkeleton'
 import { TopMovieCarousel } from '@/app/(client)/components/topMovieCarousel'
 import { useMovies } from '@/lib/api/movies'
 import { useTheaters } from '@/lib/api/theaters'
 import { useGenres } from '@/lib/api/genres'
 import { DEFAULT_MOVIE_LIST, DEFAULT_THEATER_LIST, DEFAULT_GENRE_LIST } from '@/constants'
+
 export default function HomePage() {
+  // State cho city - được quản lý ở component cha
+  const [selectedCity, setSelectedCity] = useState('Hà Nội')
+
+  // Fetch data với selectedCity và các params khác
   const {
     data: listMovies = DEFAULT_MOVIE_LIST,
-    isLoading,
-    error,
-  } = useMovies({ page: 1, limit: 10 })
-  const { data: listTheater = DEFAULT_THEATER_LIST } = useTheaters({})
-  const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres({})
+    isLoading: loadingMovies,
+    error: errorMovies,
+  } = useMovies({})
+  
+  const { 
+    data: listTheater = DEFAULT_THEATER_LIST, 
+    isLoading: loadingTheater 
+  } = useTheaters({ 
+    city: selectedCity,
+    limit: 100, // Lấy nhiều rạp hơn
+    isActive: 'true', // Chỉ lấy rạp đang hoạt động
+    sortBy: 'name',
+    order: 'asc'
+  })
+  
+  const { 
+    data: listGenres = DEFAULT_GENRE_LIST, 
+    isLoading: loadingGenres 
+  } = useGenres({})
 
-  if (isLoading) {
-    return <div>Loading...</div>
+  // Handler để update city từ ShowtimeSection
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city)
   }
-
-  if (error) {
-    return <div>Error loading data</div>
-  }
-
+  
   return (
     <div className="flex flex-col w-full overflow-x-hidden">
-      <HeroSection movies={listMovies.movies.slice(0, 5)} />
-
+      {loadingMovies ? (
+        <div className="flex items-center justify-center h-[600px]">
+          <span>Loading...</span>
+        </div>
+      ) : (
+        <HeroSection movies={listMovies?.movies} />
+      )}
+      
+      {errorMovies && (
+        <div className="text-center text-red-500 py-4">
+          <span>Lỗi load data movies</span>
+        </div>
+      )}
+      
       <main
         className="
           w-full max-w-none
@@ -37,20 +67,41 @@ export default function HomePage() {
           py-12 space-y-16
         "
       >
-        <TopMovieCarousel title="🔥 Top Movies" movies={listMovies.movies.slice(0, 5)} />
+        <TopMovieCarousel 
+          title="🔥 Top Movies" 
+          movies={listMovies.movies} 
+        />
+        
         <MovieSection
           title="🎟️ Đang chiếu"
-          movies={listMovies.movies.slice(0, 5)}
-          viewAllHref="/movies?filter=now-playing"
+          movies={listMovies.movies.slice(5, 9)}
+          viewAllHref="/movies"
         />
+        
         <MovieSection
           title="📅 Sắp chiếu"
-          movies={listMovies.movies.slice(0, 5)}
-          viewAllHref="/movies?filter=coming-soon"
+          movies={listMovies.movies.slice(1, 5)}
+          viewAllHref="/movies"
         />
 
-        <GenreGrid genres={listGenres} />
-        <ShowtimeSection cinemas={listTheater.theaters} />
+        {loadingGenres ? (
+          <div className="text-center py-8">
+            <span>Đang tải thể loại...</span>
+          </div>
+        ) : (
+          <GenreGrid genres={listGenres} />
+        )}
+        
+        {loadingTheater ? (
+          <ShowtimeSectionSkeleton />
+        ) : (
+          <ShowtimeSection 
+            cinemas={listTheater.theaters}
+            selectedCity={selectedCity}
+            onCityChange={handleCityChange}
+          />
+        )}
+        
         <FeaturedReviews />
       </main>
     </div>
