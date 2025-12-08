@@ -98,3 +98,17 @@ export async function deleteMovie(id: string) {
   const res = await api.delete(`/admin/movies/${id}`);
   return res.data;
 }
+
+// ✨ NEW: Upload poster image
+export async function uploadMoviePoster(movieId: string, file: File) {
+  const formData = new FormData();
+  formData.append('poster', file);
+
+  const res = await api.post(`/admin/movies/${movieId}/upload-poster`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return res.data; // Returns: { success: true, message: "...", data: { url: "...", publicId: "..." } }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Product, ProductCreateDTO } from "@/types/product";
 import { useProductMutations } from "../hooks/useProductMutations";
-import { Upload } from "lucide-react";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -20,7 +21,6 @@ interface ProductFormDialogProps {
 export function ProductFormDialog({ open, onOpenChange, productToEdit }: ProductFormDialogProps) {
   const { createMutation, updateMutation, uploadImageMutation } = useProductMutations();
   const isEditMode = !!productToEdit;
-  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<ProductCreateDTO>({
     defaultValues: {
@@ -44,6 +44,13 @@ export function ProductFormDialog({ open, onOpenChange, productToEdit }: Product
     }
   });
 
+  // State cho upload ảnh
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const imageUrl = watch("imageUrl");
+
   useEffect(() => {
     if (productToEdit) {
       setValue("name", productToEdit.name);
@@ -61,6 +68,8 @@ export function ProductFormDialog({ open, onOpenChange, productToEdit }: Product
       setValue("featured", productToEdit.featured || false);
       setValue("isActive", productToEdit.isActive);
       setValue("calories", productToEdit.calories || 0);
+      setPreviewUrl(productToEdit.imageUrl || "");
+      setSelectedFile(null);
     } else {
       reset({
         name: "",
@@ -78,46 +87,84 @@ export function ProductFormDialog({ open, onOpenChange, productToEdit }: Product
         featured: false,
         isActive: true,
       });
+      setPreviewUrl("");
+      setSelectedFile(null);
     }
-    setImageFile(null);
   }, [productToEdit, open, reset, setValue]);
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file ảnh!');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Kích thước file không được vượt quá 5MB!');
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Clear selected file
+  const clearFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(imageUrl || "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Upload image after creating/updating product
+  const uploadImageIfNeeded = async (productId: string) => {
+    if (selectedFile) {
+      try {
+        const result = await uploadImageMutation.mutateAsync({ 
+          productId, 
+          imageFile: selectedFile 
+        });
+        // Update imageUrl with the uploaded URL
+        if (result?.data?.url) {
+          setValue("imageUrl", result.data.url);
+        }
+      } catch (error) {
+        console.error("Upload image error:", error);
+      }
+    }
+  };
 
   const onSubmit = async (data: ProductCreateDTO) => {
     try {
       if (isEditMode && productToEdit) {
+        // Update product first
         await updateMutation.mutateAsync({ id: productToEdit._id, data });
-        
-        // Upload image if file selected
-        if (imageFile) {
-          await uploadImageMutation.mutateAsync({ 
-            productId: productToEdit._id, 
-            imageFile 
-          });
-        }
-        
+        // Then upload image if file is selected
+        await uploadImageIfNeeded(productToEdit._id);
         onOpenChange(false);
       } else {
+        // Create product first
         const result = await createMutation.mutateAsync(data);
-        
-        // Upload image after creating product
-        if (imageFile && result?.data?._id) {
-          await uploadImageMutation.mutateAsync({ 
-            productId: result.data._id, 
-            imageFile 
-          });
+        // Then upload image if file is selected
+        if (result?.data?._id) {
+          await uploadImageIfNeeded(result.data._id);
         }
-        
         onOpenChange(false);
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
     }
   };
 
@@ -253,27 +300,68 @@ export function ProductFormDialog({ open, onOpenChange, productToEdit }: Product
               />
             </div>
 
-            {/* Image */}
-            <div>
-              <Label>Image URL</Label>
-              <Input {...register("imageUrl")} placeholder="https://example.com/popcorn.jpg" />
-            </div>
+            {/* ✨ NEW: Upload Image Section */}
+            <div className="space-y-2">
+              <Label>Hình ảnh sản phẩm</Label>
+              
+              {/* Preview */}
+              {previewUrl && (
+                <div className="relative w-40 h-40 rounded-lg overflow-hidden border-2 border-gray-300">
+                  <ImageWithFallback 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                  {selectedFile && (
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
 
-            <div>
-              <Label>Hoặc upload ảnh</Label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="file" 
+              {/* Upload Button */}
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
                   accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
-                {imageFile && (
-                  <span className="text-xs text-green-600 flex items-center gap-1">
-                    <Upload className="w-3 h-3" />
-                    {imageFile.name}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Upload size={16} />
+                  {selectedFile ? "Chọn ảnh khác" : "Chọn ảnh từ máy"}
+                </Button>
+                {selectedFile && (
+                  <span className="text-sm text-gray-600 self-center truncate max-w-xs">
+                    {selectedFile.name}
                   </span>
                 )}
+              </div>
+
+              {/* Manual URL Input (fallback) */}
+              <div className="pt-2">
+                <Label className="text-sm text-gray-500">Hoặc nhập URL hình ảnh</Label>
+                <Input 
+                  {...register("imageUrl")} 
+                  placeholder="https://example.com/product.jpg" 
+                  onChange={(e) => {
+                    setValue("imageUrl", e.target.value);
+                    if (e.target.value && !selectedFile) {
+                      setPreviewUrl(e.target.value);
+                    }
+                  }}
+                />
               </div>
             </div>
 
