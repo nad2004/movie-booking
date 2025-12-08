@@ -110,7 +110,11 @@ const authController = {
       }
 
       if (!user.password) {
-        return errorResponse(res, "Tài khoản chưa thiết lập mật khẩu", 400);
+        return errorResponse(
+          res,
+          "Tài khoản này được tạo bằng Google. Vui lòng nhấn nút 'Login with Google' phía trên để đăng nhập",
+          400
+        );
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);

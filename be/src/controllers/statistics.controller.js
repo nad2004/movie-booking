@@ -1,8 +1,12 @@
 import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
 import Booking from "../models/booking.model.js";
+import CounterTransaction from "../models/counter-transaction.model.js";
 import Movie from "../models/movie.model.js";
+import Review from "../models/review.model.js";
 import Schedule from "../models/schedule.model.js";
+import StaffKPI from "../models/staff-kpi.model.js";
+import Theater from "../models/theater.model.js";
 import User from "../models/user.model.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
@@ -666,6 +670,654 @@ const statisticsController = {
       }
     } catch (error) {
       console.error("Export report error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+  //  Dashboard Summary Overview
+  getSummaryOverview: async (req, res) => {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+      // 1. Tổng số tài khoản
+      const [totalAccounts, newAccountsThisMonth] = await Promise.all([
+        User.countDocuments({}),
+        User.countDocuments({ createdAt: { $gte: startOfMonth } })
+      ]);
+
+      // 2. Số lượng phim
+      const [totalMovies, newMoviesThisMonth] = await Promise.all([
+        Movie.countDocuments({ isDeleted: false }),
+        Movie.countDocuments({ isDeleted: false, createdAt: { $gte: startOfMonth } })
+      ]);
+
+      // 3. Số rạp
+      const [totalTheaters, newTheatersThisMonth] = await Promise.all([
+        Theater.countDocuments({ isActive: true }),
+        Theater.countDocuments({ isActive: true, createdAt: { $gte: startOfMonth } })
+      ]);
+
+      // 4. Số vé bán ra (Tickets)
+      const ticketsAggregation = await Booking.aggregate([
+        {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalTickets: { $sum: { $size: "$seats" } }
+          }
+        }
+      ]);
+      const ticketsThisMonth = ticketsAggregation[0]?.totalTickets || 0;
+      
+      // Calculate ticket difference compared to last month
+      const lastMonthTicketsAgg = await Booking.aggregate([
+         {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalTickets: { $sum: { $size: "$seats" } }
+          }
+        }
+      ]);
+      const ticketsLastMonth = lastMonthTicketsAgg[0]?.totalTickets || 0;
+      const ticketDiff = ticketsThisMonth - ticketsLastMonth;
+      const ticketDiffSign = ticketDiff >= 0 ? "+" : "";
+
+
+      // 5. Doanh thu tháng
+      const revenueThisMonthAgg = await Booking.aggregate([
+        {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalAmount" }
+          }
+        }
+      ]);
+      const revenueThisMonth = revenueThisMonthAgg[0]?.totalRevenue || 0;
+
+      const revenueLastMonthAgg = await Booking.aggregate([
+        {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalAmount" }
+          }
+        }
+      ]);
+      const revenueLastMonth = revenueLastMonthAgg[0]?.totalRevenue || 0;
+      
+      let revenueGrowth = 0;
+      if (revenueLastMonth > 0) {
+        revenueGrowth = ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100;
+      } else if (revenueThisMonth > 0) {
+        revenueGrowth = 100;
+      }
+      const revenueGrowthSign = revenueGrowth >= 0 ? "+" : "";
+
+
+      const cards = [
+        {
+          title: "Tổng số tài khoản",
+          value: totalAccounts,
+          subLabel: `+${newAccountsThisMonth} tài khoản mới`,
+          description: "so với tháng trước" // Note: Logic strictly asks for "so với tháng trước" description but logic was "new this month". I'll keep user requirement text but logically it usually implies comparison. 
+          // Actually "new accounts this month" implies growth. If user wants strictly comparison users count diff, that's different.
+          // User request: "subLabel": "+0 tài khoản mới", "description": "so với tháng trước"
+          // I will stick to "new this month" as the subLabel value as it fits "+X tài khoản mới".
+        },
+        {
+          title: "Số lượng phim",
+          value: totalMovies,
+          subLabel: `+${newMoviesThisMonth} phim mới`,
+          description: "so với tháng trước"
+        },
+        {
+          title: "Số rạp",
+          value: totalTheaters,
+          subLabel: `+${newTheatersThisMonth} rạp mới`,
+          description: "so với tháng trước"
+        },
+        {
+          title: "Số vé bán ra trong tháng",
+          value: ticketsThisMonth,
+          subLabel: `${ticketDiffSign}${ticketDiff} vé`,
+          description: "so với tháng trước"
+        },
+        {
+          title: "Doanh thu tháng",
+          value: revenueThisMonth,
+          subLabel: `${revenueGrowthSign}${revenueGrowth.toFixed(1)}%`,
+          description: "tăng trưởng so với tháng trước"
+        }
+      ];
+
+      return successResponse(res, { cards });
+    } catch (error) {
+      console.error("Get summary overview error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Top 5 Movies
+  getTopMovies: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const topMovies = await Booking.aggregate([
+        {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfYear, $lte: endOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: "$movieTitle",
+            totalTickets: { $sum: { $size: "$seats" } }
+          }
+        },
+        { $sort: { totalTickets: -1 } },
+        { $limit: 5 }
+      ]);
+
+      const items = topMovies.map(movie => ({
+        name: movie._id,
+        value: movie.totalTickets
+      }));
+
+       // Pad to 5 items
+      while (items.length < 5) {
+        items.push({ name: "Chưa có dữ liệu", value: 0 });
+      }
+
+      return successResponse(res, {
+        title: "Top 5 Phim Xem Nhiều Nhất",
+        subTitle: "Xếp hạng theo lượt xem",
+        year,
+        items
+      });
+    } catch (error) {
+      console.error("Get top movies error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Top 5 Cinemas
+  getTopCinemas: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const topCinemas = await Booking.aggregate([
+        {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfYear, $lte: endOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: "$theaterName",
+            totalRevenue: { $sum: "$totalAmount" }
+          }
+        },
+        { $sort: { totalRevenue: -1 } },
+        { $limit: 5 }
+      ]);
+
+      const items = topCinemas.map(cinema => ({
+        name: cinema._id,
+        // Convert to Million VND
+        value: parseFloat((cinema.totalRevenue / 1000000).toFixed(2)) 
+      }));
+
+       // Pad to 5 items
+      while (items.length < 5) {
+        items.push({ name: "Chưa có dữ liệu", value: 0 });
+      }
+
+      return successResponse(res, {
+        title: "Top 5 Rạp Doanh Thu Cao Nhất",
+        subTitle: "Đơn vị: Triệu VND",
+        year,
+        items
+      });
+    } catch (error) {
+      console.error("Get top cinemas error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+  // FIX: Top 3 Employees (By Revenue)
+  getTopEmployees: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const topEmployees = await CounterTransaction.aggregate([
+        {
+          $match: {
+            status: "completed",
+            createdAt: { $gte: startOfYear, $lte: endOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: "$staffName",
+            totalRevenue: { $sum: "$totalAmount" }
+          }
+        },
+        { $sort: { totalRevenue: -1 } },
+        { $limit: 3 }
+      ]);
+
+      const items = topEmployees.map(emp => ({
+        name: emp._id,
+        value: emp.totalRevenue
+      }));
+
+      // Pad to 3 items
+      while (items.length < 3) {
+        items.push({ name: "Chưa có dữ liệu", value: 0 });
+      }
+
+      return successResponse(res, {
+        title: "Top 3 Nhân Viên Xuất Sắc",
+        subTitle: "Xếp hạng theo doanh thu bán hàng",
+        year,
+        items
+      });
+    } catch (error) {
+      console.error("Get top employees error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Top 3 Performance Movies (By Rating)
+  getTopPerformanceMovies: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      // Note: Reviews are linked to movies. We aggregate reviews created in that year.
+      const topMovies = await Review.aggregate([
+        {
+          $match: {
+            status: "Đã duyệt", // Only counting approved reviews
+            createdAt: { $gte: startOfYear, $lte: endOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: "$movie",
+            avgRating: { $avg: "$rating" },
+            count: { $sum: 1 }
+          }
+        },
+        {
+           $lookup: {
+             from: "movies",
+             localField: "_id",
+             foreignField: "_id",
+             as: "movieInfo"
+           }
+        },
+        { $unwind: "$movieInfo" },
+        { $sort: { avgRating: -1, count: -1 } },
+        { $limit: 3 }
+      ]);
+
+      const items = topMovies.map(m => ({
+        name: m.movieInfo.title,
+        value: parseFloat(m.avgRating.toFixed(1))
+      }));
+
+       // Pad to 3 items
+      while (items.length < 3) {
+        items.push({ name: "Chưa có dữ liệu", value: 0 });
+      }
+
+      return successResponse(res, {
+        title: "Top 3 Phim Hiệu Suất Cao",
+        subTitle: "Xếp hạng theo đánh giá trung bình",
+        year,
+        items
+      });
+    } catch (error) {
+      console.error("Get top performance movies error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Top 3 Effective Cinemas (By Occupancy Rate)
+  getTopEffectiveCinemas: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const topCinemas = await Schedule.aggregate([
+        {
+          $match: {
+            showDate: { $gte: startOfYear, $lte: endOfYear },
+            status: { $in: ["Đang mở bán vé", "Sắp đầy", "Hết vé", "Đã chiếu"] }
+          }
+        },
+        {
+          $lookup: {
+            from: "theaters",
+            localField: "theater",
+            foreignField: "_id",
+            as: "theaterInfo"
+          }
+        },
+        { $unwind: "$theaterInfo" },
+        {
+          $group: {
+            _id: "$theaterInfo.name",
+            totalSeats: { $sum: "$totalSeats" },
+            bookedSeats: { $sum: "$bookedSeatsCount" }
+          }
+        },
+        {
+          $project: {
+            name: "$_id",
+            occupancyRate: {
+              $cond: [
+                { $eq: ["$totalSeats", 0] },
+                0,
+                { $multiply: [{ $divide: ["$bookedSeats", "$totalSeats"] }, 100] }
+              ]
+            }
+          }
+        },
+        { $sort: { occupancyRate: -1 } },
+        { $limit: 3 }
+      ]);
+
+      const items = topCinemas.map(c => ({
+        name: c.name,
+        value: parseFloat(c.occupancyRate.toFixed(1))
+      }));
+
+      // Pad to 3 items
+      while (items.length < 3) {
+        items.push({ name: "Chưa có dữ liệu", value: 0 });
+      }
+
+      return successResponse(res, {
+        title: "Top 3 Rạp Hoạt Động Hiệu Quả",
+        subTitle: "Xếp hạng theo tỷ lệ lấp đầy",
+        year,
+        items
+      });
+    } catch (error) {
+      console.error("Get top effective cinemas error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+  // FIX: Employee KPI
+  getEmployeeKPI: async (req, res) => {
+    try {
+      const { employeeId } = req.query;
+      if (!employeeId) {
+        return errorResponse(res, "Employee ID is required", 400);
+      }
+
+      // Default to current month/year if not provided
+      const now = new Date();
+      const month = req.query.month ? parseInt(req.query.month) : now.getMonth() + 1;
+      const year = req.query.year ? parseInt(req.query.year) : now.getFullYear();
+
+      // Create start and end date for the query period (entire month)
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+      // Try to find existing KPI record
+      let kpi = await StaffKPI.findOne({
+        staff: employeeId,
+        period: "monthly",
+        startDate: { $gte: startDate },
+        endDate: { $lte: endDate }
+      }).populate("staff", "fullName email position");
+
+      if (!kpi) {
+        // Option: we could calculate on the fly, but for now just return empty state or 404.
+        // Let's return a structured empty response so FE doesn't break.
+        return successResponse(res, {
+            period: "monthly",
+            month,
+            year,
+            staffId: employeeId,
+            message: "Chưa có dữ liệu KPI cho tháng này",
+            kpiData: null
+        });
+      }
+
+      return successResponse(res, kpi);
+    } catch (error) {
+      console.error("Get employee KPI error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Performance Trend (Staff Score & Theater Efficiency)
+  getPerformanceTrend: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      // 1. Staff Performance Trend (Average Monthly Score)
+      const staffTrend = await StaffKPI.aggregate([
+        {
+          $match: {
+            period: "monthly",
+            startDate: { $gte: startOfYear, $lte: endOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: { $month: "$startDate" },
+            avgScore: { $avg: "$performance.overallScore" }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+
+      // 2. Theater Efficiency Trend (Average Monthly Occupancy)
+      // Using Schedule to calculate occupancy rate
+      const theaterTrend = await Schedule.aggregate([
+        {
+          $match: {
+            showDate: { $gte: startOfYear, $lte: endOfYear },
+            status: { $in: ["Đang mở bán vé", "Sắp đầy", "Hết vé", "Đã chiếu"] }
+          }
+        },
+        {
+          $group: {
+            _id: { $month: "$showDate" },
+            totalSeats: { $sum: "$totalSeats" },
+            bookedSeats: { $sum: "$bookedSeatsCount" }
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            occupancyRate: {
+              $cond: [
+                { $eq: ["$totalSeats", 0] },
+                0,
+                { $multiply: [{ $divide: ["$bookedSeats", "$totalSeats"] }, 100] }
+              ]
+            }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+
+      // Construct Response 12 Months
+      const monthsData = [];
+      for (let i = 1; i <= 12; i++) {
+        const staffMonth = staffTrend.find(m => m._id === i);
+        const theaterMonth = theaterTrend.find(m => m._id === i);
+
+        monthsData.push({
+          tenThang: `Tháng ${i}`,
+          values: [
+            {
+              name: "Hiệu suất nhân viên",
+              value: staffMonth ? parseFloat(staffMonth.avgScore.toFixed(1)) : 0
+            },
+            {
+              name: "Hiệu suất rạp",
+              value: theaterMonth ? parseFloat(theaterMonth.occupancyRate.toFixed(1)) : 0
+            }
+          ]
+        });
+      }
+
+      return successResponse(res, {
+        title: "Xu Hướng Hiệu Suất",
+        subTitle: "Theo dõi sự thay đổi theo thời gian",
+        year,
+        months: monthsData
+      });
+    } catch (error) {
+      console.error("Get performance trend error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Revenue and Views Trend
+  getRevenueAndViews: async (req, res) => {
+    try {
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const stats = await Booking.aggregate([
+        {
+          $match: {
+            status: "Hoàn tất",
+            createdAt: { $gte: startOfYear, $lte: endOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: { $month: "$createdAt" },
+            totalRevenue: { $sum: "$totalAmount" },
+            totalViews: { $sum: { $size: "$seats" } }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+
+      // Construct Response 12 Months
+      const monthsData = [];
+      for (let i = 1; i <= 12; i++) {
+        const stat = stats.find(m => m._id === i);
+
+        monthsData.push({
+          tenThang: `Tháng ${i}`,
+          values: [
+            {
+              name: "Doanh thu (x1000)",
+              value: stat ? Math.round(stat.totalRevenue / 1000) : 0
+            },
+            {
+              name: "Lượt xem",
+              value: stat ? stat.totalViews : 0
+            }
+          ]
+        });
+      }
+
+      return successResponse(res, {
+        title: "Doanh thu & Lượt xem",
+        subTitle: "Thống kê theo từng tháng",
+        year,
+        months: monthsData
+      });
+    } catch (error) {
+      console.error("Get revenue and views error:", error);
+      return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // FIX: Employee Comparison
+  getPerformanceComparison: async (req, res) => {
+    try {
+      const { employeeIds, month, year } = req.query;
+
+      if (!employeeIds) {
+        return errorResponse(res, "Employee IDs are required", 400);
+      }
+
+      const ids = employeeIds.split(",").map(id => id.trim());
+      const queryYear = parseInt(year) || new Date().getFullYear();
+      const queryMonth = parseInt(month) || new Date().getMonth() + 1;
+
+      const startDate = new Date(queryYear, queryMonth - 1, 1);
+      const endDate = new Date(queryYear, queryMonth, 0, 23, 59, 59, 999);
+
+      const kpiData = await StaffKPI.find({
+        staff: { $in: ids },
+        period: "monthly",
+        startDate: { $gte: startDate },
+        endDate: { $lte: endDate }
+      }).populate("staff", "fullName");
+
+      // Normalize return data
+      const comparison = kpiData.map(kpi => ({
+        staffId: kpi.staff._id,
+        staffName: kpi.staff.fullName,
+        stats: {
+          Sales: kpi.sales?.revenueAchievement || 0,
+          Service: (kpi.customerService?.customerSatisfactionScore || 0) * 20, // Scale 5 -> 100
+          Operations: kpi.operational?.validationAccuracy || 0,
+          Attendance: kpi.attendance?.onTimeRate || 0,
+          Quality: kpi.quality?.qualityScore || 0
+        },
+        overallScore: kpi.performance?.overallScore || 0
+      }));
+
+      return successResponse(res, {
+        year: queryYear,
+        month: queryMonth,
+        comparison
+      });
+    } catch (error) {
+      console.error("Get performance comparison error:", error);
       return errorResponse(res, "Lỗi server", 500);
     }
   },

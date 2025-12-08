@@ -52,6 +52,7 @@ const options = {
       { name: "Shift Management", description: "Quản lý ca làm việc và chuyên cần nhân viên" },
       { name: "Analytics", description: "Phân tích và báo cáo dữ liệu kinh doanh" },
       { name: "Performance Metrics", description: "Tracking và đánh giá hiệu suất (KPI)" },
+      { name: "Dashboard", description: "Dashboard" },
     ],
   },
   apis: ["./src/docs/*.swagger.js"],

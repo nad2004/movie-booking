@@ -782,6 +782,66 @@ router.get(
 
 // Statistics & Reports (Admin)
 router.get(
+  "/admin/dashboard/sumary-overview",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getSummaryOverview
+);
+router.get(
+  "/admin/dashboard/top-movies",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getTopMovies
+);
+router.get(
+  "/admin/dashboard/top-cinemas",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getTopCinemas
+);
+router.get(
+  "/admin/dashboard/top-employees",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getTopEmployees
+);
+router.get(
+  "/admin/dashboard/top-performance-movies",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getTopPerformanceMovies
+);
+router.get(
+  "/admin/dashboard/top-effective-cinemas",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getTopEffectiveCinemas
+);
+router.get(
+  "/admin/employee/kpi",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getEmployeeKPI
+);
+router.get(
+  "/admin/performance/trend",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getPerformanceTrend
+);
+router.get(
+  "/admin/revenue-views",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getRevenueAndViews
+);
+router.get(
+  "/admin/performance/compare",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  statisticsController.getPerformanceComparison
+);
+router.get(
   "/admin/statistics/overview",
   authenticateToken,
   authorize("admin", "super-admin"),
