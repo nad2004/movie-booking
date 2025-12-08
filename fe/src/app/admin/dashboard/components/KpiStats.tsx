@@ -24,9 +24,9 @@ export function KpiStats() {
                 <CardTitle className="text-sm font-medium text-gray-500">
                   {item.label}
                 </CardTitle>
-                <div className={`${item.color} bg-opacity-10 p-2 rounded-lg`}>
-                  <span className="text-xl">{item.emoji}</span>
-                </div>
+                 <div className={`absolute inset-0 flex items-center justify-end overflow-hidden opacity-10`}>
+                <span className={`w-full h-full scale-150 ${item.color}`} />
+              </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">{item.value}</div>

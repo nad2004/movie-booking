@@ -32,7 +32,7 @@ export const useGoogleAuth = () => {
       });
 
       setUser(user);
-      toast.success('Đăng nhập Google thành công!');
+      showSuccess('Đăng nhập Google thành công!');
       router.refresh();
 
       const callbackUrl = searchParams.get('callbackUrl');
@@ -47,11 +47,10 @@ export const useGoogleAuth = () => {
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Đăng nhập với Server thất bại';
-      toast.error(message);
+      showError(message);
     }
   });
 
-  // 2. Hàm trigger login Google
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -72,11 +71,9 @@ export const useGoogleAuth = () => {
 
         // Gửi về Backend
         loginWithBackend(payload);
-        showSuccess('Đăng nhập thành công', 'Chào mừng bạn quay trở lại!')
-
       } catch (error) {
         console.error('Error fetching Google user info:', error);
-      showError('Lỗi đăng nhập', "")
+      showError('Lỗi đăng nhập',  'Đăng nhập với Google thất bại')
       }
     },
     onError: (error) => {

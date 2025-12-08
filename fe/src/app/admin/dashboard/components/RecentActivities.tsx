@@ -20,8 +20,9 @@ export function RecentActivities() {
       </CardHeader>
       <CardContent>
         <div className="relative pl-2">
+          Chức năng đang phát triển
           {/* Timeline Line */}
-          <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-gray-100" />
+          {/* <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-gray-100" />
           
           <div className="space-y-6">
             {recentActivities.map((item, index) => {
@@ -40,7 +41,7 @@ export function RecentActivities() {
                     </div>
                 )
             })}
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

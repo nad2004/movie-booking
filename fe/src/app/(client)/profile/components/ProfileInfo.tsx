@@ -41,7 +41,7 @@ export function ProfileInfo({ user, onUpdate }: ProfileInfoProps) {
       fullName: user.fullName || '',
       email: user.email || '',
       phoneNumber: user.phoneNumber || '',
-      dateOfBirth: user.dateOfBirth || '',
+      // dateOfBirth: user.dateOfBirth || '',
     },
   })
 
@@ -82,7 +82,7 @@ export function ProfileInfo({ user, onUpdate }: ProfileInfoProps) {
           <InfoItem label="Họ và tên" value={user.fullName} />
           <InfoItem label="Email" value={user.email} />
           <InfoItem label="Số điện thoại" value={user.phoneNumber} />
-          <InfoItem label="Ngày sinh" value={user.dateOfBirth} />
+          {/* <InfoItem label="Ngày sinh" value={user.dateOfBirth} /> */}
         </div>
       ) : (
         <Form {...form}>
@@ -135,7 +135,7 @@ export function ProfileInfo({ user, onUpdate }: ProfileInfoProps) {
                 </FormItem>
               )}
             />
-            <FormField
+            {/* <FormField
               control={form.control}
               name="dateOfBirth"
               render={({ field }) => (
@@ -149,7 +149,7 @@ export function ProfileInfo({ user, onUpdate }: ProfileInfoProps) {
                   </div>
                 </FormItem>
               )}
-            />
+            /> */}
 
             <div className="flex justify-end pt-4">
               <Button type="submit" className="bg-primary hover:bg-primary/90 gap-2 text-white">

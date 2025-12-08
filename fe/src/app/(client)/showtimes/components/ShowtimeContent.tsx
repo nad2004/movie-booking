@@ -9,6 +9,7 @@ import MovieShowtimeCard from './MovieShowtimeCard'
 import type { Theater } from '@/types/theater'
 import type { Schedule } from '@/types/schedule'
 import type { Movie } from '@/types/movie'
+import { se } from 'date-fns/locale'
 
 type ShowtimeContentProps = {
   selectedDate: string | undefined
@@ -36,12 +37,18 @@ export default function ShowtimeContent({
   isLoading = false,
 }: ShowtimeContentProps) {
 
-  // Logic gom nhóm: Mỗi Card đại diện cho 1 Phim vào 1 Ngày cụ thể
-  const groupedData = useMemo(() => {
+   const groupedData = useMemo(() => {
     // 1. Lọc theo ngày (nếu người dùng có chọn ngày trên DateSelector)
     let filtered = schedules;
-    if (selectedDate) {
-      filtered = schedules.filter(s => s.showDate.startsWith(selectedDate));
+    if (selectedDate && selectedDate.trim() !== '') {
+      // Chuyển đổi selectedDate từ DD/MM/YYYY sang YYYY-MM-DD
+      const [day, month, year] = selectedDate.split('/');
+      const formattedSelectedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      
+      filtered = schedules.filter(s => {
+        const scheduleDate = s.showDate.split('T')[0];
+        return scheduleDate === formattedSelectedDate;
+      });
     }
 
     // 2. Gom nhóm theo: MOVIE_ID + DATE

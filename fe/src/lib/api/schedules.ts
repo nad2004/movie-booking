@@ -5,7 +5,7 @@ import { api } from "@/lib/api/axios";
 export interface GetScheduleParams {
   movieId?: string;      // movieId
   theaterId?: string;    // theaterId
-  date?: string;         // Lọc theo ngày (YYYY-MM-DD)
+  showDate?: string;         // Lọc theo ngày (YYYY-MM-DD)
 }
 
 export async function getSchedules(params: GetScheduleParams = {}) {

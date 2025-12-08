@@ -83,7 +83,7 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
                 asChild
                 className="w-full bg-primary hover:bg-primary/90 h-12 text-base"
               >
-                <Link href={paymentUrl} target="_blank" rel="noopener noreferrer">
+                <Link href={paymentUrl}>
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Mở trang thanh toán VNPAY
                 </Link>

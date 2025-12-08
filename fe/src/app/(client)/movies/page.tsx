@@ -36,7 +36,7 @@ export default function PhimLoc() {
   const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres({})
 
   // Lấy danh sách thể loại unique
-  const uniqueGenres = Array.from(new Set(listGenres.map(genre => genre.name)))
+  const uniqueGenres = Array.from(new Set(listGenres.items.map(genre => genre.name)))
   const [queryParams, setQueryParams] = useState<GetMoviesParams>({
     page: pageFromUrl,
     limit: itemsPerPage,
@@ -198,30 +198,33 @@ export default function PhimLoc() {
 
         <div id="movie-list-section">
           {/* Hiển thị loading overlay hoặc text */}
-          {(isLoading || isFetching) && (
+          {isLoading || isFetching ? (
             <div className="text-white py-4 text-center animate-pulse">Đang lọc phim...</div>
+          ) : (
+            <>
+              <MovieList
+                title={`📽️ Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
+                movies={listMovies.movies}
+                viewAllHref="#"
+              />
+              <div className="flex flex-col gap-4 mt-4">
+                <PaginationInfo
+                  currentPage={queryParams.page || 1}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
+
+                <CustomPagination
+                  currentPage={queryParams.page || 1}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  showPageNumbers={5}
+                />
+              </div>
+            </>
           )}
 
-          <MovieList
-            title={`📽️ Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
-            movies={listMovies.movies}
-            viewAllHref="#"
-          />
-          <div className="flex flex-col gap-4 mt-4">
-            <PaginationInfo
-              currentPage={queryParams.page || 1}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-            />
-
-            <CustomPagination
-              currentPage={queryParams.page || 1}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              showPageNumbers={5}
-            />
-          </div>
           {!isLoading && !isFetching && listMovies.movies.length === 0 && (
             <div className="text-center py-10 text-gray-400">Không tìm thấy phim nào phù hợp.</div>
           )}

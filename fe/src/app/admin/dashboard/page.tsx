@@ -44,7 +44,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* 5. Footer Alerts */}
-      <SystemNotification />
+      {/* <SystemNotification /> */}
     </div>
   );
 }

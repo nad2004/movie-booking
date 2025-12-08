@@ -37,8 +37,6 @@ type MeResponse = ApiResponse<User>;
 // --- 1. API lấy thông tin user hiện tại ---
 export async function getMe() {
   try {
-    // Gọi API /auth/me
-    // Header Authorization đã được tự động gắn ở file axios.ts
     const res = await api.get<MeResponse>("/auth/me");
     return res.data.data;
   } catch (error) {
@@ -56,4 +54,13 @@ export function useMe() {
     retry: 1, // Thử lại 1 lần nếu lỗi
     refetchOnWindowFocus: false, // Không fetch lại khi switch tab để đỡ lag
   });
+}
+export interface SetPasswordDTO {
+  newPassword: string;
+}
+
+// API gọi endpoint set-password
+export async function setPasswordApi(data: SetPasswordDTO) {
+  const res = await api.post("/auth/set-password", data);
+  return res.data;
 }

@@ -124,7 +124,7 @@ export default function ShowtimeClient({
   // Fetch schedules với params từ API
   const { data: scheduleData, isFetching: isLoadingSchedules } = useSchedules({
     theaterId: selectedCinemaId,
-    date: selectedDate, // YYYY-MM-DD
+    showDate: selectedDate, // YYYY-MM-DD
   })
 
   const schedules = useMemo(() => {

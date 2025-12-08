@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes'
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import {
   Moon, Sun, Search, User as UserIcon, ChevronDown,
-  Ticket, Settings, X, Loader2, Clock, Star
+  Ticket, Settings, X, Loader2, Clock, Star, Film
 } from 'lucide-react'
 
 // UI Components
@@ -333,10 +333,9 @@ export function Header() {
         )}>
           <Link href="/" className="flex items-center gap-2 shrink-0 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/30 transition-transform group-hover:scale-105">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <rect x="3" y="4" width="18" height="16" rx="2" ry="2" strokeWidth="2" />
-                <path d="M3 10h18M10 4v16" strokeWidth="2" />
-              </svg>
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#6C63FF] to-[#8C82FF] flex items-center justify-center shadow-lg">
+                          <Film className="w-6 h-6 text-white" />
+                        </div>
             </div>
             <span className="text-xl font-bold tracking-tight hidden xl:block bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
               CineBooking

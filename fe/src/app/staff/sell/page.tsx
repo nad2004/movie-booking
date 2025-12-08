@@ -64,7 +64,7 @@ export default function TicketSales() {
   const { data: schedulesData, isLoading: isLoadingSchedules } = useSchedules({
     theaterId: staffTheaterId || undefined,
     movieId: selectedMovieId !== 'ALL' ? selectedMovieId : undefined,
-    date: !showAllDates ? selectedDate : undefined,
+    showDate: !showAllDates ? selectedDate : undefined,
   })
 
   const schedules = schedulesData?.schedules || []

@@ -48,7 +48,7 @@ export default function ProfilePage() {
                 <div className="flex-1 space-y-6 w-full">
                     <ProfileInfo user={user} onUpdate={updateProfile} />
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <ProfileSecurity />
+                        <ProfileSecurity user={user} />
                         <ProfilePreferences 
                             preferences={user.preferences} 
                             onToggle={togglePreference} 

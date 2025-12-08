@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { Theater } from '@/types/theater'
 import { useSchedules } from '@/lib/api/schedules'
 import { useTheaters } from '@/lib/api/theaters'
@@ -25,10 +25,9 @@ export default function LichChieuHomNay() {
 
   const { data: scheduleData, isFetching: isSchedulesLoading } = useSchedules({
     theaterId: activeCinema?._id,
-    date: selectedDate,
+    showDate: selectedDate,
   })
-
-  const schedules = scheduleData?.schedules || []
+  const schedules = useMemo(() => {return scheduleData?.schedules || []}, [scheduleData])
   const handleSelectCity = (city: string) => {
     setSelectedCity(city)
     setManualCinema(undefined)

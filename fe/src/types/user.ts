@@ -26,7 +26,7 @@ export interface User {
   cloudinaryPublicId?: string;
   role: "customer" | "staff" | "admin" | "super-admin";
   staffInfo?: StaffInfo;
-  authProvider: "local" | "google" | "facebook";
+  authProviders: string[];
   googleId?: string;
   facebookId?: string;
   loyaltyPoints: number;
