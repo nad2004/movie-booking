@@ -11,10 +11,10 @@ import {
   CheckCircle2, 
   XCircle 
 } from 'lucide-react'
-import type { Booking, BookingStatus } from '@/types/booking'
+import type { TicketVerify } from '@/types/booking'
 
 interface TicketInfoDisplayProps {
-  ticket: Booking | null
+  ticket: TicketVerify | null
   onConfirm: () => void
   isConfirming?: boolean
 }
@@ -45,7 +45,7 @@ export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInf
       ) : (
         <div className="space-y-4">
           {/* Ticket Status */}
-          <TicketStatusBadge status={ticket.status} />
+          <TicketStatusBadge status={ticket.validation.isUsed} />
 
           {/* Ticket Details */}
           <TicketDetails ticket={ticket} />
@@ -54,7 +54,7 @@ export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInf
           <CustomerInfo ticket={ticket} />
 
           {/* Confirm Button */}
-          {ticket.status === 'Hoàn tất' && (
+          {ticket.booking.status === 'Hoàn tất' && (
             <Button 
               onClick={onConfirm}
               disabled={isConfirming}
@@ -71,8 +71,8 @@ export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInf
 }
 
 // Sub-components
-function TicketStatusBadge({ status }: { status: BookingStatus }) {
-  const isValid = status === 'Hoàn tất'
+function TicketStatusBadge({ status }: { status: boolean }) {
+  const isValid = !status
   
   return (
     <div className={`p-4 rounded-[10px] flex items-center gap-3 ${
@@ -101,28 +101,28 @@ function TicketStatusBadge({ status }: { status: BookingStatus }) {
   )
 }
 
-function TicketDetails({ ticket }: { ticket: Booking }) {
+function TicketDetails({ ticket }: { ticket: TicketVerify }) {
   return (
     <div className="space-y-3 p-4 bg-secondary rounded-[10px]">
       {/* Movie Name */}
       <DetailRow
         icon={<Film className="w-5 h-5 text-muted-foreground mt-0.5" />}
         label="Tên phim"
-        value={ticket.schedule.movie.title}
+        value={ticket.booking.movieTitle}
       />
 
       {/* Showtime */}
       <DetailRow
         icon={<Clock className="w-5 h-5 text-muted-foreground mt-0.5" />}
         label="Thời gian chiếu"
-        value={`${new Date(ticket.schedule.showDate).toLocaleDateString('vi-VN')} - ${new Date(ticket.showTime).toLocaleDateString('vi-VN')}`}
+        value={`${new Date(ticket.booking.showDate).toLocaleDateString('vi-VN')} - ${new Date(ticket.booking.showTime).toLocaleDateString('vi-VN')}`}
       />
 
       {/* Room */}
       <DetailRow
         icon={<MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />}
         label="Phòng chiếu"
-        value={ticket.roomName}
+        value={ticket.booking.roomName}
       />
 
       {/* Seats */}
@@ -131,7 +131,7 @@ function TicketDetails({ ticket }: { ticket: Booking }) {
         <div className="flex-1">
           <p className="text-sm text-muted-foreground">Ghế ngồi</p>
           <div className="flex gap-2 mt-1 flex-wrap">
-            {ticket.seats.map((ghe) => (
+            {ticket.booking.seats.map((ghe) => (
               <Badge key={ghe.seatNumber} variant="outline" className="rounded-[6px]">
                 {ghe.seatNumber}
               </Badge>
@@ -155,14 +155,14 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
   )
 }
 
-function CustomerInfo({ ticket }: { ticket: Booking }) {
+function CustomerInfo({ ticket }: { ticket: TicketVerify }) {
   return (
     <div className="p-4 bg-primary/5 rounded-[10px] border border-primary/20">
       <p className="text-sm text-muted-foreground mb-1">Tên khách hàng</p>
-      <p className="text-foreground font-semibold">{ticket.customer.fullName}</p>
+      <p className="text-foreground font-semibold">{ticket.booking.customer.name}</p>
       <div className="flex justify-between mt-3 pt-3 border-t border-primary/20">
         <span className="text-sm text-muted-foreground">Mã vé:</span>
-        <span className="text-foreground font-medium">{ticket.bookingCode}</span>
+        <span className="text-foreground font-medium">{ticket.booking.bookingCode}</span>
       </div>
     </div>
   )

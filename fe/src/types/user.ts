@@ -19,6 +19,7 @@ export interface User {
   _id: string;
   username?: string;
   email: string;
+  name?: string;
   fullName: string;
   phoneNumber?: string;
   profilePicture?: string;

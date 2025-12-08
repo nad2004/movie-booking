@@ -8,11 +8,11 @@ import { QrCode, ScanLine, Camera, X, AlertCircle, RotateCw } from 'lucide-react
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BrowserQRCodeReader, IScannerControls } from '@zxing/browser'
 import { getBookingByCode } from '@/lib/api/booking'
-import { Booking } from '@/types/booking'
+import { TicketVerify } from '@/types/booking'
 import { useNotification } from '@/providers/NotificationProvider'
 
 interface TicketScannerProps {
-  onScan: (ticketData: Booking) => void
+  onScan: (ticketData: TicketVerify) => void
   isLoading?: boolean
 }
 
@@ -247,7 +247,7 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
       {/* QR Scan Area */}
       <div className="mb-6">
         {!isCameraMode ? (
-          <div className="aspect-square bg-gradient-to-br from-primary/5 to-primary/10 rounded-[10px] flex flex-col items-center justify-center border-2 border-dashed border-primary/30">
+          <div className="aspect-square bg-linear-to-br from-primary/5 to-primary/10 rounded-[10px] flex flex-col items-center justify-center border-2 border-dashed border-primary/30">
             <ScanLine className="w-16 h-16 text-primary/60 mb-4 animate-pulse" />
             <p className="text-foreground mb-2 font-medium">Quét mã QR với camera</p>
             <p className="text-sm text-muted-foreground mb-4">hoặc nhập mã thủ công bên dưới</p>

@@ -16,7 +16,7 @@ import {
 
 import { Theater } from "@/types/theater";
 import { useTheaterMutations } from "../hooks/useTheaterMutations";
-
+import { VIETNAM_CITIES } from "@/constants/location";
 // Schema Validate
 const theaterSchema = z.object({
   name: z.string().min(2, "Tên rạp là bắt buộc"),
@@ -120,10 +120,10 @@ export function TheaterFormDialog({ open, onOpenChange, theaterToEdit }: Theater
                     <SelectTrigger className="mt-1.5">
                         <SelectValue placeholder="Chọn thành phố" />
                     </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Hà Nội">Hà Nội</SelectItem>
-                        <SelectItem value="Hồ Chí Minh">TP.HCM</SelectItem>
-                        <SelectItem value="Đà Nẵng">Đà Nẵng</SelectItem>
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
+                      {VIETNAM_CITIES.map((city) => {
+                        return <SelectItem key={city} value={city}>{city}</SelectItem>
+                      })}
                     </SelectContent>
                 </Select>
                 {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city.message}</p>}

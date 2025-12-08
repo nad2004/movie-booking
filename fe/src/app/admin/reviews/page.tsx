@@ -35,7 +35,7 @@ export default function ReviewManagementPage() {
   // State
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 500)
-  
+
   const [params, setParams] = useState<GetReviewsParams>({
     page: pageFromUrl,
     limit: itemsPerPage,
@@ -53,7 +53,11 @@ export default function ReviewManagementPage() {
   }, [pageFromUrl])
 
   // Fetch Data
-  const { data: reviewData = DEFAULT_REVIEWS_LIST, isLoading, isFetching } = useReviews({
+  const {
+    data: reviewData = DEFAULT_REVIEWS_LIST,
+    isLoading,
+    isFetching,
+  } = useReviews({
     ...params,
     search: debouncedSearch,
   })
@@ -67,13 +71,13 @@ export default function ReviewManagementPage() {
   // [Logic mới] Hàm cập nhật URL
   const updateUrlParams = (newPage: number, otherParams?: Partial<GetReviewsParams>) => {
     const newSearchParams = new URLSearchParams(searchParams.toString())
-    
+
     // Set page
     newSearchParams.set('page', newPage.toString())
-    
+
     // Nếu có thay đổi params khác (status, rating...) thì update vào URL nếu cần thiết
     // (Ở đây mình tập trung vào page, các filter khác nếu muốn lưu lên URL thì handle thêm)
-    
+
     router.push(`?${newSearchParams.toString()}`, { scroll: false })
   }
 
@@ -89,7 +93,7 @@ export default function ReviewManagementPage() {
     if (newParams.search !== undefined) {
       setSearch(newParams.search)
     }
-    
+
     setParams(prev => {
       const updated = { ...prev, ...newParams, search: undefined }
       // Nếu thay đổi filter (status, rating), reset về page 1
@@ -113,50 +117,48 @@ export default function ReviewManagementPage() {
       })
     }
   }
-    const isTransitioning = useMemo(()=> {return !isLoading && isFetching}, [isLoading, isFetching])
-  
+  const isTransitioning = useMemo(() => {
+    return !isLoading && isFetching
+  }, [isLoading, isFetching])
+
   return (
     <main className="flex-1 p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <h1 className="text-gray-900 text-3xl font-bold">Quản Lý Đánh Giá</h1>
 
-        <ReviewToolbar
-          params={{ ...params, search }}
-          setParams={handleFilterChange}
-        />
+        <ReviewToolbar params={{ ...params, search }} setParams={handleFilterChange} />
         {isLoading ? (
-                    // Initial loading - show full skeleton
-                    <TableSkeleton />
-                  ) : (
-                    <>
-                      {/* Show content */}
-                      <ReviewTable
-          reviews={reviewData.reviews}
-          isLoading={isLoading}
-          onApprove={handleApprove}
-          onRejectClick={setRejectId}
-          onDeleteClick={setDeleteId}
-        />
-                      
-                      {/* Show overlay during transitions (page change, tab change) */}
-                      {isTransitioning && <LoadingOverlay />}
-                    </>
-                  )}
-        
+          // Initial loading - show full skeleton
+          <TableSkeleton />
+        ) : (
+          <>
+            {/* Show content */}
+            <ReviewTable
+              reviews={reviewData.reviews}
+              isLoading={isLoading}
+              onApprove={handleApprove}
+              onRejectClick={setRejectId}
+              onDeleteClick={setDeleteId}
+            />
+
+            {/* Show overlay during transitions (page change, tab change) */}
+            {isTransitioning && <LoadingOverlay />}
+          </>
+        )}
 
         {/* [UI Mới] Phần phân trang */}
         <PaginationInfo
-            currentPage={params.page || 1}
-            totalPages={totalPages}
-            totalItems={totalReviews}
-            itemsPerPage={itemsPerPage}
+          currentPage={params.page || 1}
+          totalPages={totalPages}
+          totalItems={totalReviews}
+          itemsPerPage={itemsPerPage}
         />
 
         <CustomPagination
-            currentPage={params.page || 1}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            showPageNumbers={5}
+          currentPage={params.page || 1}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          showPageNumbers={5}
         />
       </div>
 
@@ -170,7 +172,9 @@ export default function ReviewManagementPage() {
             <AlertDialogDescription>Hành động này không thể hoàn tác.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="hover:bg-gray-300! hover:text-gray-800!">Hủy</AlertDialogCancel>
+            <AlertDialogCancel className="hover:bg-gray-300! hover:text-gray-800!">
+              Hủy
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700"

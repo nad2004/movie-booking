@@ -3,16 +3,16 @@
 import { useState } from 'react'
 import { TicketScanner } from './components/TicketScanner'
 import { TicketInfoDisplay } from './components/TicketInfoDisplay'
-import { TicketStatsCards, type TicketStats } from './components/TicketStatsCards'
-import type { Booking } from '@/types/booking'
+import { type TicketStats } from './components/TicketStatsCards'
+import type { TicketVerify } from '@/types/booking'
 import { useNotification } from '@/providers/NotificationProvider'
-
+import { useConfirmTicket } from './hooks/useConfirmTicket'
 export default function ConfirmTicket() {
-  const { showSuccess } = useNotification()
+  const { showSuccess, showError } = useNotification()
   
-  const [ticketInfo, setTicketInfo] = useState<Booking | null>(null)
+  const [ticketInfo, setTicketInfo] = useState<TicketVerify | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
-
+  const { confirmTicket } = useConfirmTicket()
   // Mock stats data - replace with real API
   const stats: TicketStats = {
     total: 245,
@@ -21,7 +21,7 @@ export default function ConfirmTicket() {
   }
 
   // Handle ticket scan - now receives full Booking object from API
-  const handleScanTicket = async (ticketData: Booking) => {
+  const handleScanTicket = async (ticketData: TicketVerify) => {
     setTicketInfo(ticketData)
   }
 
@@ -30,8 +30,7 @@ export default function ConfirmTicket() {
     if (!ticketInfo) return
     setIsConfirming(true)
     try { 
-      await new Promise(resolve => setTimeout(resolve, 800))
-      showSuccess('Đã xác nhận khách vào rạp!')
+      confirmTicket.mutate(ticketInfo.booking.bookingCode)
       setTicketInfo(null)
     } catch (error) {
       console.error('Error confirming entry:', error)

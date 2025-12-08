@@ -40,7 +40,7 @@ export function ReviewTable({ reviews, isLoading, onApprove, onRejectClick, onDe
               </Avatar>
               <div>
                 <h4 className="font-semibold text-gray-900 text-sm">{review.customer?.fullName || "Unknown User"}</h4>
-                <p className="text-xs text-gray-500 line-clamp-1 max-w-[150px]" title={review.movie.title}>
+                <p className="text-xs text-gray-500 line-clamp-1 max-w-[150px]" title={review.movie.title || ''}>
                     {review.movie.title} {/* Nếu review.movie là ID thì cần populate từ BE, hoặc hiển thị ID */}
                 </p>
               </div>
