@@ -4,7 +4,14 @@
 import { useCallback, memo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -99,10 +106,13 @@ function ShiftCard({ shift, onAssignNew, onEdit, onDelete }: ShiftCardProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {shift.employees.map((emp) => {
+              {shift.employees.map(emp => {
                 const statusBadge = getStatusBadge(emp)
                 return (
-                  <TableRow key={emp.assignmentId} className="group hover:bg-gray-50 transition-colors">
+                  <TableRow
+                    key={emp.assignmentId}
+                    className="group hover:bg-gray-50 transition-colors"
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="w-9 h-9 border border-gray-200">
@@ -119,16 +129,24 @@ function ShiftCard({ shift, onAssignNew, onEdit, onDelete }: ShiftCardProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col text-sm">
-                        <span className={emp.checkInTime ? 'text-green-600 font-medium' : 'text-gray-400'}>
-                          In: {emp.checkInTime ? format(new Date(emp.checkInTime), 'HH:mm') : '--:--'}
+                        <span
+                          className={
+                            emp.checkInTime ? 'text-green-600 font-medium' : 'text-gray-400'
+                          }
+                        >
+                          In:{' '}
+                          {emp.checkInTime ? format(new Date(emp.checkInTime), 'HH:mm') : '--:--'}
                         </span>
                         <span className={emp.checkOutTime ? 'text-gray-600' : 'text-gray-400'}>
-                          Out: {emp.checkOutTime ? format(new Date(emp.checkOutTime), 'HH:mm') : '--:--'}
+                          Out:{' '}
+                          {emp.checkOutTime ? format(new Date(emp.checkOutTime), 'HH:mm') : '--:--'}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`rounded-lg px-2.5 py-1 font-medium border shadow-none ${statusBadge.className}`}>
+                      <Badge
+                        className={`rounded-lg px-2.5 py-1 font-medium border shadow-none ${statusBadge.className}`}
+                      >
                         {statusBadge.showPulse && (
                           <span className="relative flex h-2 w-2 mr-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -141,13 +159,22 @@ function ShiftCard({ shift, onAssignNew, onEdit, onDelete }: ShiftCardProps) {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900">
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
+                          >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-gray-100 w-[180px]">
+                        <DropdownMenuContent
+                          align="end"
+                          className="rounded-xl shadow-lg border-gray-100 w-[180px]"
+                        >
                           <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => onEdit(emp)} className="cursor-pointer gap-2">
+                          <DropdownMenuItem
+                            onClick={() => onEdit(emp)}
+                            className="cursor-pointer gap-2"
+                          >
                             <Edit3 className="w-4 h-4" /> Cập nhật
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />

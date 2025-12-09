@@ -6,8 +6,18 @@ import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import {
-  Moon, Sun, Search, User as UserIcon, ChevronDown,
-  Ticket, Settings, X, Loader2, Clock, Star, Film
+  Moon,
+  Sun,
+  Search,
+  User as UserIcon,
+  ChevronDown,
+  Ticket,
+  Settings,
+  X,
+  Loader2,
+  Clock,
+  Star,
+  Film,
 } from 'lucide-react'
 
 // UI Components
@@ -48,8 +58,8 @@ const MainNav = memo(({ className }: { className?: string }) => {
   const pathname = usePathname()
 
   return (
-    <nav className={cn("flex items-center gap-8", className)}>
-      {NAV_LINKS.map((link) => (
+    <nav className={cn('flex items-center gap-8', className)}>
+      {NAV_LINKS.map(link => (
         <Link
           key={link.href}
           href={link.href}
@@ -77,7 +87,7 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   const debouncedSearch = useDebounce(query, 500)
 
   // Chỉ fetch khi có ít nhất 2 ký tự để tối ưu API call
@@ -132,9 +142,9 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
             ref={inputRef}
             placeholder="Tìm tên phim, đạo diễn..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
             className="h-10 pl-9 pr-8 rounded-xl bg-background border-primary/50 ring-1 ring-primary/20 focus-visible:ring-primary w-full shadow-sm"
-            onKeyDown={(e) => e.key === 'Escape' && handleClose()}
+            onKeyDown={e => e.key === 'Escape' && handleClose()}
           />
           <div className="absolute right-2 flex items-center">
             {isSearching ? (
@@ -159,7 +169,7 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
                   <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Phim gợi ý
                   </div>
-                  {movies.map((movie) => (
+                  {movies.map(movie => (
                     <Link
                       key={movie._id}
                       href={`/movies/${movie._id}`}
@@ -258,9 +268,18 @@ const UserNav = () => {
       ) : isAuthenticated && user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-transparent hover:ring-primary/20 transition-all">
+            <Button
+              variant="ghost"
+              className="relative h-10 w-10 rounded-full ring-2 ring-transparent hover:ring-primary/20 transition-all"
+            >
               <Avatar className="h-10 w-10 border border-border">
-                <AvatarImage width={200} height={200} src={user.profilePicture || ''} alt={user.fullName} className="object-cover"/>
+                <AvatarImage
+                  width={200}
+                  height={200}
+                  src={user.profilePicture || ''}
+                  alt={user.fullName}
+                  className="object-cover"
+                />
                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
                   {user.fullName?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
@@ -298,7 +317,7 @@ const UserNav = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="p-0 focus:bg-transparent"
-              onSelect={(e) => e.preventDefault()}
+              onSelect={e => e.preventDefault()}
             >
               <LogoutButton className="w-full bg-bg-primary justify-start rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-destructive/10 hover:text-destructive text-foreground shadow-none" />
             </DropdownMenuItem>
@@ -320,22 +339,25 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className={cn(
-        'flex items-center justify-between w-full',
-        'h-[72px] md:h-[82px] xl:h-[70px]',
-        'px-4 md:px-6 xl:px-[86px]'
-      )}>
-        
+      <div
+        className={cn(
+          'flex items-center justify-between w-full',
+          'h-[72px] md:h-[82px] xl:h-[70px]',
+          'px-4 md:px-6 xl:px-[86px]'
+        )}
+      >
         {/* LEFT: Logo + Nav */}
-        <div className={cn(
-          'flex items-center gap-10 transition-all duration-300',
-          isSearchOpen ? 'hidden md:flex' : 'flex'
-        )}>
+        <div
+          className={cn(
+            'flex items-center gap-10 transition-all duration-300',
+            isSearchOpen ? 'hidden md:flex' : 'flex'
+          )}
+        >
           <Link href="/" className="flex items-center gap-2 shrink-0 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/30 transition-transform group-hover:scale-105">
               <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#6C63FF] to-[#8C82FF] flex items-center justify-center shadow-lg">
-                          <Film className="w-6 h-6 text-white" />
-                        </div>
+                <Film className="w-6 h-6 text-white" />
+              </div>
             </div>
             <span className="text-xl font-bold tracking-tight hidden xl:block bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
               CineBooking
@@ -348,20 +370,17 @@ export function Header() {
         </div>
 
         {/* RIGHT: Actions */}
-        <div className={cn(
-          'flex items-center gap-2 md:gap-4',
-          isSearchOpen ? 'w-full md:w-auto justify-end' : ''
-        )}>
+        <div
+          className={cn(
+            'flex items-center gap-2 md:gap-4',
+            isSearchOpen ? 'w-full md:w-auto justify-end' : ''
+          )}
+        >
           {/* Search Box */}
-          <SearchBar 
-            isOpen={isSearchOpen} 
-            onToggle={setIsSearchOpen} 
-          />
+          <SearchBar isOpen={isSearchOpen} onToggle={setIsSearchOpen} />
 
           {/* User & Theme Actions */}
-          <div className={cn(
-            isSearchOpen ? 'hidden md:block' : 'block'
-          )}>
+          <div className={cn(isSearchOpen ? 'hidden md:block' : 'block')}>
             <UserNav />
           </div>
         </div>

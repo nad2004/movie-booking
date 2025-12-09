@@ -1,4 +1,4 @@
-"use client"
+'use client'
 import { MovieHeader } from '@/app/(client)/movies/[id]/components/MovieHeader'
 import { ShowtimeSection } from '@/app/(client)/movies/[id]/components/ShowtimeSection'
 import { ReviewSection } from '@/app/(client)/movies/[id]/components/ReviewSection'

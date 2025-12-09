@@ -47,15 +47,19 @@ export async function getDailyRoster(params: GetDailyRosterParams, signal?: Abor
  * Lấy danh sách ca làm của một nhân viên
  */
 // Thêm signal
-export async function getUserAssignments(userId: string, params?: { 
-  from?: string
-  to?: string
-  date?: string
-  page?: number
-  limit?: number
-}, signal?: AbortSignal) {
+export async function getUserAssignments(
+  userId: string,
+  params?: {
+    from?: string
+    to?: string
+    date?: string
+    page?: number
+    limit?: number
+  },
+  signal?: AbortSignal
+) {
   try {
-    const res = await api.get(`/assignments/of-user/${userId}`, { 
+    const res = await api.get(`/assignments/of-user/${userId}`, {
       params,
       signal, // 🟢 Truyền signal
     })
@@ -221,8 +225,8 @@ export function useAssignmentMutations() {
  * Hook lấy assignments của 1 user cụ thể
  */
 export function useUserAssignments(
-  userId: string, 
-  params?: { 
+  userId: string,
+  params?: {
     from?: string
     to?: string
     date?: string

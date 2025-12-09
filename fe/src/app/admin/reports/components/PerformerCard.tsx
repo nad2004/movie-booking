@@ -1,20 +1,20 @@
-import type { TopPerformer } from "../page";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import type { TopPerformer } from '../page'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 
-export const PerformerCard = ({ 
-  icon: Icon, 
-  title, 
-  performers, 
+export const PerformerCard = ({
+  icon: Icon,
+  title,
+  performers,
   valueLabel,
   iconColor,
-  isLoading = false
-}: { 
-  icon: any; 
-  title: string; 
-  performers: TopPerformer[];
-  valueLabel: string;
-  iconColor: string;
-  isLoading?: boolean;
+  isLoading = false,
+}: {
+  icon: any
+  title: string
+  performers: TopPerformer[]
+  valueLabel: string
+  iconColor: string
+  isLoading?: boolean
 }) => (
   <div className="bg-card rounded-lg border border-border p-6">
     <div className="flex items-center gap-3 mb-5">
@@ -23,19 +23,17 @@ export const PerformerCard = ({
       </div>
       <h3 className="text-base font-semibold text-foreground">{title}</h3>
     </div>
-    
+
     {isLoading ? (
       <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
+        {[1, 2, 3].map(i => (
           <div key={i} className="p-3 bg-secondary/50 rounded-lg animate-pulse">
             <div className="h-10 bg-secondary rounded"></div>
           </div>
         ))}
       </div>
     ) : performers.length === 0 ? (
-      <div className="text-center py-8 text-muted-foreground">
-        Không có dữ liệu
-      </div>
+      <div className="text-center py-8 text-muted-foreground">Không có dữ liệu</div>
     ) : (
       <div className="space-y-3">
         {performers.map((item, index) => (
@@ -67,4 +65,4 @@ export const PerformerCard = ({
       </div>
     )}
   </div>
-);
+)

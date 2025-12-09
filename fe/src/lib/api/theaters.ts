@@ -1,7 +1,7 @@
-import { TheaterListResponse } from "@/types/theater";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api/axios";
-import axios from "axios"; // Import axios để check isCancel
+import { TheaterListResponse } from '@/types/theater'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api/axios'
+import axios from 'axios' // Import axios để check isCancel
 
 export interface GetTheatersParams {
   page?: number
@@ -16,20 +16,19 @@ export interface GetTheatersParams {
 // Thêm tham số signal
 export async function getTheaters(params: GetTheatersParams = {}, signal?: AbortSignal) {
   try {
-    const res = await api.get<TheaterListResponse>("/theaters", {
+    const res = await api.get<TheaterListResponse>('/theaters', {
       params: { ...params },
       signal, // 🟢 Truyền signal vào config axios
-    });
+    })
 
-    return res.data.data;
-
+    return res.data.data
   } catch (error) {
     // 🟢 Check cancel
     if (axios.isCancel(error)) {
-      throw error;
+      throw error
     }
 
-    console.error("Failed to fetch theaters", error);
+    console.error('Failed to fetch theaters', error)
 
     return {
       theaters: [],
@@ -39,60 +38,59 @@ export async function getTheaters(params: GetTheatersParams = {}, signal?: Abort
         totalItems: 0,
         itemsPerPage: 0,
       },
-    };
+    }
   }
 }
 
 export function useTheaters(params: GetTheatersParams) {
   return useQuery({
-    queryKey: ["theaters", params],
+    queryKey: ['theaters', params],
     // 🟢 Lấy signal từ context
     queryFn: ({ signal }) => getTheaters(params, signal),
     staleTime: 1000 * 60 * 10, // cache 10 phút
     retry: 2,
-  });
+  })
 }
-
 
 // --- 1. DTO Types (Request Body) ---
 export interface TheaterCreateDTO {
-  name: string;
-  slug?: string;
-  address: string;
-  city: string;
-  district?: string;
-  phoneNumber?: string;
-  email?: string;
-  openingHours?: string;
+  name: string
+  slug?: string
+  address: string
+  city: string
+  district?: string
+  phoneNumber?: string
+  email?: string
+  openingHours?: string
   // Location GeoJSON (Dựa theo ảnh Swagger)
   location?: {
-    type: "Point";
-    coordinates: [number, number]; // [longitude, latitude]
-  };
-  description?: string;
-  isActive?: boolean;
+    type: 'Point'
+    coordinates: [number, number] // [longitude, latitude]
+  }
+  description?: string
+  isActive?: boolean
 }
 
-export interface TheaterUpdateDTO extends Partial<TheaterCreateDTO>{
-  isDeleted?: boolean;
+export interface TheaterUpdateDTO extends Partial<TheaterCreateDTO> {
+  isDeleted?: boolean
 }
 
 // --- Mutations (Không cần signal) ---
 
 // CREATE
 export async function createTheater(data: TheaterCreateDTO) {
-  const res = await api.post("/admin/theaters", data);
-  return res.data;
+  const res = await api.post('/admin/theaters', data)
+  return res.data
 }
 
 // UPDATE
 export async function updateTheater(id: string, data: TheaterUpdateDTO) {
-  const res = await api.put(`/admin/theaters/${id}`, data);
-  return res.data;
+  const res = await api.put(`/admin/theaters/${id}`, data)
+  return res.data
 }
 
 // DELETE
 export async function deleteTheater(id: string) {
-  const res = await api.delete(`/admin/theaters/${id}`);
-  return res.data;
+  const res = await api.delete(`/admin/theaters/${id}`)
+  return res.data
 }

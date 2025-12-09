@@ -52,7 +52,7 @@ export default function ProductManagementPage() {
 
   // Lấy thông tin phân trang từ API response
   const products = listProducts ?? []
-  const totalPages = listProducts?  Math.ceil(listProducts.length / itemsPerPage) : 1
+  const totalPages = listProducts ? Math.ceil(listProducts.length / itemsPerPage) : 1
   const totalItems = listProducts ? listProducts.length : 0
 
   const { deleteMutation } = useProductMutations()

@@ -40,7 +40,7 @@ export default function ShiftsList({
 
   return (
     <div className="space-y-4">
-      {shifts.map((shift) => (
+      {shifts.map(shift => (
         <ShiftCard
           key={shift.scheduleId}
           shift={shift}

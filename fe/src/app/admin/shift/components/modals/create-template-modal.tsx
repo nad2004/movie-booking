@@ -57,7 +57,7 @@ export default function CreateTemplateModal({
     resolver: zodResolver(shiftTemplateSchema),
     defaultValues: {
       code: '',
-      name: '', 
+      name: '',
       startTime: '',
       endTime: '',
       color: 'blue',
@@ -65,7 +65,7 @@ export default function CreateTemplateModal({
     },
   })
 
-  const handleFormSubmit = form.handleSubmit(async (data) => {
+  const handleFormSubmit = form.handleSubmit(async data => {
     await onSubmit(data)
     form.reset()
   })
@@ -81,7 +81,7 @@ export default function CreateTemplateModal({
         <DialogHeader>
           <DialogTitle>Tạo Ca Mẫu Mới</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <div className="space-y-4">
             <FormField
@@ -184,7 +184,7 @@ export default function CreateTemplateModal({
             onClick={handleFormSubmit}
             className="bg-[#6C63FF] hover:bg-[#5a52e0] text-white"
           >
-            {isLoading ? "Đang lưu..." : "Lưu Ca Mẫu"}
+            {isLoading ? 'Đang lưu...' : 'Lưu Ca Mẫu'}
           </Button>
         </DialogFooter>
       </DialogContent>

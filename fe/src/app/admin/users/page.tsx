@@ -54,7 +54,11 @@ export default function UserManagementPage() {
   }, [pageFromUrl, typeUserFromUrl])
 
   // Fetch API
-  const { data: userData, isLoading, isFetching } = useUsers({
+  const {
+    data: userData,
+    isLoading,
+    isFetching,
+  } = useUsers({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch,
@@ -64,7 +68,9 @@ export default function UserManagementPage() {
   const totalPages = userData?.pagination?.totalPages || 1
   const totalBookings = userData?.pagination.totalItems || 0
   const { deleteMutation } = useUserMutations()
-  const isTransitioning = useMemo(()=> {return !isLoading && isFetching}, [isLoading, isFetching])
+  const isTransitioning = useMemo(() => {
+    return !isLoading && isFetching
+  }, [isLoading, isFetching])
 
   const updateUrlParams = (newPage: number, newTypeUser: string) => {
     const params = new URLSearchParams()
@@ -129,7 +135,7 @@ export default function UserManagementPage() {
                 onAssignTheater={handleAssignTheater}
                 showAssignTheater={typeUser === 'staff'}
               />
-              
+
               {/* Show overlay during transitions (page change, tab change) */}
               {isTransitioning && <LoadingOverlay />}
             </>
@@ -164,10 +170,7 @@ export default function UserManagementPage() {
       />
 
       {/* Create Staff Modal */}
-      <CreateStaffModal 
-        open={showCreateStaffModal}
-        onOpenChange={setShowCreateStaffModal}
-      />
+      <CreateStaffModal open={showCreateStaffModal} onOpenChange={setShowCreateStaffModal} />
 
       {/* Assign Theater Modal */}
       <AssignTheaterModal

@@ -24,15 +24,13 @@ const formatTime = (timeString: string) => {
 }
 
 export function ActiveShiftCard({ assignment, currentTime, onCheckOut }: ActiveShiftCardProps) {
-  const workDuration = assignment.checkInTime 
-    ? calculateWorkDuration(assignment.checkInTime)
-    : 0
+  const workDuration = assignment.checkInTime ? calculateWorkDuration(assignment.checkInTime) : 0
 
   return (
     <div className="bg-card border-2 border-primary rounded-xl p-6 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div 
+          <div
             className="w-12 h-12 rounded-xl flex items-center justify-center"
             style={{ backgroundColor: `${assignment.color}20` }}
           >

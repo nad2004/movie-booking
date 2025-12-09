@@ -32,7 +32,7 @@ export default function TicketSales() {
   // Lấy theaterId từ store
   const staffTheaterId = useUserStore(state => state.staffTheaterId)
   const _hasHydrated = useUserStore(state => state._hasHydrated)
-  
+
   // State UI
   const [selectedMovieId, setSelectedMovieId] = useState<string>('ALL') // 'ALL' = tất cả phim
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA'))
@@ -70,13 +70,8 @@ export default function TicketSales() {
   const schedules = schedulesData?.schedules || []
 
   // Sử dụng Hook useBooking
-  const {
-    selectedSchedule,
-    setSelectedSchedule,
-    selectedSeats,
-    handleSeatClick,
-    totalAmount,
-  } = useBooking({ movieId: selectedMovieId === 'ALL' ? '' : selectedMovieId })
+  const { selectedSchedule, setSelectedSchedule, selectedSeats, handleSeatClick, totalAmount } =
+    useBooking({ movieId: selectedMovieId === 'ALL' ? '' : selectedMovieId })
 
   const { mutate: staffCreateBooking, isPending } = useStaffCreateBooking()
 
@@ -103,7 +98,7 @@ export default function TicketSales() {
     if (!selectedSchedule) return toast.error('Chưa chọn suất chiếu')
     if (selectedSeats.length === 0) return toast.error('Chưa chọn ghế')
     if (!customerInfo) return toast.error('Thiếu thông tin khách hàng')
-    
+
     const payload = {
       scheduleId: selectedSchedule._id,
       seats: selectedSeats.map(s => ({
@@ -129,7 +124,7 @@ export default function TicketSales() {
       },
       onError: (error: any) => {
         showError('Lỗi', error?.response?.data?.message || 'Không thể tạo đơn')
-      }
+      },
     })
   }
 

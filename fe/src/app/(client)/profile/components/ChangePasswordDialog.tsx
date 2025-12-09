@@ -1,20 +1,20 @@
 'use client'
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog'
 import {
   Form,
   FormControl,
@@ -22,32 +22,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { useChangePassword } from '@/hooks/useChangePassword';
+} from '@/components/ui/form'
+import { useChangePassword } from '@/hooks/useChangePassword'
 
 // 1. Schema Validate (Vẫn giữ confirmPassword để check khớp ở client)
-const changePasswordSchema = z.object({
-  oldPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
-  newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự'),
-  confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Mật khẩu xác nhận không khớp",
-  path: ["confirmPassword"],
-});
+const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
+    newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự'),
+    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  })
 
-type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
 
 interface ChangePasswordDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
-  const { mutate: changePassword, isPending } = useChangePassword();
-  
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const { mutate: changePassword, isPending } = useChangePassword()
+
+  const [showOld, setShowOld] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -56,20 +58,23 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
       newPassword: '',
       confirmPassword: '',
     },
-  });
+  })
 
   const onSubmit = (data: ChangePasswordFormValues) => {
     // 2. Chỉ gửi oldPassword và newPassword lên API
-    changePassword({
-      oldPassword: data.oldPassword,
-      newPassword: data.newPassword
-    }, {
-      onSuccess: () => {
-        form.reset();
-        onOpenChange(false);
+    changePassword(
+      {
+        oldPassword: data.oldPassword,
+        newPassword: data.newPassword,
+      },
+      {
+        onSuccess: () => {
+          form.reset()
+          onOpenChange(false)
+        },
       }
-    });
-  };
+    )
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,7 +88,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-2">
-            
             {/* Mật khẩu hiện tại (oldPassword) */}
             <FormField
               control={form.control}
@@ -93,10 +97,10 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                   <FormLabel>Mật khẩu hiện tại</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input 
-                        type={showOld ? 'text' : 'password'} 
-                        placeholder="••••••••" 
-                        {...field} 
+                      <Input
+                        type={showOld ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        {...field}
                       />
                     </FormControl>
                     <button
@@ -121,10 +125,10 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                   <FormLabel>Mật khẩu mới</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input 
-                        type={showNew ? 'text' : 'password'} 
-                        placeholder="••••••••" 
-                        {...field} 
+                      <Input
+                        type={showNew ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        {...field}
                       />
                     </FormControl>
                     <button
@@ -149,10 +153,10 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                   <FormLabel>Xác nhận mật khẩu mới</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input 
-                        type={showConfirm ? 'text' : 'password'} 
-                        placeholder="••••••••" 
-                        {...field} 
+                      <Input
+                        type={showConfirm ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        {...field}
                       />
                     </FormControl>
                     <button
@@ -172,7 +176,11 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Hủy
               </Button>
-              <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary/90 text-white">
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
                 {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Lưu thay đổi
               </Button>
@@ -181,5 +189,5 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

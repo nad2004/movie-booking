@@ -21,7 +21,7 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false)
-  
+
   // 2. Sử dụng hook
   const { mutate: sendForgotPassword, isPending } = useForgotPassword()
 
@@ -40,29 +40,24 @@ export default function ForgotPasswordPage() {
       onSuccess: () => {
         // Chỉ chuyển sang màn hình thông báo khi API thành công
         setIsSubmitted(true)
-      }
+      },
     })
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-primary px-4 font-sans">
       <div className="w-full max-w-[400px] space-y-8">
-        
         {/* Header Section (Giữ nguyên) */}
         <div className="flex flex-col items-center gap-6">
           <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105">
             <div className="flex items-center justify-center p-2 rounded-lg bg-primary shadow-lg shadow-primary/20">
               <Film className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-text-primary tracking-tight">
-              CineBooking
-            </span>
+            <span className="text-2xl font-bold text-text-primary tracking-tight">CineBooking</span>
           </Link>
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-text-primary">Reset Password</h1>
-            <p className="text-text-secondary text-sm">
-              Recover your account password via email
-            </p>
+            <p className="text-text-secondary text-sm">Recover your account password via email</p>
           </div>
         </div>
 
@@ -102,7 +97,7 @@ export default function ForgotPasswordPage() {
             >
               {isPending ? (
                 <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Sending...
                 </span>
               ) : (
@@ -120,12 +115,12 @@ export default function ForgotPasswordPage() {
             <p className="text-text-secondary text-sm mb-6">
               We have sent password recovery instructions to your email address.
             </p>
-            <Button 
-                variant="outline" 
-                onClick={() => setIsSubmitted(false)}
-                className="w-full border-border text-text-primary hover:bg-bg-secondary rounded-xl h-11"
+            <Button
+              variant="outline"
+              onClick={() => setIsSubmitted(false)}
+              className="w-full border-border text-text-primary hover:bg-bg-secondary rounded-xl h-11"
             >
-                Try another email
+              Try another email
             </Button>
           </div>
         )}
@@ -133,8 +128,8 @@ export default function ForgotPasswordPage() {
         {/* Footer Link (Giữ nguyên) */}
         <div className="text-center text-sm">
           <span className="text-text-secondary">Remember your password? </span>
-          <Link 
-            href="/login" 
+          <Link
+            href="/login"
             className="text-primary font-semibold hover:underline inline-flex items-center gap-1 group"
           >
             Login

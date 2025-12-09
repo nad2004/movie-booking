@@ -38,7 +38,7 @@ const updateAssignmentSchema = z
     status: z.enum(['assigned', 'working', 'completed', 'absent']),
   })
   .refine(
-    (data) => {
+    data => {
       if (data.checkInTime && data.checkOutTime) {
         return data.checkInTime <= data.checkOutTime
       }

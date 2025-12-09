@@ -1,38 +1,38 @@
-import type { ApiResponse } from './apiTemplate';
+import type { ApiResponse } from './apiTemplate'
 export interface ShiftTemplate {
-  _id: string;
-  code: string;
-  name: string; // VD: Ca Sáng
-  startTime: string; // 08:00
-  endTime: string; // 16:00
-  color: string; // Để hiển thị trên lịch
-  isActive: boolean;
+  _id: string
+  code: string
+  name: string // VD: Ca Sáng
+  startTime: string // 08:00
+  endTime: string // 16:00
+  color: string // Để hiển thị trên lịch
+  isActive: boolean
 }
 
 export interface WorkSchedule {
-  id: string;
-  date: string; // 2025-12-01
-  theaterId: string;
-  shiftTemplateId: string;
-  shiftTemplate?: ShiftTemplate; // Relation
-  status: 'Open' | 'Closed';
+  id: string
+  date: string // 2025-12-01
+  theaterId: string
+  shiftTemplateId: string
+  shiftTemplate?: ShiftTemplate // Relation
+  status: 'Open' | 'Closed'
 }
 
 export interface ShiftAssignment {
-  id: string;
-  workScheduleId: string;
-  userId: string;
-  userName: string;
-  role: string;
-  checkInTime?: string;
-  checkOutTime?: string;
-  status: 'Assigned' | 'Working' | 'Completed' | 'Absent';
+  id: string
+  workScheduleId: string
+  userId: string
+  userName: string
+  role: string
+  checkInTime?: string
+  checkOutTime?: string
+  status: 'Assigned' | 'Working' | 'Completed' | 'Absent'
 }
 
 export type ShiftTemplateResponse = ApiResponse<ShiftTemplate[]>
 export interface AssignedEmployee {
-  _id: string,
-  role: string,
+  _id: string
+  role: string
   shiftTemplateId: string
   theaterId: string
   theaterName: string
@@ -48,7 +48,7 @@ export interface AssignedEmployee {
   checkOutTime?: string // ISO string
   assignedAt: string // ISO string
   date: string
-  fullName?:string
+  fullName?: string
   startDateTime: string
   endDateTime: string
 }

@@ -154,22 +154,16 @@ export function useTopCinemas(year?: number) {
 
 // --- 4. Helper function to transform API data to chart format ---
 
-const COLORS = [
-  'bg-blue-500',
-  'bg-green-500', 
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-pink-500'
-]
+const COLORS = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500']
 
 export function transformToChartData(
-  items: TopMovieItem[] | TopCinemaItem[], 
+  items: TopMovieItem[] | TopCinemaItem[],
   unit?: string
 ): ChartDataItem[] {
   return items.map((item, index) => ({
     name: item.name,
     value: item.value,
     color: COLORS[index % COLORS.length],
-    unit
+    unit,
   }))
 }

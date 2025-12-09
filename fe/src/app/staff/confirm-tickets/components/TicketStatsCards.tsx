@@ -1,4 +1,3 @@
-
 import { Card } from '@/components/ui/card'
 import { QrCode, CheckCircle2, XCircle } from 'lucide-react'
 

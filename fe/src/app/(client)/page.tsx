@@ -22,22 +22,16 @@ export default function HomePage() {
     isLoading: loadingMovies,
     error: errorMovies,
   } = useMovies({})
-  
-  const { 
-    data: listTheater = DEFAULT_THEATER_LIST, 
-    isLoading: loadingTheater 
-  } = useTheaters({ 
+
+  const { data: listTheater = DEFAULT_THEATER_LIST, isLoading: loadingTheater } = useTheaters({
     city: selectedCity,
     limit: 100, // Lấy nhiều rạp hơn
     isActive: 'true', // Chỉ lấy rạp đang hoạt động
     sortBy: 'name',
-    order: 'asc'
+    order: 'asc',
   })
-  
-  const { 
-    data: listGenres = DEFAULT_GENRE_LIST, 
-    isLoading: loadingGenres 
-  } = useGenres({})
+
+  const { data: listGenres = DEFAULT_GENRE_LIST, isLoading: loadingGenres } = useGenres({})
 
   // Handler để update city từ ShowtimeSection
   const handleCityChange = (city: string) => {
@@ -52,13 +46,13 @@ export default function HomePage() {
       ) : (
         <HeroSection movies={listMovies?.movies} />
       )}
-      
+
       {errorMovies && (
         <div className="text-center text-red-500 py-4">
           <span>Lỗi load data movies</span>
         </div>
       )}
-      
+
       <main
         className="
           w-full max-w-none
@@ -66,17 +60,14 @@ export default function HomePage() {
           py-12 space-y-16
         "
       >
-        <TopMovieCarousel 
-          title="🔥 Top Movies" 
-          movies={listMovies.movies} 
-        />
-        
+        <TopMovieCarousel title="🔥 Top Movies" movies={listMovies.movies} />
+
         <MovieSection
           title="🎟️ Đang chiếu"
           movies={listMovies.movies.slice(5, 9)}
           viewAllHref="/movies"
         />
-        
+
         <MovieSection
           title="📅 Sắp chiếu"
           movies={listMovies.movies.slice(1, 5)}
@@ -90,17 +81,17 @@ export default function HomePage() {
         ) : (
           <GenreGrid genres={listGenres.items} />
         )}
-        
+
         {loadingTheater ? (
           <ShowtimeSectionSkeleton />
         ) : (
-          <ShowtimeSection 
+          <ShowtimeSection
             cinemas={listTheater.theaters}
             selectedCity={selectedCity}
             onCityChange={handleCityChange}
           />
         )}
-        
+
         <FeaturedReviews />
       </main>
     </div>

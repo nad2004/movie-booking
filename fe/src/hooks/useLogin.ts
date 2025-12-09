@@ -16,7 +16,7 @@ export const useLogin = () => {
   const { showSuccess, showError } = useNotification()
   const setUser = useUserStore(state => state.setUser)
   const setStaffTheater = useUserStore(state => state.setStaffTheater)
-const setStaffTheaterName = useUserStore(state => state.setStaffTheaterName)
+  const setStaffTheaterName = useUserStore(state => state.setStaffTheaterName)
   return useMutation({
     mutationFn: (data: LoginRequest) => loginApi(data),
 

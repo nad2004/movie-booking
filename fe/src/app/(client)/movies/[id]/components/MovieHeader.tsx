@@ -160,7 +160,13 @@ export function MovieHeader() {
         </div>
 
         {/* Trailer Modal */}
-        {showTrailer && <TrailerModal setShowTrailer={setShowTrailer} showTrailer={showTrailer} src={movie.trailerUrl} />}
+        {showTrailer && (
+          <TrailerModal
+            setShowTrailer={setShowTrailer}
+            showTrailer={showTrailer}
+            src={movie.trailerUrl}
+          />
+        )}
       </section>
     </>
   )

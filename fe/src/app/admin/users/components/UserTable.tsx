@@ -27,7 +27,6 @@ export function UserTable({
   onAssignTheater,
   showAssignTheater = false,
 }: UserTableProps) {
-
   if (users.length === 0)
     return <div className="text-center py-10 text-gray-500">Không có người dùng nào.</div>
 

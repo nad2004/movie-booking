@@ -121,7 +121,7 @@ export interface ChartDataItem {
 export async function getTopEmployees(year?: number) {
   try {
     const res = await api.get<TopEmployeesResponse>('/admin/dashboard/top-employees', {
-      params: year ? { year } : undefined
+      params: year ? { year } : undefined,
     })
     return res.data.data
   } catch (error) {
@@ -132,9 +132,12 @@ export async function getTopEmployees(year?: number) {
 
 export async function getTopPerformanceMovies(year?: number) {
   try {
-    const res = await api.get<TopPerformanceMoviesResponse>('/admin/dashboard/top-performance-movies', {
-      params: year ? { year } : undefined
-    })
+    const res = await api.get<TopPerformanceMoviesResponse>(
+      '/admin/dashboard/top-performance-movies',
+      {
+        params: year ? { year } : undefined,
+      }
+    )
     return res.data.data
   } catch (error) {
     console.error('Fetch top performance movies failed', error)
@@ -144,9 +147,12 @@ export async function getTopPerformanceMovies(year?: number) {
 
 export async function getTopEffectiveCinemas(year?: number) {
   try {
-    const res = await api.get<TopEffectiveCinemasResponse>('/admin/dashboard/top-effective-cinemas', {
-      params: year ? { year } : undefined
-    })
+    const res = await api.get<TopEffectiveCinemasResponse>(
+      '/admin/dashboard/top-effective-cinemas',
+      {
+        params: year ? { year } : undefined,
+      }
+    )
     return res.data.data
   } catch (error) {
     console.error('Fetch top effective cinemas failed', error)
@@ -157,7 +163,7 @@ export async function getTopEffectiveCinemas(year?: number) {
 export async function getPerformanceTrend(year?: number) {
   try {
     const res = await api.get<PerformanceTrendResponse>('/admin/performance/trend', {
-      params: year ? { year } : undefined
+      params: year ? { year } : undefined,
     })
     return res.data.data
   } catch (error) {
@@ -169,7 +175,7 @@ export async function getPerformanceTrend(year?: number) {
 export async function getRevenueViews(year?: number) {
   try {
     const res = await api.get<RevenueViewsResponse>('/admin/revenue-views', {
-      params: year ? { year } : undefined
+      params: year ? { year } : undefined,
     })
     return res.data.data
   } catch (error) {
@@ -234,21 +240,21 @@ export function useRevenueViews(year?: number) {
 
 const COLORS = [
   'bg-blue-500',
-  'bg-green-500', 
+  'bg-green-500',
   'bg-purple-500',
   'bg-orange-500',
   'bg-pink-500',
-  'bg-cyan-500'
+  'bg-cyan-500',
 ]
 
 export function transformToChartData(
-  items: TopEmployeeItem[] | TopPerformanceMovieItem[] | TopEffectiveCinemaItem[], 
+  items: TopEmployeeItem[] | TopPerformanceMovieItem[] | TopEffectiveCinemaItem[],
   unit?: string
 ): ChartDataItem[] {
   return items.map((item, index) => ({
     name: item.name,
     value: item.value,
     color: COLORS[index % COLORS.length],
-    unit
+    unit,
   }))
 }

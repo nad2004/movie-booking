@@ -1,11 +1,17 @@
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
-import { GetReviewsParams } from "@/lib/api/reviews";
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Search } from 'lucide-react'
+import { GetReviewsParams } from '@/lib/api/reviews'
 
 interface ReviewToolbarProps {
-  params: GetReviewsParams;
-  setParams: (params: GetReviewsParams) => void;
+  params: GetReviewsParams
+  setParams: (params: GetReviewsParams) => void
 }
 
 export function ReviewToolbar({ params, setParams }: ReviewToolbarProps) {
@@ -17,15 +23,17 @@ export function ReviewToolbar({ params, setParams }: ReviewToolbarProps) {
         <Input
           placeholder="Tìm theo người dùng hoặc tên phim..."
           className="pl-9 bg-gray-50 border-gray-200"
-          value={params.search || ""}
-          onChange={(e) => setParams({ ...params, search: e.target.value, page: 1 })}
+          value={params.search || ''}
+          onChange={e => setParams({ ...params, search: e.target.value, page: 1 })}
         />
       </div>
 
       {/* Filter Status */}
       <Select
-        value={params.status || "all"}
-        onValueChange={(val) => setParams({ ...params, status: val === "all" ? undefined : val as any, page: 1 })}
+        value={params.status || 'all'}
+        onValueChange={val =>
+          setParams({ ...params, status: val === 'all' ? undefined : (val as any), page: 1 })
+        }
       >
         <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200">
           <SelectValue placeholder="Trạng thái" />
@@ -40,8 +48,10 @@ export function ReviewToolbar({ params, setParams }: ReviewToolbarProps) {
 
       {/* Filter Rating */}
       <Select
-        value={params.rating?.toString() || "all"}
-        onValueChange={(val) => setParams({ ...params, rating: val === "all" ? undefined : Number(val), page: 1 })}
+        value={params.rating?.toString() || 'all'}
+        onValueChange={val =>
+          setParams({ ...params, rating: val === 'all' ? undefined : Number(val), page: 1 })
+        }
       >
         <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200">
           <SelectValue placeholder="Số sao" />
@@ -56,5 +66,5 @@ export function ReviewToolbar({ params, setParams }: ReviewToolbarProps) {
         </SelectContent>
       </Select>
     </div>
-  );
+  )
 }

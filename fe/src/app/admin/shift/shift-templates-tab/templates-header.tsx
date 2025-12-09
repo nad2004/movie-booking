@@ -1,10 +1,10 @@
 'use client'
 
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 interface TemplatesHeaderProps {
-  onCreate: () => void;
+  onCreate: () => void
 }
 
 export default function TemplatesHeader({ onCreate }: TemplatesHeaderProps) {
@@ -23,5 +23,5 @@ export default function TemplatesHeader({ onCreate }: TemplatesHeaderProps) {
         <Plus className="w-4 h-4 mr-2" /> Thêm Mới
       </Button>
     </div>
-  );
+  )
 }

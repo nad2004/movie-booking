@@ -1,19 +1,19 @@
-import { MOCK_DATA } from "../page";
-import { SectionHeader } from "./SectionHeader";
-import { Target, Activity, BarChart3, CheckCircle2, Calendar } from "lucide-react";
-import { KPIMetricCard } from "./KPIMetricCard";
-export const KPIDetailSection = ({ 
-  selectedEmployee, 
-  setSelectedEmployee, 
-  isCalculating, 
-  calculateKPI 
+import { MOCK_DATA } from '../page'
+import { SectionHeader } from './SectionHeader'
+import { Target, Activity, BarChart3, CheckCircle2, Calendar } from 'lucide-react'
+import { KPIMetricCard } from './KPIMetricCard'
+export const KPIDetailSection = ({
+  selectedEmployee,
+  setSelectedEmployee,
+  isCalculating,
+  calculateKPI,
 }: {
-  selectedEmployee: number;
-  setSelectedEmployee: (id: number) => void;
-  isCalculating: boolean;
-  calculateKPI: () => void;
+  selectedEmployee: number
+  setSelectedEmployee: (id: number) => void
+  isCalculating: boolean
+  calculateKPI: () => void
 }) => {
-  const currentKPI = MOCK_DATA.kpiData[selectedEmployee as keyof typeof MOCK_DATA.kpiData];
+  const currentKPI = MOCK_DATA.kpiData[selectedEmployee as keyof typeof MOCK_DATA.kpiData]
 
   return (
     <section className="bg-card rounded-lg border border-border p-6 mb-8">
@@ -45,10 +45,10 @@ export const KPIDetailSection = ({
           </label>
           <select
             value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(Number(e.target.value))}
+            onChange={e => setSelectedEmployee(Number(e.target.value))}
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           >
-            {MOCK_DATA.employees.map((emp) => (
+            {MOCK_DATA.employees.map(emp => (
               <option key={emp.id} value={emp.id}>
                 {emp.name}
               </option>
@@ -88,5 +88,5 @@ export const KPIDetailSection = ({
         </div>
       </div>
     </section>
-  );
-};
+  )
+}

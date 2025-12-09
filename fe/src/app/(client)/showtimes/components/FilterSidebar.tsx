@@ -8,7 +8,7 @@ type FilterSidebarProps = {
   selectedCity: string
   onSelectCity: (id: string) => void
   currentCinemas: Theater[]
-  selectedCinema: Theater | undefined 
+  selectedCinema: Theater | undefined
   onSelectCinema: (theater: Theater | undefined) => void
   isLoading: boolean
 }
@@ -21,7 +21,6 @@ export default function FilterSidebar({
   onSelectCinema,
   isLoading,
 }: FilterSidebarProps) {
-
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* --- 1. City Filter --- */}
@@ -48,17 +47,15 @@ export default function FilterSidebar({
 
       {/* --- 2. Cinema Filter --- */}
       {isLoading && (!currentCinemas || currentCinemas.length === 0) ? (
-        <div className="text-center text-text-secondary py-4">
-          Đang tải danh sách rạp...
-        </div>
+        <div className="text-center text-text-secondary py-4">Đang tải danh sách rạp...</div>
       ) : (
         <Card className="bg-surface border-border p-3 sm:p-4" style={{ borderRadius: '16px' }}>
           <h3 className="text-text-primary mb-3 text-sm sm:text-base" style={{ fontWeight: 600 }}>
             Rạp
           </h3>
           <div className="space-y-2">
-             {/* Nút Tất cả */}
-             {/* <button
+            {/* Nút Tất cả */}
+            {/* <button
                 key={'all'}
                 onClick={() => {onSelectCinema(undefined)}}
                 className={`w-full text-left px-2.5 sm:px-3 py-2 rounded-lg transition-all text-sm sm:text-base ${
@@ -85,9 +82,9 @@ export default function FilterSidebar({
                 {cinema.name}
               </button>
             ))}
-            
+
             {currentCinemas.length === 0 && (
-               <p className="text-sm text-text-secondary px-2">Không có rạp nào tại khu vực này.</p>
+              <p className="text-sm text-text-secondary px-2">Không có rạp nào tại khu vực này.</p>
             )}
           </div>
         </Card>

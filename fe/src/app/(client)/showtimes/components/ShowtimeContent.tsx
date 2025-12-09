@@ -22,10 +22,10 @@ type ShowtimeContentProps = {
 
 // Định nghĩa lại kiểu dữ liệu cho nhóm để bao gồm cả thông tin ngày
 type GroupedMovieSchedule = {
-  uniqueKey: string;
-  date: string; // Ngày chiếu (YYYY-MM-DD)
-  movie: Movie;
-  schedules: Schedule[];
+  uniqueKey: string
+  date: string // Ngày chiếu (YYYY-MM-DD)
+  movie: Movie
+  schedules: Schedule[]
 }
 
 export default function ShowtimeContent({
@@ -36,53 +36,52 @@ export default function ShowtimeContent({
   checkCinema,
   isLoading = false,
 }: ShowtimeContentProps) {
-
-   const groupedData = useMemo(() => {
+  const groupedData = useMemo(() => {
     // 1. Lọc theo ngày (nếu người dùng có chọn ngày trên DateSelector)
-    let filtered = schedules;
+    let filtered = schedules
     if (selectedDate && selectedDate.trim() !== '') {
       // Chuyển đổi selectedDate từ DD/MM/YYYY sang YYYY-MM-DD
-      const [day, month, year] = selectedDate.split('/');
-      const formattedSelectedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      
+      const [day, month, year] = selectedDate.split('/')
+      const formattedSelectedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+
       filtered = schedules.filter(s => {
-        const scheduleDate = s.showDate.split('T')[0];
-        return scheduleDate === formattedSelectedDate;
-      });
+        const scheduleDate = s.showDate.split('T')[0]
+        return scheduleDate === formattedSelectedDate
+      })
     }
 
     // 2. Gom nhóm theo: MOVIE_ID + DATE
-    const groups: Record<string, GroupedMovieSchedule> = {};
+    const groups: Record<string, GroupedMovieSchedule> = {}
 
     filtered.forEach(schedule => {
       // Lấy phần ngày (bỏ giờ). Giả sử showDate là ISO string "2024-11-28T10:00..."
-      const dateKey = schedule.showDate.split('T')[0]; 
-      const movieId = schedule.movie._id;
-      
+      const dateKey = schedule.showDate.split('T')[0]
+      const movieId = schedule.movie._id
+
       // Tạo key duy nhất kết hợp giữa phim và ngày
-      const uniqueKey = `${movieId}_${dateKey}`;
+      const uniqueKey = `${movieId}_${dateKey}`
 
       if (!groups[uniqueKey]) {
         groups[uniqueKey] = {
           uniqueKey,
           date: dateKey,
           movie: schedule.movie,
-          schedules: []
-        };
+          schedules: [],
+        }
       }
-      groups[uniqueKey].schedules.push(schedule);
-    });
+      groups[uniqueKey].schedules.push(schedule)
+    })
 
     // 3. Chuyển thành mảng và Sắp xếp
     return Object.values(groups).sort((a, b) => {
       // Ưu tiên sắp xếp theo ngày trước (tăng dần)
       if (a.date !== b.date) {
-        return a.date.localeCompare(b.date);
+        return a.date.localeCompare(b.date)
       }
       // Nếu cùng ngày thì sắp xếp theo tên phim
-      return a.movie.title.localeCompare(b.movie.title);
-    });
-  }, [schedules, selectedDate]);
+      return a.movie.title.localeCompare(b.movie.title)
+    })
+  }, [schedules, selectedDate])
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -99,20 +98,19 @@ export default function ShowtimeContent({
       </Card>
 
       {/* --- LOGIC HIỂN THỊ CHÍNH --- */}
-      
+
       {/* 1. Chưa chọn Rạp */}
-      {(!checkCinema || !selectedCinema) ? (
+      {!checkCinema || !selectedCinema ? (
         <div className="text-center py-16 bg-surface border border-border rounded-2xl flex flex-col items-center justify-center gap-4">
           <div className="w-16 h-16 rounded-full bg-bg-secondary flex items-center justify-center">
-             <MapPin className="w-8 h-8 text-text-secondary" />
+            <MapPin className="w-8 h-8 text-text-secondary" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-text-primary">Chưa chọn rạp chiếu</h3>
             <p className="text-text-secondary">Vui lòng chọn khu vực và rạp để xem lịch chiếu.</p>
           </div>
         </div>
-      ) : 
-      (
+      ) : (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-4">
           <SelectedCinemaHeader
             cinemaName={selectedCinema.name || ''}
@@ -133,11 +131,8 @@ export default function ShowtimeContent({
                       Ngày: {new Date(date).toLocaleDateString('vi-VN')}
                     </span>
                   )}
-                  
-                  <MovieShowtimeCard 
-                    movie={movie} 
-                    schedules={schedules} 
-                  />
+
+                  <MovieShowtimeCard movie={movie} schedules={schedules} />
                 </div>
               ))}
             </div>

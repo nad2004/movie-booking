@@ -1,21 +1,17 @@
-import { PerformerCard } from "./PerformerCard";
-import { Award, Film, Building2 } from "lucide-react";
-import { YearFilter } from '../../components/YearFilter';
-import { 
-  useTopEmployees, 
-  useTopPerformanceMovies, 
-  useTopEffectiveCinemas,
-} from "@/lib/api/report";
+import { PerformerCard } from './PerformerCard'
+import { Award, Film, Building2 } from 'lucide-react'
+import { YearFilter } from '../../components/YearFilter'
+import { useTopEmployees, useTopPerformanceMovies, useTopEffectiveCinemas } from '@/lib/api/report'
 
 interface TopPerformersSectionProps {
-  selectedYear: number;
-  onYearChange: (year: number) => void;
+  selectedYear: number
+  onYearChange: (year: number) => void
 }
 
 export const TopPerformersSection = ({ selectedYear, onYearChange }: TopPerformersSectionProps) => {
-  const { data: employeesData, isLoading: isLoadingEmployees } = useTopEmployees(selectedYear);
-  const { data: moviesData, isLoading: isLoadingMovies } = useTopPerformanceMovies(selectedYear);
-  const { data: cinemasData, isLoading: isLoadingCinemas } = useTopEffectiveCinemas(selectedYear);
+  const { data: employeesData, isLoading: isLoadingEmployees } = useTopEmployees(selectedYear)
+  const { data: moviesData, isLoading: isLoadingMovies } = useTopPerformanceMovies(selectedYear)
+  const { data: cinemasData, isLoading: isLoadingCinemas } = useTopEffectiveCinemas(selectedYear)
 
   // Transform API data to TopPerformer format
   const transformToPerformers = (items: any[] = [], isRevenue = false) => {
@@ -25,12 +21,12 @@ export const TopPerformersSection = ({ selectedYear, onYearChange }: TopPerforme
       value: item.value,
       subValue: item.value,
       trend: (Math.random() > 0.3 ? 'up' : 'down') as 'up' | 'down', // Random trend for demo
-    }));
-  };
+    }))
+  }
 
-  const employees = employeesData ? transformToPerformers(employeesData.items) : [];
-  const movies = moviesData ? transformToPerformers(moviesData.items, true) : [];
-  const cinemas = cinemasData ? transformToPerformers(cinemasData.items, true) : [];
+  const employees = employeesData ? transformToPerformers(employeesData.items) : []
+  const movies = moviesData ? transformToPerformers(moviesData.items, true) : []
+  const cinemas = cinemasData ? transformToPerformers(cinemasData.items, true) : []
 
   return (
     <section className="mb-8">
@@ -38,10 +34,7 @@ export const TopPerformersSection = ({ selectedYear, onYearChange }: TopPerforme
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           🏆 Top Performers
         </h2>
-        <YearFilter 
-          selectedYear={selectedYear}
-          onYearChange={onYearChange}
-        />
+        <YearFilter selectedYear={selectedYear} onYearChange={onYearChange} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <PerformerCard
@@ -70,5 +63,5 @@ export const TopPerformersSection = ({ selectedYear, onYearChange }: TopPerforme
         />
       </div>
     </section>
-  );
-};
+  )
+}

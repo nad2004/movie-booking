@@ -1,5 +1,5 @@
 import GoogleAuthProvider from './components/GoogleAuthProvider'
-import { NotificationProvider } from '@/providers/NotificationProvider';
+import { NotificationProvider } from '@/providers/NotificationProvider'
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import NextTopLoader from 'nextjs-toploader'
@@ -15,7 +15,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: 'CineBooking - Đặt vé xem phim online',
-  description: 'Nền tảng đặt vé xem phim hàng đầu Việt Nam'
+  description: 'Nền tảng đặt vé xem phim hàng đầu Việt Nam',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,13 +35,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           shadow="0 0 10px #6c63ff,0 0 5px #6c63ff"
           zIndex={9999}
         />
-        
+
         {/* 2. Provider nên nằm TRONG body để tránh lỗi DOM structure */}
         <GoogleAuthProvider>
           <NotificationProvider>
-            <ClientProvider>
-              {children}
-            </ClientProvider>
+            <ClientProvider>{children}</ClientProvider>
           </NotificationProvider>
         </GoogleAuthProvider>
       </body>

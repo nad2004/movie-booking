@@ -26,7 +26,9 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
-const canCheckIn = (startDateTime: string): { allowed: boolean; status: 'early' | 'on-time' | 'late' | 'too-late' } => {
+const canCheckIn = (
+  startDateTime: string
+): { allowed: boolean; status: 'early' | 'on-time' | 'late' | 'too-late' } => {
   const now = new Date()
   const shiftStart = new Date(startDateTime)
   const diffMinutes = Math.floor((now.getTime() - shiftStart.getTime()) / 60000)
@@ -43,14 +45,22 @@ const calculateWorkDuration = (checkIn: string, checkOut: string): number => {
   return Math.max(0, Math.floor((outTime.getTime() - inTime.getTime()) / 60000))
 }
 
-export function ShiftCard({ assignment, currentLocation, onCheckIn, onCheckOut, skipTimeCheck = false }: ShiftCardProps) {
-  const isCompleted = assignment.status === 'completed' || (assignment.checkInTime && assignment.checkOutTime)
-  const isOngoing = assignment.status === 'checked-in' || (assignment.checkInTime && !assignment.checkOutTime)
+export function ShiftCard({
+  assignment,
+  currentLocation,
+  onCheckIn,
+  onCheckOut,
+  skipTimeCheck = false,
+}: ShiftCardProps) {
+  const isCompleted =
+    assignment.status === 'completed' || (assignment.checkInTime && assignment.checkOutTime)
+  const isOngoing =
+    assignment.status === 'checked-in' || (assignment.checkInTime && !assignment.checkOutTime)
   const isPending = assignment.status === 'pending' && !assignment.checkInTime
 
   const timeCheck = isPending ? canCheckIn(assignment.startDateTime) : null
 
-   // TEST MODE: Allow check-in anytime if skipTimeCheck is true
+  // TEST MODE: Allow check-in anytime if skipTimeCheck is true
   const canShowCheckIn = isPending && (skipTimeCheck || timeCheck?.allowed)
 
   let statusBadge
@@ -76,21 +86,21 @@ export function ShiftCard({ assignment, currentLocation, onCheckIn, onCheckOut, 
     )
   }
 
-  const workDuration = assignment.checkInTime && assignment.checkOutTime
-    ? calculateWorkDuration(assignment.checkInTime, assignment.checkOutTime)
-    : 0
+  const workDuration =
+    assignment.checkInTime && assignment.checkOutTime
+      ? calculateWorkDuration(assignment.checkInTime, assignment.checkOutTime)
+      : 0
 
   return (
-    <div className={`bg-card rounded-xl border p-6 transition-all ${
-      isOngoing ? 'border-primary shadow-md' : 'border-border'
-    }`}>
+    <div
+      className={`bg-card rounded-xl border p-6 transition-all ${
+        isOngoing ? 'border-primary shadow-md' : 'border-border'
+      }`}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <div 
-              className="w-1 h-12 rounded-full" 
-              style={{ backgroundColor: assignment.color }}
-            />
+            <div className="w-1 h-12 rounded-full" style={{ backgroundColor: assignment.color }} />
             <div>
               <h3 className="text-lg font-semibold text-foreground">
                 {assignment.shiftName} ({assignment.shiftCode})
@@ -134,7 +144,7 @@ export function ShiftCard({ assignment, currentLocation, onCheckIn, onCheckOut, 
             </div>
           </div>
         )}
-        
+
         {assignment.checkOutTime && (
           <div>
             <p className="text-xs text-muted-foreground mb-1">Check-out</p>
@@ -146,7 +156,7 @@ export function ShiftCard({ assignment, currentLocation, onCheckIn, onCheckOut, 
             </div>
           </div>
         )}
-        
+
         {workDuration > 0 && (
           <div>
             <p className="text-xs text-muted-foreground mb-1">Thời gian làm</p>

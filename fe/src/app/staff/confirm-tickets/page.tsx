@@ -9,7 +9,7 @@ import { useNotification } from '@/providers/NotificationProvider'
 import { useConfirmTicket } from './hooks/useConfirmTicket'
 export default function ConfirmTicket() {
   const { showSuccess, showError } = useNotification()
-  
+
   const [ticketInfo, setTicketInfo] = useState<TicketVerify | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
   const { confirmTicket } = useConfirmTicket()
@@ -29,7 +29,7 @@ export default function ConfirmTicket() {
   const handleConfirmEntry = async () => {
     if (!ticketInfo) return
     setIsConfirming(true)
-    try { 
+    try {
       confirmTicket.mutate(ticketInfo.booking.bookingCode)
       setTicketInfo(null)
     } catch (error) {
@@ -46,18 +46,14 @@ export default function ConfirmTicket() {
         <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
           Kiểm tra & Xác nhận vé
         </h2>
-        <p className="text-muted-foreground mt-1">
-          Quét mã vé điện tử và xác nhận khách vào rạp
-        </p>
+        <p className="text-muted-foreground mt-1">Quét mã vé điện tử và xác nhận khách vào rạp</p>
       </div>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TicketScanner 
-          onScan={handleScanTicket}
-        />
-        <TicketInfoDisplay 
-          ticket={ticketInfo} 
+        <TicketScanner onScan={handleScanTicket} />
+        <TicketInfoDisplay
+          ticket={ticketInfo}
           onConfirm={handleConfirmEntry}
           isConfirming={isConfirming}
         />

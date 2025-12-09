@@ -1,16 +1,7 @@
-
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Film, 
-  QrCode, 
-  Clock, 
-  MapPin, 
-  Armchair, 
-  CheckCircle2, 
-  XCircle 
-} from 'lucide-react'
+import { Film, QrCode, Clock, MapPin, Armchair, CheckCircle2, XCircle } from 'lucide-react'
 import type { TicketVerify } from '@/types/booking'
 
 interface TicketInfoDisplayProps {
@@ -55,7 +46,7 @@ export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInf
 
           {/* Confirm Button */}
           {ticket.booking.status === 'Hoàn tất' && (
-            <Button 
+            <Button
               onClick={onConfirm}
               disabled={isConfirming}
               className="w-full bg-chart-3 hover:bg-chart-3/90 text-white rounded-[10px] shadow-md"
@@ -73,13 +64,15 @@ export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInf
 // Sub-components
 function TicketStatusBadge({ status }: { status: boolean }) {
   const isValid = !status
-  
+
   return (
-    <div className={`p-4 rounded-[10px] flex items-center gap-3 ${
-      isValid
-        ? 'bg-chart-3/10 border border-chart-3/20'
-        : 'bg-destructive/10 border border-destructive/20'
-    }`}>
+    <div
+      className={`p-4 rounded-[10px] flex items-center gap-3 ${
+        isValid
+          ? 'bg-chart-3/10 border border-chart-3/20'
+          : 'bg-destructive/10 border border-destructive/20'
+      }`}
+    >
       {isValid ? (
         <>
           <CheckCircle2 className="w-6 h-6 text-chart-3" />
@@ -131,7 +124,7 @@ function TicketDetails({ ticket }: { ticket: TicketVerify }) {
         <div className="flex-1">
           <p className="text-sm text-muted-foreground">Ghế ngồi</p>
           <div className="flex gap-2 mt-1 flex-wrap">
-            {ticket.booking.seats.map((ghe) => (
+            {ticket.booking.seats.map(ghe => (
               <Badge key={ghe.seatNumber} variant="outline" className="rounded-[6px]">
                 {ghe.seatNumber}
               </Badge>
@@ -143,7 +136,15 @@ function TicketDetails({ ticket }: { ticket: TicketVerify }) {
   )
 }
 
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function DetailRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+}) {
   return (
     <div className="flex items-start gap-3">
       {icon}

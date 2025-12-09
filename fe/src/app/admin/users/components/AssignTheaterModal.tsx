@@ -27,7 +27,7 @@ interface AssignTheaterModalProps {
 
 export function AssignTheaterModal({ open, onOpenChange, staff }: AssignTheaterModalProps) {
   const [selectedTheaterId, setSelectedTheaterId] = useState<string>('')
-  const { data: theaters } = useTheaters({limit: 100})
+  const { data: theaters } = useTheaters({ limit: 100 })
   const { assignTheaterMutation } = useUserMutations()
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function AssignTheaterModal({ open, onOpenChange, staff }: AssignTheaterM
               <SelectTrigger id="theater" className="bg-white">
                 <SelectValue placeholder="Chọn rạp phim" />
               </SelectTrigger>
-              <SelectContent className='max-h-[300px] overflow-y-auto'>
+              <SelectContent className="max-h-[300px] overflow-y-auto">
                 {theaters?.theaters?.map((theater: any) => (
                   <SelectItem key={theater._id} value={theater._id}>
                     {theater.name} - {theater.city}

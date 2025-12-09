@@ -72,7 +72,7 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
       toast.error('Vui lòng chọn suất chiếu trước')
       return
     }
-    
+
     // Kiểm tra ghế hardcode reserved (nếu cần giữ logic cũ)
     if (RESERVED_SEATS.includes(seat.seatNumber)) return
 
@@ -84,11 +84,8 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     } else {
       // Chọn mới -> Tính giá
       const price = getSeatPrice(seat.seatType)
-      
-      setSelectedSeats(prev => [
-        ...prev,
-        { ...seat, price }
-      ])
+
+      setSelectedSeats(prev => [...prev, { ...seat, price }])
     }
   }
 

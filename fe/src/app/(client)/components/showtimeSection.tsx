@@ -29,8 +29,8 @@ export function ShowtimeSection({ cinemas, selectedCity, onCityChange }: Showtim
           </Card>
 
           {/* Client Component xử lý tương tác */}
-          <ShowtimeClient 
-            cinemas={cinemas} 
+          <ShowtimeClient
+            cinemas={cinemas}
             selectedCity={selectedCity}
             onCityChange={onCityChange}
           />

@@ -1,32 +1,32 @@
 'use client'
-import { useState } from 'react';
-import { TopPerformersSection } from './components/TopPerformersSection';
-import { KPIDetailSection } from './components/KPIDetailSection';
-import { TrendsSection } from './components/TrendsSection';
-import { ComparisonSection } from './components/ComparisonSection';
-import { AlertsSection } from './components/AlertsSection';
+import { useState } from 'react'
+import { TopPerformersSection } from './components/TopPerformersSection'
+import { KPIDetailSection } from './components/KPIDetailSection'
+import { TrendsSection } from './components/TrendsSection'
+import { ComparisonSection } from './components/ComparisonSection'
+import { AlertsSection } from './components/AlertsSection'
 
 export interface TopPerformer {
-  id: number;
-  name: string;
-  value: number;
-  subValue: number;
-  trend: 'up' | 'down';
+  id: number
+  name: string
+  value: number
+  subValue: number
+  trend: 'up' | 'down'
 }
 
 interface KPIData {
-  kpi: number;
-  completion: number;
-  shifts: number;
-  performance: number;
+  kpi: number
+  completion: number
+  shifts: number
+  performance: number
 }
 
 export interface Alert {
-  id: number;
-  type: 'warning' | 'danger' | 'info';
-  title: string;
-  description: string;
-  time: string;
+  id: number
+  type: 'warning' | 'danger' | 'info'
+  title: string
+  description: string
+  time: string
 }
 
 // Mock Data (keep for KPI section and alerts)
@@ -75,26 +75,26 @@ export const MOCK_DATA = {
       time: '2 ngày trước',
     },
   ],
-};
+}
 
 // Main Component
 export default function Performance() {
-  const currentYear = new Date().getFullYear();
-  const [selectedEmployee, setSelectedEmployee] = useState(1);
-  const [isCalculating, setIsCalculating] = useState(false);
-  
+  const currentYear = new Date().getFullYear()
+  const [selectedEmployee, setSelectedEmployee] = useState(1)
+  const [isCalculating, setIsCalculating] = useState(false)
+
   // Year states for different sections
-  const [topPerformersYear, setTopPerformersYear] = useState(currentYear);
-  const [trendsYear, setTrendsYear] = useState(currentYear);
-  const [comparisonYear, setComparisonYear] = useState(currentYear);
+  const [topPerformersYear, setTopPerformersYear] = useState(currentYear)
+  const [trendsYear, setTrendsYear] = useState(currentYear)
+  const [comparisonYear, setComparisonYear] = useState(currentYear)
 
   const calculateKPI = () => {
-    setIsCalculating(true);
+    setIsCalculating(true)
     setTimeout(() => {
-      setIsCalculating(false);
-      alert('KPI đã được tính toán và cập nhật thành công!');
-    }, 1500);
-  };
+      setIsCalculating(false)
+      alert('KPI đã được tính toán và cập nhật thành công!')
+    }, 1500)
+  }
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-8">
@@ -107,30 +107,24 @@ export default function Performance() {
           </p>
         </div>
 
-        <TopPerformersSection 
+        <TopPerformersSection
           selectedYear={topPerformersYear}
           onYearChange={setTopPerformersYear}
         />
-        
+
         <KPIDetailSection
           selectedEmployee={selectedEmployee}
           setSelectedEmployee={setSelectedEmployee}
           isCalculating={isCalculating}
           calculateKPI={calculateKPI}
         />
-        
-        <TrendsSection 
-          selectedYear={trendsYear}
-          onYearChange={setTrendsYear}
-        />
-        
-        <ComparisonSection 
-          selectedYear={comparisonYear}
-          onYearChange={setComparisonYear}
-        />
-        
+
+        <TrendsSection selectedYear={trendsYear} onYearChange={setTrendsYear} />
+
+        <ComparisonSection selectedYear={comparisonYear} onYearChange={setComparisonYear} />
+
         <AlertsSection />
       </div>
     </div>
-  );
+  )
 }

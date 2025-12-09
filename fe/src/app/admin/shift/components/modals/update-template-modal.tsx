@@ -81,7 +81,7 @@ export default function UpdateTemplateModal({
     }
   }, [initialData, form])
 
-  const handleFormSubmit = form.handleSubmit((data) => {
+  const handleFormSubmit = form.handleSubmit(data => {
     onSubmit(data)
     onOpenChange(false)
   })
@@ -98,8 +98,7 @@ export default function UpdateTemplateModal({
       <DialogContent className="sm:max-w-[425px] bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle>
-            Cập nhật Ca Mẫu:{' '}
-            <span className="text-[#6C63FF]">{initialData.name}</span>
+            Cập nhật Ca Mẫu: <span className="text-[#6C63FF]">{initialData.name}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -110,9 +109,7 @@ export default function UpdateTemplateModal({
               name="code"
               render={({ field }) => (
                 <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right text-gray-500">
-                    Mã Ca
-                  </FormLabel>
+                  <FormLabel className="text-right text-gray-500">Mã Ca</FormLabel>
                   <div className="col-span-3">
                     <FormControl>
                       <Input
@@ -131,9 +128,7 @@ export default function UpdateTemplateModal({
               name="name"
               render={({ field }) => (
                 <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right text-gray-500">
-                    Tên Ca
-                  </FormLabel>
+                  <FormLabel className="text-right text-gray-500">Tên Ca</FormLabel>
                   <div className="col-span-3">
                     <FormControl>
                       <Input
@@ -152,17 +147,11 @@ export default function UpdateTemplateModal({
               name="startTime"
               render={({ field: startField }) => (
                 <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right text-gray-500">
-                    Thời gian
-                  </FormLabel>
+                  <FormLabel className="text-right text-gray-500">Thời gian</FormLabel>
                   <div className="col-span-3 space-y-1">
                     <div className="flex items-center gap-2">
                       <FormControl>
-                        <Input
-                          type="time"
-                          {...startField}
-                          className="bg-gray-50 border-gray-200"
-                        />
+                        <Input type="time" {...startField} className="bg-gray-50 border-gray-200" />
                       </FormControl>
                       <span className="text-gray-400">-</span>
                       <FormField
@@ -190,13 +179,11 @@ export default function UpdateTemplateModal({
               name="isActive"
               render={({ field }) => (
                 <FormItem className="grid grid-cols-4 items-center gap-4">
-                  <FormLabel className="text-right text-gray-500">
-                    Trạng thái
-                  </FormLabel>
+                  <FormLabel className="text-right text-gray-500">Trạng thái</FormLabel>
                   <div className="col-span-3">
                     <Select
                       value={field.value ? 'active' : 'inactive'}
-                      onValueChange={(val) => field.onChange(val === 'active')}
+                      onValueChange={val => field.onChange(val === 'active')}
                     >
                       <FormControl>
                         <SelectTrigger className="bg-gray-50 border-gray-200">
@@ -205,9 +192,7 @@ export default function UpdateTemplateModal({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="active">Đang hoạt động</SelectItem>
-                        <SelectItem value="inactive">
-                          Ngưng hoạt động
-                        </SelectItem>
+                        <SelectItem value="inactive">Ngưng hoạt động</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -219,11 +204,7 @@ export default function UpdateTemplateModal({
         </Form>
 
         <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={handleCancel}
-            className="rounded-xl"
-          >
+          <Button variant="ghost" onClick={handleCancel} className="rounded-xl">
             Hủy
           </Button>
           <Button

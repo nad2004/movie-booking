@@ -26,11 +26,7 @@ export function StepSeatSelection({
         </div>
       </div>
 
-      <SeatMaps 
-        selectedSeats={selectedSeats} 
-        schedule={schedule} 
-        onSeatClick={onSeatClick}
-      />
+      <SeatMaps selectedSeats={selectedSeats} schedule={schedule} onSeatClick={onSeatClick} />
     </div>
   )
 }

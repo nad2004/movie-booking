@@ -1,22 +1,31 @@
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Building2 } from "lucide-react";
-import { Theater } from "@/types/theater";
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Search, Plus, Building2 } from 'lucide-react'
+import { Theater } from '@/types/theater'
 
 interface RoomToolbarProps {
-  search: string;
-  onSearchChange: (val: string) => void;
-  selectedTheater: string;
-  onTheaterChange: (val: string) => void;
-  theaters: Theater[];
-  onOpenAdd: () => void;
+  search: string
+  onSearchChange: (val: string) => void
+  selectedTheater: string
+  onTheaterChange: (val: string) => void
+  theaters: Theater[]
+  onOpenAdd: () => void
 }
 
-export function RoomToolbar({ 
-  search, onSearchChange, 
-  selectedTheater, onTheaterChange, theaters, 
-  onOpenAdd 
+export function RoomToolbar({
+  search,
+  onSearchChange,
+  selectedTheater,
+  onTheaterChange,
+  theaters,
+  onOpenAdd,
 }: RoomToolbarProps) {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
@@ -28,7 +37,7 @@ export function RoomToolbar({
             placeholder="Tìm kiếm tên phòng..."
             className="pl-9 bg-gray-50 border-gray-200"
             value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={e => onSearchChange(e.target.value)}
           />
         </div>
 
@@ -42,7 +51,9 @@ export function RoomToolbar({
             <SelectContent className="bg-gray-50 text-gray-900 max-h-[300px] overflow-y-auto">
               <SelectItem value="all">Tất cả các rạp</SelectItem>
               {theaters.map(t => (
-                <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
+                <SelectItem key={t._id} value={t._id}>
+                  {t.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -53,5 +64,5 @@ export function RoomToolbar({
         <Plus className="w-4 h-4" /> Thêm Phòng Mới
       </Button>
     </div>
-  );
+  )
 }

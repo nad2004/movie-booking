@@ -48,10 +48,10 @@ export default function AssignStaffModal({
   open,
   onOpenChange,
   selectedSchedule,
-  selectedTheaterId
+  selectedTheaterId,
 }: AssignStaffModalProps) {
-  const { data: usersData, isLoading: isLoadingUsers } = useUsers({role: 'staff'})
-  const { bulkCreate  } = useAssignmentMutations()
+  const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'staff' })
+  const { bulkCreate } = useAssignmentMutations()
 
   const users = useMemo(() => usersData?.users || [], [usersData])
 
@@ -89,14 +89,14 @@ export default function AssignStaffModal({
             {
               workScheduleId: selectedSchedule.scheduleId,
               userId: data.userId,
-              role: 'staff', 
-            }
-          ]
+              role: 'staff',
+            },
+          ],
         }
 
         await bulkCreate.mutateAsync(payload)
 
-        const user = users.find((u) => u._id === data.userId)
+        const user = users.find(u => u._id === data.userId)
         toast.success('Phân công thành công!', {
           description: `Đã phân công ${user?.fullName} vào ca ${selectedSchedule.shift.name}`,
         })
@@ -122,8 +122,8 @@ export default function AssignStaffModal({
           <DialogTitle className="text-xl font-semibold">Phân Công Nhân Viên</DialogTitle>
           {selectedSchedule && (
             <DialogDescription className="text-sm text-gray-500 mt-1">
-              {selectedSchedule.date} - {selectedSchedule.shift.name} ({selectedSchedule.shift.startTime} -{' '}
-              {selectedSchedule.shift.endTime})
+              {selectedSchedule.date} - {selectedSchedule.shift.name} (
+              {selectedSchedule.shift.startTime} - {selectedSchedule.shift.endTime})
             </DialogDescription>
           )}
         </DialogHeader>
@@ -139,7 +139,11 @@ export default function AssignStaffModal({
                 name="userId"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} disabled={isLoadingUsers}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isLoadingUsers}
+                  >
                     <SelectTrigger
                       id="userId"
                       className={`h-12 ${errors.userId ? 'border-red-500' : ''}`}
@@ -156,7 +160,7 @@ export default function AssignStaffModal({
                           Không có nhân viên khả dụng
                         </div>
                       ) : (
-                        users.map((user) => (
+                        users.map(user => (
                           <SelectItem key={user._id} value={user._id}>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">

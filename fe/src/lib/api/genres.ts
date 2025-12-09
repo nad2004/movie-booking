@@ -36,7 +36,7 @@ export async function getGenres(params: GetGenresParams = {}, signal?: AbortSign
   } catch (error) {
     // 🟢 Nếu request bị cancel, throw error để React Query xử lý
     if (axios.isCancel(error)) {
-        throw error
+      throw error
     }
 
     console.error('Fetch genres failed', error)

@@ -1,6 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Seat } from '@/types/theater'
-import { createRoom, updateRoom, deleteRoom, RoomCreateDTO, RoomUpdateDTO, updateSeat } from '@/lib/api/rooms'
+import {
+  createRoom,
+  updateRoom,
+  deleteRoom,
+  RoomCreateDTO,
+  RoomUpdateDTO,
+  updateSeat,
+} from '@/lib/api/rooms'
 import { toast } from 'sonner'
 import { useNotification } from '@/providers/NotificationProvider'
 
@@ -42,7 +49,7 @@ export function useRoomMutations() {
     }: {
       theaterId: string
       roomId: string
-      data:{
+      data: {
         seats: Seat[]
       }
     }) => updateSeat(theaterId, roomId, data),
@@ -52,7 +59,6 @@ export function useRoomMutations() {
     },
     onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   })
-
 
   const deleteMutation = useMutation({
     mutationFn: ({ theaterId, roomId }: { theaterId: string; roomId: string }) =>

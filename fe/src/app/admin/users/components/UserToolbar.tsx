@@ -1,36 +1,36 @@
-import { Input } from "@/components/ui/input";
-import { Search, Users, UserPlus } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { Input } from '@/components/ui/input'
+import { Search, Users, UserPlus } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 
 interface UserToolbarProps {
-  search: string;
-  onSearchChange: (val: string) => void;
-  typeUser: string;
-  onTabChange: (val: string) => void;
-  onAddStaff: () => void;
+  search: string
+  onSearchChange: (val: string) => void
+  typeUser: string
+  onTabChange: (val: string) => void
+  onAddStaff: () => void
 }
 
-export function UserToolbar({ 
-  search, 
-  onSearchChange, 
-  typeUser, 
+export function UserToolbar({
+  search,
+  onSearchChange,
+  typeUser,
   onTabChange,
-  onAddStaff 
+  onAddStaff,
 }: UserToolbarProps) {
   return (
     <div className="space-y-4">
       {/* Tabs Switcher */}
       <Tabs value={typeUser} onValueChange={onTabChange} className="w-full">
         <TabsList className="bg-white border border-gray-200 p-1 rounded-xl h-auto w-full sm:w-auto justify-start">
-          <TabsTrigger 
-            value="customer" 
+          <TabsTrigger
+            value="customer"
             className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-white"
           >
             <Users className="w-4 h-4 mr-2" />
             Khách hàng
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="staff"
             className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-white"
           >
@@ -48,11 +48,11 @@ export function UserToolbar({
             placeholder="Tìm kiếm theo tên, email, số điện thoại..."
             className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
             value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={e => onSearchChange(e.target.value)}
           />
         </div>
-        {typeUser === "staff" && (
-          <Button 
+        {typeUser === 'staff' && (
+          <Button
             onClick={onAddStaff}
             className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6"
           >
@@ -61,5 +61,5 @@ export function UserToolbar({
         )}
       </div>
     </div>
-  );
+  )
 }

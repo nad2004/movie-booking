@@ -64,8 +64,8 @@ export default function AssignmentFilters({
           <SelectTrigger className="w-full md:w-[220px] rounded-xl bg-gray-50 border-gray-200">
             <SelectValue placeholder="Chọn rạp" />
           </SelectTrigger>
-          <SelectContent className='max-h-[300px] overflow-y-auto'>
-            {theaters.map((t) => (
+          <SelectContent className="max-h-[300px] overflow-y-auto">
+            {theaters.map(t => (
               <SelectItem key={t._id} value={t._id}>
                 {t.name}
               </SelectItem>
@@ -91,11 +91,12 @@ export default function AssignmentFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả ca</SelectItem>
-            {availableShiftCodes && availableShiftCodes.map((code) => (
-              <SelectItem key={code} value={code}>
-                Ca {code}
-              </SelectItem>
-            ))}
+            {availableShiftCodes &&
+              availableShiftCodes.map(code => (
+                <SelectItem key={code} value={code}>
+                  Ca {code}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
 

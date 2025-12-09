@@ -1,14 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { UserPlus, CreditCard, Settings, User } from "lucide-react";
-import { recentActivities } from "../constants/mockData";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { UserPlus, CreditCard, Settings, User } from 'lucide-react'
+import { recentActivities } from '../constants/mockData'
 
 const getIcon = (iconName: string) => {
-    switch(iconName) {
-        case 'UserPlus': return UserPlus;
-        case 'CreditCard': return CreditCard;
-        case 'Settings': return Settings;
-        default: return User;
-    }
+  switch (iconName) {
+    case 'UserPlus':
+      return UserPlus
+    case 'CreditCard':
+      return CreditCard
+    case 'Settings':
+      return Settings
+    default:
+      return User
+  }
 }
 
 export function RecentActivities() {
@@ -45,5 +49,5 @@ export function RecentActivities() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

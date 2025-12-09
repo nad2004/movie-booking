@@ -5,11 +5,11 @@ import { Loader2, X } from 'lucide-react'
 import { format, isSameMonth, isToday } from 'date-fns'
 
 interface PlanningCalendarProps {
-  isLoading: boolean;
-  calendarDays: Date[];
-  monthStart: Date;
-  schedulesByDate: Map<string, WorkSchedule[]>;
-  onDeleteShift: (id: string) => void;
+  isLoading: boolean
+  calendarDays: Date[]
+  monthStart: Date
+  schedulesByDate: Map<string, WorkSchedule[]>
+  onDeleteShift: (id: string) => void
 }
 
 export default function PlanningCalendar({
@@ -17,9 +17,8 @@ export default function PlanningCalendar({
   calendarDays,
   monthStart,
   schedulesByDate,
-  onDeleteShift
+  onDeleteShift,
 }: PlanningCalendarProps) {
-
   // Helper chọn màu (giữ nguyên logic cũ)
   const getShiftColor = (name: string) => {
     const lowerName = name.toLowerCase()
@@ -30,7 +29,7 @@ export default function PlanningCalendar({
     return 'border-l-gray-500 bg-gray-50 text-gray-700'
   }
 
-  const weekdayHeaders = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
+  const weekdayHeaders = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN']
 
   if (isLoading) {
     return (
@@ -53,10 +52,10 @@ export default function PlanningCalendar({
       ))}
 
       {/* Render Cells */}
-      {calendarDays.map((day) => {
+      {calendarDays.map(day => {
         const dateKey = format(day, 'yyyy-MM-dd')
         const daySchedules = schedulesByDate.get(dateKey) || []
-        
+
         const isCurrentMonth = isSameMonth(day, monthStart)
         const dayClass = isCurrentMonth ? 'bg-white text-gray-900' : 'bg-gray-50/50 text-gray-400'
         const todayClass = isToday(day) ? 'bg-indigo-50/30 ring-1 ring-inset ring-indigo-200' : ''
@@ -96,7 +95,7 @@ export default function PlanningCalendar({
 
                     {/* Delete Button */}
                     <button
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation()
                         onDeleteShift(sch._id)
                       }}

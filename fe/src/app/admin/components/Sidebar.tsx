@@ -13,15 +13,15 @@ import {
   Ticket,
   Settings,
   Clock,
-  Hamburger
+  Hamburger,
 } from 'lucide-react'
-import { LogoutButton } from '@/app/components/shared/LogoutButton' 
+import { LogoutButton } from '@/app/components/shared/LogoutButton'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 export function Sidebar() {
   const pathname = usePathname()
-  
+
   const menuItems = [
     { icon: LayoutDashboard, label: 'Tổng Quan', path: '/admin' },
     { icon: BarChart3, label: 'Báo Cáo Thống Kê', path: '/admin/reports' },

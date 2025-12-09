@@ -1,26 +1,25 @@
-import { Wallet, ExternalLink, Copy, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import Image from 'next/image';
+import { Wallet, ExternalLink, Copy, CheckCircle2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import Link from 'next/link'
+import Image from 'next/image'
 
 interface StepPaymentProps {
-  paymentUrl: string;
-  bookingCode?: string;
-  totalAmount: number;
+  paymentUrl: string
+  bookingCode?: string
+  totalAmount: number
 }
 
 export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymentProps) {
-  
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(paymentUrl);
-    toast.success("Đã sao chép liên kết thanh toán");
-  };
+    navigator.clipboard.writeText(paymentUrl)
+    toast.success('Đã sao chép liên kết thanh toán')
+  }
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <h2 className="mb-6 text-text-primary text-xl font-bold">Thanh toán đơn hàng</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Cột trái: Thông tin & Hướng dẫn */}
         <div className="space-y-6">
@@ -29,7 +28,9 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
               <CheckCircle2 className="w-5 h-5 shrink-0" />
               <div>
                 <p className="font-bold mb-1">Đơn hàng đã được tạo!</p>
-                <p>Vui lòng thanh toán trong vòng <strong>10 phút</strong> để giữ ghế.</p>
+                <p>
+                  Vui lòng thanh toán trong vòng <strong>10 phút</strong> để giữ ghế.
+                </p>
               </div>
             </div>
           </div>
@@ -37,7 +38,9 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-surface border border-border rounded-xl">
               <span className="text-text-secondary">Mã đơn hàng</span>
-              <span className="font-mono font-bold text-lg text-text-primary">{bookingCode || '...'}</span>
+              <span className="font-mono font-bold text-lg text-text-primary">
+                {bookingCode || '...'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-4 bg-surface border border-border rounded-xl">
               <span className="text-text-secondary">Số tiền cần thanh toán</span>
@@ -58,12 +61,14 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
 
         {/* Cột phải: QR Code & Action */}
         <div className="flex flex-col items-center justify-center bg-bg-primary p-6 rounded-2xl border border-border shadow-sm">
-          <p className="text-sm text-text-secondary mb-4 text-center">Quét mã bên dưới để thanh toán nhanh</p>
-          
+          <p className="text-sm text-text-secondary mb-4 text-center">
+            Quét mã bên dưới để thanh toán nhanh
+          </p>
+
           {/* QR Code generated from Payment URL */}
           <div className="relative w-48 h-48 mb-6 group">
             {paymentUrl ? (
-              <Image 
+              <Image
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`}
                 alt="Payment QR Code"
                 width={400}
@@ -79,21 +84,20 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
 
           <div className="w-full space-y-3">
             {paymentUrl ? (
-              <Button 
-                asChild
-                className="w-full bg-primary hover:bg-primary/90 h-12 text-base"
-              >
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 h-12 text-base">
                 <Link href={paymentUrl}>
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Mở trang thanh toán VNPAY
                 </Link>
               </Button>
             ) : (
-              <Button disabled className="w-full h-12">Đang tạo link...</Button>
+              <Button disabled className="w-full h-12">
+                Đang tạo link...
+              </Button>
             )}
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={handleCopyUrl}
               disabled={!paymentUrl}
               className="w-full border-border text-text-secondary hover:bg-bg-secondary"
@@ -105,5 +109,5 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
         </div>
       </div>
     </div>
-  );
+  )
 }

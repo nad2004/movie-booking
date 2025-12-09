@@ -9,9 +9,9 @@ import { ActiveShiftCard } from './ActiveShiftCard'
 import { ShiftCard } from './ShiftCard'
 import { useUserStore } from '@/store/userStore'
 import { AssignedEmployee } from '@/types/shift'
-const TEST_MODE = true 
-const SKIP_LOCATION_CHECK = true 
-const SKIP_TIME_CHECK = false 
+const TEST_MODE = true
+const SKIP_LOCATION_CHECK = true
+const SKIP_TIME_CHECK = false
 
 const theaterLocation = { lat: 10.7769, lng: 106.7009 }
 const maxDistanceMeters = 100

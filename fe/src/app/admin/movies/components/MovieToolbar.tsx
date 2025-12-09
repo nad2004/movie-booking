@@ -1,13 +1,19 @@
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
-import { GetMoviesParams } from "@/lib/api/movies";
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Search, Plus } from 'lucide-react'
+import { GetMoviesParams } from '@/lib/api/movies'
 
 interface MovieToolbarProps {
-  params: GetMoviesParams;
-  setParams: (params: GetMoviesParams) => void;
-  onOpenAdd: () => void;
+  params: GetMoviesParams
+  setParams: (params: GetMoviesParams) => void
+  onOpenAdd: () => void
 }
 
 export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps) {
@@ -20,14 +26,16 @@ export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps
           <Input
             placeholder="Tìm kiếm phim..."
             className="pl-9 bg-gray-50 border-gray-200"
-            value={params.search || ""}
-            onChange={(e) => setParams({ ...params, search: e.target.value, page: 1 })}
+            value={params.search || ''}
+            onChange={e => setParams({ ...params, search: e.target.value, page: 1 })}
           />
         </div>
 
         <Select
-          value={params.status || "all"}
-          onValueChange={(val) => setParams({ ...params, status: val === "all" ? undefined : val, page: 1 })}
+          value={params.status || 'all'}
+          onValueChange={val =>
+            setParams({ ...params, status: val === 'all' ? undefined : val, page: 1 })
+          }
         >
           <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200 ">
             <SelectValue placeholder="Trạng thái" />
@@ -41,8 +49,8 @@ export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps
         </Select>
 
         <Select
-          value={params.sortBy || "createdAt"}
-          onValueChange={(val) => setParams({ ...params, sortBy: val })}
+          value={params.sortBy || 'createdAt'}
+          onValueChange={val => setParams({ ...params, sortBy: val })}
         >
           <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200">
             <SelectValue placeholder="Sắp xếp" />
@@ -60,5 +68,5 @@ export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps
         <Plus className="w-4 h-4" /> Thêm phim
       </Button>
     </div>
-  );
+  )
 }

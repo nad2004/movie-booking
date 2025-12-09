@@ -1,9 +1,31 @@
 'use client'
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { BarChart3, TrendingUp, Users, DollarSign, Ticket, Target, Download, Calendar } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  DollarSign,
+  Ticket,
+  Target,
+  Download,
+  Calendar,
+} from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts'
 
 // Dữ liệu biểu đồ
 const doanhThuTheoNgay = [
@@ -14,7 +36,7 @@ const doanhThuTheoNgay = [
   { ngay: 'T6', doanhThu: 28900000 },
   { ngay: 'T7', doanhThu: 35600000 },
   { ngay: 'CN', doanhThu: 42100000 },
-];
+]
 
 const veTheoGio = [
   { gio: '8h', soLuong: 12 },
@@ -25,16 +47,16 @@ const veTheoGio = [
   { gio: '18h', soLuong: 85 },
   { gio: '20h', soLuong: 92 },
   { gio: '22h', soLuong: 56 },
-];
+]
 
 const phanLoaiVe = [
   { ten: 'Vé thường', giaTri: 45 },
   { ten: 'Vé VIP', giaTri: 30 },
   { ten: 'Vé cặp đôi', giaTri: 15 },
   { ten: 'Vé nhóm', giaTri: 10 },
-];
+]
 
-const COLORS = ['#6C63FF', '#F9B233', '#10B981', '#3B82F6'];
+const COLORS = ['#6C63FF', '#F9B233', '#10B981', '#3B82F6']
 
 export default function Reports() {
   return (
@@ -63,13 +85,15 @@ export default function Reports() {
             <div className="w-12 h-12 bg-primary/10 rounded-[10px] flex items-center justify-center">
               <Ticket className="w-6 h-6 text-primary" />
             </div>
-            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">+12%</Badge>
+            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">
+              +12%
+            </Badge>
           </div>
           <p className="text-muted-foreground text-sm">Vé đã bán</p>
           <p className="text-foreground font-semibold mt-1">245 vé</p>
           <p className="text-xs text-muted-foreground/70 mt-2">Mục tiêu: 280 vé</p>
           <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{width: '87.5%'}}></div>
+            <div className="h-full bg-primary rounded-full" style={{ width: '87.5%' }}></div>
           </div>
         </Card>
 
@@ -78,13 +102,15 @@ export default function Reports() {
             <div className="w-12 h-12 bg-chart-3/10 rounded-[10px] flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-chart-3" />
             </div>
-            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">+18%</Badge>
+            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">
+              +18%
+            </Badge>
           </div>
           <p className="text-muted-foreground text-sm">Doanh thu</p>
           <p className="text-foreground font-semibold mt-1">21.8M VNĐ</p>
           <p className="text-xs text-muted-foreground/70 mt-2">Mục tiêu: 25M VNĐ</p>
           <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-chart-3 rounded-full" style={{width: '87.2%'}}></div>
+            <div className="h-full bg-chart-3 rounded-full" style={{ width: '87.2%' }}></div>
           </div>
         </Card>
 
@@ -93,13 +119,15 @@ export default function Reports() {
             <div className="w-12 h-12 bg-chart-5/10 rounded-[10px] flex items-center justify-center">
               <Users className="w-6 h-6 text-chart-5" />
             </div>
-            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">+8%</Badge>
+            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">
+              +8%
+            </Badge>
           </div>
           <p className="text-muted-foreground text-sm">Khách phục vụ</p>
           <p className="text-foreground font-semibold mt-1">342 khách</p>
           <p className="text-xs text-muted-foreground/70 mt-2">Mục tiêu: 400 khách</p>
           <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-chart-5 rounded-full" style={{width: '85.5%'}}></div>
+            <div className="h-full bg-chart-5 rounded-full" style={{ width: '85.5%' }}></div>
           </div>
         </Card>
 
@@ -108,13 +136,15 @@ export default function Reports() {
             <div className="w-12 h-12 bg-accent/10 rounded-[10px] flex items-center justify-center">
               <Target className="w-6 h-6 text-accent" />
             </div>
-            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">Đạt</Badge>
+            <Badge className="bg-chart-3/10 text-chart-3 hover:bg-chart-3/10 rounded-[6px]">
+              Đạt
+            </Badge>
           </div>
           <p className="text-muted-foreground text-sm">Tỷ lệ hoàn thành</p>
           <p className="text-foreground font-semibold mt-1">86.7%</p>
           <p className="text-xs text-muted-foreground/70 mt-2">Trung bình: 82%</p>
           <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-accent rounded-full" style={{width: '86.7%'}}></div>
+            <div className="h-full bg-accent rounded-full" style={{ width: '86.7%' }}></div>
           </div>
         </Card>
       </div>
@@ -134,19 +164,23 @@ export default function Reports() {
               </div>
             </div>
           </div>
-          
+
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={doanhThuTheoNgay}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
               <XAxis dataKey="ngay" stroke="#8A8A8A" style={{ fontSize: '12px' }} />
-              <YAxis stroke="#8A8A8A" tickFormatter={(value) => `${value / 1000000}M`} style={{ fontSize: '12px' }} />
-              <Tooltip 
-                formatter={(value) => `${(value as number).toLocaleString('vi-VN')}đ`}
-                contentStyle={{ 
-                  backgroundColor: '#FFFFFF', 
-                  border: '1px solid #E5E5E5', 
+              <YAxis
+                stroke="#8A8A8A"
+                tickFormatter={value => `${value / 1000000}M`}
+                style={{ fontSize: '12px' }}
+              />
+              <Tooltip
+                formatter={value => `${(value as number).toLocaleString('vi-VN')}đ`}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E5E5',
                   borderRadius: '10px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                 }}
               />
               <Bar dataKey="doanhThu" fill="#6C63FF" radius={[10, 10, 0, 0]} />
@@ -180,22 +214,25 @@ export default function Reports() {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
-                formatter={(value) => `${value}%`}
-                contentStyle={{ 
-                  backgroundColor: '#FFFFFF', 
-                  border: '1px solid #E5E5E5', 
-                  borderRadius: '10px' 
+              <Tooltip
+                formatter={value => `${value}%`}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E5E5',
+                  borderRadius: '10px',
                 }}
               />
             </PieChart>
           </ResponsiveContainer>
-          
+
           <div className="space-y-2 mt-4">
             {phanLoaiVe.map((item, index) => (
               <div key={item.ten} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[index] }}></div>
+                  <div
+                    className="w-3 h-3 rounded-sm"
+                    style={{ backgroundColor: COLORS[index] }}
+                  ></div>
                   <span className="text-muted-foreground">{item.ten}</span>
                 </div>
                 <span className="text-foreground font-medium">{item.giaTri}%</span>
@@ -213,7 +250,9 @@ export default function Reports() {
           </div>
           <div>
             <h3 className="text-foreground">Vé bán theo khung giờ</h3>
-            <p className="text-sm text-muted-foreground">Phân tích hiệu suất bán vé theo giờ trong ngày</p>
+            <p className="text-sm text-muted-foreground">
+              Phân tích hiệu suất bán vé theo giờ trong ngày
+            </p>
           </div>
         </div>
 
@@ -222,20 +261,20 @@ export default function Reports() {
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
             <XAxis dataKey="gio" stroke="#8A8A8A" style={{ fontSize: '12px' }} />
             <YAxis stroke="#8A8A8A" style={{ fontSize: '12px' }} />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#FFFFFF', 
-                border: '1px solid #E5E5E5', 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E5E5E5',
                 borderRadius: '10px',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
               }}
             />
-            <Line 
-              type="monotone" 
-              dataKey="soLuong" 
-              stroke="#6C63FF" 
-              strokeWidth={3} 
-              dot={{ fill: '#6C63FF', r: 5 }} 
+            <Line
+              type="monotone"
+              dataKey="soLuong"
+              stroke="#6C63FF"
+              strokeWidth={3}
+              dot={{ fill: '#6C63FF', r: 5 }}
               activeDot={{ r: 7 }}
             />
           </LineChart>
@@ -296,5 +335,5 @@ export default function Reports() {
         </div>
       </Card>
     </div>
-  );
+  )
 }

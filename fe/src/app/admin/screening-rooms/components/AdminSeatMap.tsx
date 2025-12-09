@@ -25,7 +25,7 @@ interface AdminSeatMapProps {
   theaterId?: string
   room: FlatRoom
   onClose: () => void
-  onSave: (updatedSeatMap: Seat[]) => void 
+  onSave: (updatedSeatMap: Seat[]) => void
   isSaving: boolean
 }
 
@@ -54,15 +54,13 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
     const seatsInRow = seats.filter(s => s.row === rowLabel)
 
     // Kiểm tra xem tất cả ghế trong hàng này đã nằm trong selectedSeats chưa
-    const allSelected = seatsInRow.every(rowSeat => 
+    const allSelected = seatsInRow.every(rowSeat =>
       selectedSeats.some(selected => selected.seatNumber === rowSeat.seatNumber)
     )
 
     if (allSelected) {
       // Nếu chọn hết rồi thì bỏ chọn cả hàng
-      setSelectedSeats(prev => 
-        prev.filter(s => s.row !== rowLabel)
-      )
+      setSelectedSeats(prev => prev.filter(s => s.row !== rowLabel))
     } else {
       // Nếu chưa chọn hết thì merge thêm vào (lọc trùng)
       setSelectedSeats(prev => {
@@ -103,22 +101,22 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
 
   // --- LOGIC PHỤ: Toggle trạng thái Active/Bảo trì ---
   const toggleSeatStatus = () => {
-     if (selectedSeats.length === 0) return
+    if (selectedSeats.length === 0) return
 
-     const selectedIds = new Set(selectedSeats.map(s => s.seatNumber))
+    const selectedIds = new Set(selectedSeats.map(s => s.seatNumber))
 
-     const updatedAllSeats = seats.map(seat => {
-        if (selectedIds.has(seat.seatNumber)) {
-           return { ...seat, isAvailable: !seat.isAvailable }
-        }
-        return seat
-     })
+    const updatedAllSeats = seats.map(seat => {
+      if (selectedIds.has(seat.seatNumber)) {
+        return { ...seat, isAvailable: !seat.isAvailable }
+      }
+      return seat
+    })
 
-     setSeats(updatedAllSeats)
-     
-     // Đồng bộ lại selectedSeats
-     const updatedSelectedSeats = updatedAllSeats.filter(s => selectedIds.has(s.seatNumber))
-     setSelectedSeats(updatedSelectedSeats)
+    setSeats(updatedAllSeats)
+
+    // Đồng bộ lại selectedSeats
+    const updatedSelectedSeats = updatedAllSeats.filter(s => selectedIds.has(s.seatNumber))
+    setSelectedSeats(updatedSelectedSeats)
   }
 
   // Helper: Màu sắc theo loại ghế
@@ -133,7 +131,8 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
     switch (type) {
       case 'VIP':
         // Nếu chọn VIP -> Cam đậm
-        if (isSelected) return `${baseSelectedClass} bg-orange-500 border-orange-600 ring-orange-200`
+        if (isSelected)
+          return `${baseSelectedClass} bg-orange-500 border-orange-600 ring-orange-200`
         // VIP bình thường -> Cam nhạt
         return 'bg-orange-100 border-orange-300 text-orange-700 hover:bg-orange-200 font-semibold'
 
@@ -147,7 +146,7 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
         // Nếu chọn Thường -> Xám đậm/Đen nhạt (để hợp với tông trắng/xám của ghế thường)
         // Thay vì màu xanh dương (blue) như trước
         if (isSelected) return `${baseSelectedClass} bg-slate-600 border-slate-700 ring-slate-300`
-        
+
         // Thường bình thường -> Trắng
         return 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'
     }
@@ -165,7 +164,11 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
             Thiết lập sơ đồ: <span className="text-blue-700">{room.roomName}</span>
           </CardTitle>
           <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-             Click vào ghế hoặc tên hàng để chọn. Giữ <Badge variant="outline" className="text-xs">Shift</Badge> để chọn nhanh.
+            Click vào ghế hoặc tên hàng để chọn. Giữ{' '}
+            <Badge variant="outline" className="text-xs">
+              Shift
+            </Badge>{' '}
+            để chọn nhanh.
           </p>
         </div>
 
@@ -177,11 +180,16 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
             </Badge>
             <span className="ml-1 text-xs text-gray-400">ghế</span>
           </div>
-          
-          <Button variant="outline" size="sm" onClick={onClose} className="border-gray-300 hover:bg-gray-100">
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            className="border-gray-300 hover:bg-gray-100"
+          >
             <X className="w-4 h-4 mr-2" /> Đóng
           </Button>
-          
+
           <Button
             size="sm"
             onClick={() => onSave(seats)}
@@ -210,7 +218,12 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
             <Button
               variant="outline"
               size="sm"
-              className={cn("transition-all", selectedSeats.length > 0 && selectedSeats[0].seatType === 'Thường' ? "ring-2 ring-gray-200 bg-gray-50" : "hover:bg-gray-50")}
+              className={cn(
+                'transition-all',
+                selectedSeats.length > 0 && selectedSeats[0].seatType === 'Thường'
+                  ? 'ring-2 ring-gray-200 bg-gray-50'
+                  : 'hover:bg-gray-50'
+              )}
               onClick={() => updateSeatType('Thường')}
               disabled={selectedSeats.length === 0}
             >
@@ -219,7 +232,12 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
             <Button
               variant="outline"
               size="sm"
-              className={cn("hover:bg-orange-50 border-orange-200 text-orange-700", selectedSeats.length > 0 && selectedSeats[0].seatType === 'VIP' && "ring-2 ring-orange-200 bg-orange-50")}
+              className={cn(
+                'hover:bg-orange-50 border-orange-200 text-orange-700',
+                selectedSeats.length > 0 &&
+                  selectedSeats[0].seatType === 'VIP' &&
+                  'ring-2 ring-orange-200 bg-orange-50'
+              )}
               onClick={() => updateSeatType('VIP')}
               disabled={selectedSeats.length === 0}
             >
@@ -229,11 +247,17 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
             <Button
               variant="outline"
               size="sm"
-              className={cn("hover:bg-pink-50 border-pink-200 text-pink-700", selectedSeats.length > 0 && selectedSeats[0].seatType === 'Ghế đôi' && "ring-2 ring-pink-200 bg-pink-50")}
+              className={cn(
+                'hover:bg-pink-50 border-pink-200 text-pink-700',
+                selectedSeats.length > 0 &&
+                  selectedSeats[0].seatType === 'Ghế đôi' &&
+                  'ring-2 ring-pink-200 bg-pink-50'
+              )}
               onClick={() => updateSeatType('Ghế đôi')}
               disabled={selectedSeats.length === 0}
             >
-              <div className="w-3 h-3 bg-pink-100 border border-pink-400 rounded-sm mr-2"></div> Ghế đôi
+              <div className="w-3 h-3 bg-pink-100 border border-pink-400 rounded-sm mr-2"></div> Ghế
+              đôi
             </Button>
           </div>
 
@@ -246,7 +270,7 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
             onClick={toggleSeatStatus}
             disabled={selectedSeats.length === 0}
           >
-             {selectedSeats.some(s => !s.isAvailable) ? "Mở khóa ghế" : "Bảo trì ghế"}
+            {selectedSeats.some(s => !s.isAvailable) ? 'Mở khóa ghế' : 'Bảo trì ghế'}
           </Button>
         </div>
 
@@ -282,7 +306,7 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
                     .sort((a, b) => a.column - b.column)
                     .map(seat => {
                       const isSelected = selectedSeats.some(s => s.seatNumber === seat.seatNumber)
-                      
+
                       return (
                         <div
                           key={seat.seatNumber}
@@ -294,7 +318,9 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
                         >
                           {seat.seatType === 'Ghế đôi' ? (
                             <span className="text-[10px] tracking-tighter">D{seat.column}</span>
-                          ) : seat.column}
+                          ) : (
+                            seat.column
+                          )}
                         </div>
                       )
                     })}
@@ -307,13 +333,16 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
         {/* LEGEND */}
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-8 border-t border-dashed mt-4 text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border border-gray-300 bg-white shadow-sm"></div> <span className="text-xs font-medium">Thường</span>
+            <div className="w-5 h-5 rounded border border-gray-300 bg-white shadow-sm"></div>{' '}
+            <span className="text-xs font-medium">Thường</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border border-orange-300 bg-orange-100 shadow-sm"></div> <span className="text-xs font-medium">VIP</span>
+            <div className="w-5 h-5 rounded border border-orange-300 bg-orange-100 shadow-sm"></div>{' '}
+            <span className="text-xs font-medium">VIP</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border border-pink-300 bg-pink-100 shadow-sm"></div> <span className="text-xs font-medium">Ghế đôi</span>
+            <div className="w-5 h-5 rounded border border-pink-300 bg-pink-100 shadow-sm"></div>{' '}
+            <span className="text-xs font-medium">Ghế đôi</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded border border-gray-300 bg-gray-200 opacity-60"></div>{' '}
@@ -321,7 +350,8 @@ export function AdminSeatMap({ theaterId, room, onClose, onSave, isSaving }: Adm
           </div>
           {/* Legend "Đang chọn" được cập nhật để phản ánh việc giữ màu */}
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded border-2 border-slate-500 bg-slate-600 shadow-md"></div> <span className="text-xs font-medium">Đang chọn (Màu đậm)</span>
+            <div className="w-5 h-5 rounded border-2 border-slate-500 bg-slate-600 shadow-md"></div>{' '}
+            <span className="text-xs font-medium">Đang chọn (Màu đậm)</span>
           </div>
         </div>
       </CardContent>

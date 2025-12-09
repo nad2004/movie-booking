@@ -18,7 +18,7 @@ interface TicketScannerProps {
 
 export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
   const { showError } = useNotification()
-  
+
   const [ticketCode, setTicketCode] = useState('')
   const [isCameraMode, setIsCameraMode] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
@@ -95,18 +95,18 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
 
       // Start decoding from video device
       const controls = await readerRef.current.decodeFromVideoDevice(
-        selectedCameraId || undefined, 
+        selectedCameraId || undefined,
         videoRef.current,
         (result, error) => {
           if (result) {
-            const scannedText = result.getText()            
+            const scannedText = result.getText()
             try {
               // Try to parse as JSON (QR code contains full booking object)
               const qrData = JSON.parse(scannedText)
-              
+
               // Extract bookingCode from QR data
               const bookingCode = qrData.bookingCode || qrData._id
-              
+
               if (bookingCode) {
                 getBookingByCode(bookingCode)
                 stopCamera()
@@ -130,12 +130,12 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
           }
         }
       )
-      
+
       controlsRef.current = controls
       setIsCameraMode(true)
     } catch (error: any) {
       console.error('Camera error:', error)
-      
+
       if (error.name === 'NotAllowedError') {
         setCameraError('Quyền truy cập camera bị từ chối. Vui lòng cho phép truy cập.')
       } else if (error.name === 'NotFoundError') {
@@ -286,7 +286,8 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
             {availableCameras.length > 1 && (
               <div className="absolute top-4 left-0 right-0 text-center pointer-events-none">
                 <div className="inline-block bg-black/70 text-white px-3 py-1 rounded-full text-xs">
-                  {availableCameras.find(cam => cam.deviceId === selectedCameraId)?.label || 'Camera'}
+                  {availableCameras.find(cam => cam.deviceId === selectedCameraId)?.label ||
+                    'Camera'}
                 </div>
               </div>
             )}

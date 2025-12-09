@@ -1,20 +1,20 @@
 'use client'
 
-import { Card } from '@/components/ui/card';
-import { Clock, Armchair, Loader2, Calendar } from 'lucide-react';
-import { SeatMaps } from '@/app/components/shared/seatsmap';
-import { Schedule } from '@/types/schedule';
-import { BookedSeat } from '@/types/booking';
-import type { Seat } from '@/types/theater';
+import { Card } from '@/components/ui/card'
+import { Clock, Armchair, Loader2, Calendar } from 'lucide-react'
+import { SeatMaps } from '@/app/components/shared/seatsmap'
+import { Schedule } from '@/types/schedule'
+import { BookedSeat } from '@/types/booking'
+import type { Seat } from '@/types/theater'
 
 interface SeatSelectorProps {
-  schedules: Schedule[];
-  isLoadingSchedules: boolean;
-  selectedSchedule: Schedule | null;
-  onSelectSchedule: (schedule: Schedule) => void;
-  
-  selectedSeats: BookedSeat[];
-  onSeatClick: (seat: Seat) => void;
+  schedules: Schedule[]
+  isLoadingSchedules: boolean
+  selectedSchedule: Schedule | null
+  onSelectSchedule: (schedule: Schedule) => void
+
+  selectedSeats: BookedSeat[]
+  onSeatClick: (seat: Seat) => void
 }
 
 export function SeatSelector({
@@ -23,7 +23,7 @@ export function SeatSelector({
   selectedSchedule,
   onSelectSchedule,
   selectedSeats,
-  onSeatClick
+  onSeatClick,
 }: SeatSelectorProps) {
   // Helper function để format ngày
   const formatDate = (dateString: string) => {
@@ -32,20 +32,22 @@ export function SeatSelector({
   }
 
   // Group schedules by date
-  const groupedSchedules = schedules.reduce((acc, schedule) => {
-    const date = schedule.showDate
-    if (!acc[date]) {
-      acc[date] = []
-    }
-    acc[date].push(schedule)
-    return acc
-  }, {} as Record<string, Schedule[]>)
+  const groupedSchedules = schedules.reduce(
+    (acc, schedule) => {
+      const date = schedule.showDate
+      if (!acc[date]) {
+        acc[date] = []
+      }
+      acc[date].push(schedule)
+      return acc
+    },
+    {} as Record<string, Schedule[]>
+  )
 
   const sortedDates = Object.keys(groupedSchedules).sort()
 
   return (
     <div className="space-y-4 flex-1 flex flex-col min-h-0">
-      
       {/* List Suất Chiếu */}
       <Card className="p-4 border border-gray-200 shadow-sm shrink-0 max-h-[300px] overflow-y-auto">
         <div className="flex items-center gap-2 mb-3">
@@ -80,10 +82,11 @@ export function SeatSelector({
                 {sortedDates.length > 1 && (
                   <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 pt-2 border-t first:border-t-0 first:pt-0">
                     <Calendar className="w-3 h-3" />
-                    {formatDate(date)} - {new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' })}
+                    {formatDate(date)} -{' '}
+                    {new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' })}
                   </div>
                 )}
-                
+
                 {/* Danh sách suất theo ngày */}
                 <div className="flex flex-wrap gap-2">
                   {groupedSchedules[date].map(schedule => (
@@ -97,11 +100,11 @@ export function SeatSelector({
                       }`}
                     >
                       <div className="flex flex-col items-start">
-                        <span className="font-semibold">{new Date(schedule.showDate).toLocaleDateString('vi-VN')}</span>
-                        <span className="font-semibold">{schedule.startTime}</span>
-                        <span className="text-[10px] text-gray-500">
-                          {schedule.roomName}
+                        <span className="font-semibold">
+                          {new Date(schedule.showDate).toLocaleDateString('vi-VN')}
                         </span>
+                        <span className="font-semibold">{schedule.startTime}</span>
+                        <span className="text-[10px] text-gray-500">{schedule.roomName}</span>
                       </div>
                     </button>
                   ))}
@@ -116,30 +119,30 @@ export function SeatSelector({
       {selectedSchedule && (
         <Card className="p-4 border border-gray-200 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center justify-between mb-4 shrink-0">
-              <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
-                      <Armchair className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-sm">
-                      Sơ đồ ghế: {selectedSchedule.roomName}
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(selectedSchedule.showDate)} - {selectedSchedule.startTime}
-                    </p>
-                  </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
+                <Armchair className="w-4 h-4" />
               </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">
+                  Sơ đồ ghế: {selectedSchedule.roomName}
+                </h3>
+                <p className="text-xs text-gray-500">
+                  {formatDate(selectedSchedule.showDate)} - {selectedSchedule.startTime}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="bg-gray-50 rounded-xl border border-gray-100 p-2 flex-1 overflow-auto">
-              <SeatMaps 
-                  schedule={selectedSchedule}
-                  selectedSeats={selectedSeats}
-                  onSeatClick={onSeatClick}
-              />
+            <SeatMaps
+              schedule={selectedSchedule}
+              selectedSeats={selectedSeats}
+              onSeatClick={onSeatClick}
+            />
           </div>
         </Card>
       )}
     </div>
-  );
+  )
 }

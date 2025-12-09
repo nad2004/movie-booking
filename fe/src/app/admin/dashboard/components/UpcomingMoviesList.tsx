@@ -1,7 +1,7 @@
-import { Film } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { upcomingMovies } from "../constants/mockData";
+import { Film } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { upcomingMovies } from '../constants/mockData'
 
 export function UpcomingMoviesList() {
   return (
@@ -29,5 +29,5 @@ export function UpcomingMoviesList() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

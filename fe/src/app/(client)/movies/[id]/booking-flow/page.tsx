@@ -1,26 +1,26 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useBooking } from '@/hooks/useBooking';
-import { BookingHeader } from './components/BookingHeader';
-import { BookingProgress } from './components/BookingProgress';
-import { BookingSummary } from './components/BookingSummary';
-import { StepShowtime } from './components/steps/StepShowtime';
-import { StepSeatSelection } from './components/steps/StepSeatSelection';
-import { StepCombo } from './components/steps/StepCombo';
-import { StepPayment } from './components/steps/StepPayment';
-import { StepSuccess } from './components/steps/StepSuccess';
-import { useParams, useSearchParams } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useBooking } from '@/hooks/useBooking'
+import { BookingHeader } from './components/BookingHeader'
+import { BookingProgress } from './components/BookingProgress'
+import { BookingSummary } from './components/BookingSummary'
+import { StepShowtime } from './components/steps/StepShowtime'
+import { StepSeatSelection } from './components/steps/StepSeatSelection'
+import { StepCombo } from './components/steps/StepCombo'
+import { StepPayment } from './components/steps/StepPayment'
+import { StepSuccess } from './components/steps/StepSuccess'
+import { useParams, useSearchParams } from 'next/navigation'
 
 export default function BookingPage() {
-  const params = useParams();
-  const movieId = params.id as string;
+  const params = useParams()
+  const movieId = params.id as string
 
-  const searchParams = useSearchParams();
-  const preSelectedScheduleId = searchParams.get('scheduleId') || undefined;
+  const searchParams = useSearchParams()
+  const preSelectedScheduleId = searchParams.get('scheduleId') || undefined
 
-  const movieTitle = "Đặt vé xem phim"; // Bạn có thể fetch thêm tên phim nếu muốn
+  const movieTitle = 'Đặt vé xem phim' // Bạn có thể fetch thêm tên phim nếu muốn
 
   const {
     currentStep,
@@ -31,17 +31,17 @@ export default function BookingPage() {
     cartItems,
     updateCartItem,
     // Payment method không cần truyền xuống StepPayment nữa vì đã hardcode VNPAY
-    schedules, 
+    schedules,
     isLoadingSchedules,
     totalAmount,
     nextStep,
     prevStep,
-    
+
     // New states from updated useBooking
-    isProcessing, 
+    isProcessing,
     createdBookingData,
     paymentUrl,
-  } = useBooking({ movieId, preSelectedScheduleId });
+  } = useBooking({ movieId, preSelectedScheduleId })
 
   // --- Logic Render Step ---
   const renderStepContent = () => {
@@ -55,7 +55,7 @@ export default function BookingPage() {
             selectedSchedule={selectedSchedule}
             onSelect={setSelectedSchedule}
           />
-        );
+        )
       case 2:
         return (
           <StepSeatSelection
@@ -63,14 +63,9 @@ export default function BookingPage() {
             schedule={selectedSchedule}
             onSeatClick={handleSeatClick}
           />
-        );
+        )
       case 3:
-        return (
-          <StepCombo
-            cartItems={cartItems}
-            updateCartItem={updateCartItem}
-          />
-        );
+        return <StepCombo cartItems={cartItems} updateCartItem={updateCartItem} />
       case 4:
         return (
           <StepPayment
@@ -78,18 +73,18 @@ export default function BookingPage() {
             bookingCode={createdBookingData?.bookingCode}
             totalAmount={totalAmount}
           />
-        );
+        )
       case 5:
         return (
           <StepSuccess
             bookingData={createdBookingData}
-            onClose={() => window.location.href = '/'} 
+            onClose={() => (window.location.href = '/')}
           />
-        );
+        )
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col">
@@ -114,13 +109,14 @@ export default function BookingPage() {
                 >
                   <ArrowLeft className="w-4 h-4" /> Quay lại
                 </Button>
-                
+
                 <Button
                   onClick={nextStep}
                   disabled={
                     (currentStep === 1 && !selectedSchedule) ||
-                    (currentStep === 2 && selectedSeats.length === 0) || 
-                    isProcessing || (currentStep === 4)
+                    (currentStep === 2 && selectedSeats.length === 0) ||
+                    isProcessing ||
+                    currentStep === 4
                   }
                   className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white h-12 gap-2 shadow-lg shadow-primary/20 flex items-center"
                 >
@@ -132,10 +128,10 @@ export default function BookingPage() {
                   ) : (
                     <>
                       {/* Ở bước 4 nút sẽ đổi text để xác nhận hoàn tất */}
-                      { 'Tiếp tục'} 
+                      {'Tiếp tục'}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </>
-                  )} 
+                  )}
                 </Button>
               </div>
             )}
@@ -155,5 +151,5 @@ export default function BookingPage() {
         </div>
       </main>
     </div>
-  );
+  )
 }

@@ -22,7 +22,7 @@ import { useTheaters } from '@/lib/api/theaters'
 
 export default function ShiftAssignmentsTab() {
   // --- API Hooks (Fetch theaters first) ---
-  const { data: theatersData } = useTheaters({limit: 100})
+  const { data: theatersData } = useTheaters({ limit: 100 })
   const { data: shiftTemplatesData } = useShiftTemplates({ isActive: true })
   const { remove } = useAssignmentMutations()
 
@@ -73,7 +73,7 @@ export default function ShiftAssignmentsTab() {
   // Get available shift codes from templates (for filter dropdown)
   const availableShiftCodes = useMemo(() => {
     if (!shiftTemplates || shiftTemplates.length === 0) return []
-    const codes = new Set(shiftTemplates.map((t) => t.code))
+    const codes = new Set(shiftTemplates.map(t => t.code))
     return Array.from(codes).sort()
   }, [shiftTemplates])
 
@@ -82,13 +82,13 @@ export default function ShiftAssignmentsTab() {
     if (!searchQuery) return shifts
 
     return shifts
-      .map((shift) => ({
+      .map(shift => ({
         ...shift,
-        employees: shift.employees.filter((emp) =>
+        employees: shift.employees.filter(emp =>
           emp.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
         ),
       }))
-      .filter((shift) => shift.employees.length > 0)
+      .filter(shift => shift.employees.length > 0)
   }, [shifts, searchQuery])
 
   // --- Handlers ---
@@ -175,9 +175,18 @@ export default function ShiftAssignmentsTab() {
       />
 
       {/* Modals */}
-      <AssignStaffModal open={isAssignOpen} onOpenChange={setAssignOpen} selectedSchedule={selectedSchedule} selectedTheaterId={activeTheaterId} />
+      <AssignStaffModal
+        open={isAssignOpen}
+        onOpenChange={setAssignOpen}
+        selectedSchedule={selectedSchedule}
+        selectedTheaterId={activeTheaterId}
+      />
 
-      <UpdateAssignmentModal open={isUpdateOpen} onOpenChange={setUpdateOpen} employee={selectedEmployee} />
+      <UpdateAssignmentModal
+        open={isUpdateOpen}
+        onOpenChange={setUpdateOpen}
+        employee={selectedEmployee}
+      />
 
       <ConfirmDeleteAlert
         open={isDeleteOpen}

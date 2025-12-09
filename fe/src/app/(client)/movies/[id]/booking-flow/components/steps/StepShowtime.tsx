@@ -1,29 +1,28 @@
 // src/features/booking/components/steps/StepShowtime.tsx
-import { Clock, MapPin, Calendar, Loader2 } from 'lucide-react';
-import { Schedule } from '@/types/schedule';
+import { Clock, MapPin, Calendar, Loader2 } from 'lucide-react'
+import { Schedule } from '@/types/schedule'
 
 interface StepShowtimeProps {
-  movieTitle: string;
-  schedules: Schedule[]; // Nhận mảng dữ liệu thật
-  isLoading: boolean;
-  selectedSchedule: Schedule | null;
-  onSelect: (schedule: Schedule) => void;
+  movieTitle: string
+  schedules: Schedule[] // Nhận mảng dữ liệu thật
+  isLoading: boolean
+  selectedSchedule: Schedule | null
+  onSelect: (schedule: Schedule) => void
 }
 
-export function StepShowtime({ 
-  movieTitle, 
-  schedules, 
-  isLoading, 
-  selectedSchedule, 
-  onSelect 
+export function StepShowtime({
+  movieTitle,
+  schedules,
+  isLoading,
+  selectedSchedule,
+  onSelect,
 }: StepShowtimeProps) {
-  
-  const formatPrice = (price: number) => price.toLocaleString('vi-VN') + ' đ';
+  const formatPrice = (price: number) => price.toLocaleString('vi-VN') + ' đ'
 
   return (
     <div>
       <h2 className="mb-6 text-text-primary text-xl font-bold">Chọn suất chiếu – {movieTitle}</h2>
-      
+
       {/* Case 1: Đang tải */}
       {isLoading && (
         <div className="flex justify-center items-center py-10">
@@ -41,7 +40,7 @@ export function StepShowtime({
 
       {/* Case 3: Hiển thị danh sách */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {schedules.map((schedule) => (
+        {schedules.map(schedule => (
           <div
             key={schedule._id}
             onClick={() => onSelect(schedule)}
@@ -55,27 +54,29 @@ export function StepShowtime({
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-primary" />
                 <span className="text-text-primary font-semibold text-lg">
-                    {/* Giả sử startTime format là "19:00" */}
-                    {schedule.startTime}
+                  {/* Giả sử startTime format là "19:00" */}
+                  {schedule.startTime}
                 </span>
               </div>
               <div className="px-2 py-1 rounded bg-bg-secondary text-xs font-medium text-text-secondary border border-border">
                 {schedule.roomType} {/* 2D, IMAX... */}
               </div>
             </div>
-            
+
             <div className="space-y-2 text-sm text-text-secondary">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 {/* Access vào object theater lồng nhau */}
-                <span>{schedule.theater?.name} • {schedule.roomName}</span>
+                <span>
+                  {schedule.theater?.name} • {schedule.roomName}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 <span>{new Date(schedule.showDate).toLocaleDateString('vi-VN')}</span>
               </div>
             </div>
-            
+
             <div className="mt-4 pt-3 border-t border-border flex justify-between items-center">
               <span className="text-text-secondary text-sm">Giá vé từ</span>
               {/* Access vào ticketPrices */}
@@ -87,5 +88,5 @@ export function StepShowtime({
         ))}
       </div>
     </div>
-  );
+  )
 }

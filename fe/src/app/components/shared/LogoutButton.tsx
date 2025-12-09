@@ -21,16 +21,24 @@ import { useState } from 'react'
 interface LogoutButtonProps {
   showIcon?: boolean
   text?: string
-  variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined
+  variant?:
+    | 'default'
+    | 'link'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | null
+    | undefined
   className?: string
 }
 
-export function LogoutButton({ 
-  className, 
-  variant = 'default', 
+export function LogoutButton({
+  className,
+  variant = 'default',
   showIcon = true,
   text = 'Đăng xuất',
-  ...props 
+  ...props
 }: LogoutButtonProps) {
   const { logout } = useUserStore()
   const router = useRouter()
@@ -47,16 +55,12 @@ export function LogoutButton({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {/* Truyền toàn bộ props còn lại vào Button (vd: size, className, disabled...) */}
-        <Button 
-            variant={variant} 
-            className={className} 
-            {...props}
-        >
+        <Button variant={variant} className={className} {...props}>
           {showIcon && <LogOut className="mr-2 h-4 w-4" />}
           <span>{text}</span>
         </Button>
       </AlertDialogTrigger>
-      
+
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Xác nhận đăng xuất</AlertDialogTitle>
@@ -66,7 +70,7 @@ export function LogoutButton({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={handleLogout}
             className="bg-red-600 hover:bg-red-700 text-white"
           >

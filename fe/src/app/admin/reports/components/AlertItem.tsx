@@ -1,27 +1,31 @@
-import { TrendingUp, AlertTriangle } from "lucide-react";
-import type { Alert } from "../page";
+import { TrendingUp, AlertTriangle } from 'lucide-react'
+import type { Alert } from '../page'
 export const AlertItem = ({ alert }: { alert: Alert }) => {
   const getAlertStyles = () => {
     switch (alert.type) {
       case 'danger':
-        return 'bg-red-50 border-l-red-500';
+        return 'bg-red-50 border-l-red-500'
       case 'warning':
-        return 'bg-yellow-50 border-l-yellow-500';
+        return 'bg-yellow-50 border-l-yellow-500'
       default:
-        return 'bg-blue-50 border-l-blue-500';
+        return 'bg-blue-50 border-l-blue-500'
     }
-  };
+  }
 
   const getIcon = () => {
-    const iconClass = alert.type === 'danger' ? 'text-red-500' : 
-                     alert.type === 'warning' ? 'text-yellow-500' : 'text-blue-500';
-    
+    const iconClass =
+      alert.type === 'danger'
+        ? 'text-red-500'
+        : alert.type === 'warning'
+          ? 'text-yellow-500'
+          : 'text-blue-500'
+
     return alert.type === 'info' ? (
       <TrendingUp className={`w-5 h-5 ${iconClass}`} />
     ) : (
       <AlertTriangle className={`w-5 h-5 ${iconClass}`} />
-    );
-  };
+    )
+  }
 
   return (
     <div className={`p-4 rounded-lg border-l-4 ${getAlertStyles()}`}>
@@ -33,10 +37,8 @@ export const AlertItem = ({ alert }: { alert: Alert }) => {
           </div>
           <p className="text-sm text-muted-foreground">{alert.description}</p>
         </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {alert.time}
-        </span>
+        <span className="text-xs text-muted-foreground whitespace-nowrap">{alert.time}</span>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,4 +1,4 @@
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -10,50 +10,50 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
-import { SectionHeader } from './SectionHeader';
-import { YearFilter } from '../../components/YearFilter';
-import { usePerformanceTrend, useRevenueViews } from '@/lib/api/report';
+} from 'recharts'
+import { SectionHeader } from './SectionHeader'
+import { YearFilter } from '../../components/YearFilter'
+import { usePerformanceTrend, useRevenueViews } from '@/lib/api/report'
 
 interface TrendsSectionProps {
-  selectedYear: number;
-  onYearChange: (year: number) => void;
+  selectedYear: number
+  onYearChange: (year: number) => void
 }
 
 export const TrendsSection = ({ selectedYear, onYearChange }: TrendsSectionProps) => {
-  const { data: performanceData, isLoading: isLoadingPerformance } = usePerformanceTrend(selectedYear);
-  const { data: revenueData, isLoading: isLoadingRevenue } = useRevenueViews(selectedYear);
+  const { data: performanceData, isLoading: isLoadingPerformance } =
+    usePerformanceTrend(selectedYear)
+  const { data: revenueData, isLoading: isLoadingRevenue } = useRevenueViews(selectedYear)
 
   // Transform performance trend data
-  const performanceChartData = performanceData?.months.map(month => {
-    const result: any = { month: month.tenThang };
-    month.values.forEach(val => {
-      result[val.name] = val.value;
-    });
-    return result;
-  }) || [];
+  const performanceChartData =
+    performanceData?.months.map(month => {
+      const result: any = { month: month.tenThang }
+      month.values.forEach(val => {
+        result[val.name] = val.value
+      })
+      return result
+    }) || []
 
   // Transform revenue views data
-  const revenueChartData = revenueData?.months.map(month => {
-    const result: any = { month: month.tenThang };
-    month.values.forEach(val => {
-      result[val.name] = val.value;
-    });
-    return result;
-  }) || [];
+  const revenueChartData =
+    revenueData?.months.map(month => {
+      const result: any = { month: month.tenThang }
+      month.values.forEach(val => {
+        result[val.name] = val.value
+      })
+      return result
+    }) || []
 
   return (
     <section className="bg-card rounded-lg border border-border p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
-        <SectionHeader 
-          icon={TrendingUp} 
-          title="Xu Hướng Hiệu Suất" 
+        <SectionHeader
+          icon={TrendingUp}
+          title="Xu Hướng Hiệu Suất"
           subtitle="Theo dõi sự thay đổi theo thời gian"
         />
-        <YearFilter 
-          selectedYear={selectedYear}
-          onYearChange={onYearChange}
-        />
+        <YearFilter selectedYear={selectedYear} onYearChange={onYearChange} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -119,11 +119,11 @@ export const TrendsSection = ({ selectedYear, onYearChange }: TrendsSectionProps
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
                 {revenueData?.months[0]?.values.map((val, idx) => (
-                  <Bar 
+                  <Bar
                     key={val.name}
-                    dataKey={val.name} 
-                    fill={idx === 0 ? '#8b5cf6' : '#f59e0b'} 
-                    name={val.name} 
+                    dataKey={val.name}
+                    fill={idx === 0 ? '#8b5cf6' : '#f59e0b'}
+                    name={val.name}
                   />
                 ))}
               </BarChart>
@@ -132,5 +132,5 @@ export const TrendsSection = ({ selectedYear, onYearChange }: TrendsSectionProps
         </div>
       </div>
     </section>
-  );
-};
+  )
+}

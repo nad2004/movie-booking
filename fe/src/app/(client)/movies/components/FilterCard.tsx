@@ -30,7 +30,7 @@ type FilterCardProps = {
   onApplyFilter: () => void
   isLoading: boolean
   // Optional: Thêm prop reset nếu cần
-  onResetFilter?: () => void 
+  onResetFilter?: () => void
 }
 
 type FilterButtonListProps = {
@@ -42,49 +42,61 @@ type FilterButtonListProps = {
 
 // --- SUB-COMPONENT: MEMOIZED LIST ---
 // Sử dụng memo để tránh re-render khi parent thay đổi state không liên quan (vd: nhập input year)
-const FilterButtonList = memo(({ items, selectedItem, onSelect, className }: FilterButtonListProps) => {
-  return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
-      {items.map(item => {
-        const isSelected = Array.isArray(selectedItem)
-          ? selectedItem.includes(item)
-          : selectedItem === item
+const FilterButtonList = memo(
+  ({ items, selectedItem, onSelect, className }: FilterButtonListProps) => {
+    return (
+      <div className={cn('flex flex-wrap gap-2', className)}>
+        {items.map(item => {
+          const isSelected = Array.isArray(selectedItem)
+            ? selectedItem.includes(item)
+            : selectedItem === item
 
-        return (
-          <button
-            key={item}
-            onClick={() => onSelect(item)}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
-              isSelected
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
-            )}
-            type="button"
-          >
-            {item}
-          </button>
-        )
-      })}
-    </div>
-  )
-})
+          return (
+            <button
+              key={item}
+              onClick={() => onSelect(item)}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
+                isSelected
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+              )}
+              type="button"
+            >
+              {item}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+)
 FilterButtonList.displayName = 'FilterButtonList'
 
 // --- MAIN COMPONENT ---
 export default function FilterCard({
-  countries, selectedCountry, onSelectCountry,
-  movieTypes, selectedType, onSelectType,
-  ratings, selectedRating, onSelectRating,
-  genres, selectedGenres, onToggleGenre,
-  customYear, onSetCustomYear,
-  sortOptions, selectedSort, onSelectSort,
+  countries,
+  selectedCountry,
+  onSelectCountry,
+  movieTypes,
+  selectedType,
+  onSelectType,
+  ratings,
+  selectedRating,
+  onSelectRating,
+  genres,
+  selectedGenres,
+  onToggleGenre,
+  customYear,
+  onSetCustomYear,
+  sortOptions,
+  selectedSort,
+  onSelectSort,
   onClose,
   onApplyFilter,
   isLoading,
-  onResetFilter
+  onResetFilter,
 }: FilterCardProps) {
-
   return (
     <Card className="bg-card border-border shadow-lg p-6 mb-8 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-300">
       {/* Header */}
@@ -99,30 +111,53 @@ export default function FilterCard({
       <div className="space-y-8">
         {/* Grid Layout cho các nhóm filter nhỏ */}
         <div className="grid grid-cols-1  gap-8">
-          
           {/* Cột 1 */}
           <div className="space-y-6">
             <div>
-              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">Quốc gia</label>
-              <FilterButtonList items={countries} selectedItem={selectedCountry} onSelect={onSelectCountry} />
+              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
+                Quốc gia
+              </label>
+              <FilterButtonList
+                items={countries}
+                selectedItem={selectedCountry}
+                onSelect={onSelectCountry}
+              />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">Loại phim</label>
-              <FilterButtonList items={movieTypes} selectedItem={selectedType} onSelect={onSelectType} />
+              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
+                Loại phim
+              </label>
+              <FilterButtonList
+                items={movieTypes}
+                selectedItem={selectedType}
+                onSelect={onSelectType}
+              />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">Độ tuổi</label>
-              <FilterButtonList items={ratings} selectedItem={selectedRating} onSelect={onSelectRating} />
+              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
+                Độ tuổi
+              </label>
+              <FilterButtonList
+                items={ratings}
+                selectedItem={selectedRating}
+                onSelect={onSelectRating}
+              />
             </div>
           </div>
 
           {/* Cột 2 */}
           <div className="space-y-6">
             <div>
-               <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">Sắp xếp theo</label>
-               <FilterButtonList items={sortOptions} selectedItem={selectedSort} onSelect={onSelectSort} />
+              <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
+                Sắp xếp theo
+              </label>
+              <FilterButtonList
+                items={sortOptions}
+                selectedItem={selectedSort}
+                onSelect={onSelectSort}
+              />
             </div>
 
             <div>
@@ -130,7 +165,7 @@ export default function FilterCard({
                 Năm sản xuất
               </label>
               <div className="flex items-center gap-4">
-                 <Input
+                <Input
                   type="number"
                   placeholder="VD: 2024 (Nhập 0 = Tất cả)"
                   value={customYear}
@@ -144,8 +179,10 @@ export default function FilterCard({
 
         {/* Thể loại (Chiếm full width vì thường nhiều item) */}
         <div>
-           <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">Thể loại</label>
-           <FilterButtonList items={genres} selectedItem={selectedGenres} onSelect={onToggleGenre} />
+          <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
+            Thể loại
+          </label>
+          <FilterButtonList items={genres} selectedItem={selectedGenres} onSelect={onToggleGenre} />
         </div>
       </div>
 
@@ -160,7 +197,7 @@ export default function FilterCard({
         </Button>
 
         {onResetFilter && (
-           <Button
+          <Button
             variant="ghost"
             onClick={onResetFilter}
             className="flex-none rounded-xl text-muted-foreground hover:text-foreground"
@@ -182,7 +219,7 @@ export default function FilterCard({
               Đang áp dụng...
             </>
           ) : (
-            "Xem kết quả"
+            'Xem kết quả'
           )}
         </Button>
       </div>

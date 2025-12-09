@@ -25,7 +25,7 @@ export interface RejectReviewDTO {
 export async function getMovieReviews(movieId: string, signal?: AbortSignal) {
   try {
     const res = await api.get<ReviewListResponse>(`/reviews/movie/${movieId}`, {
-      signal // 🟢 Truyền signal
+      signal, // 🟢 Truyền signal
     })
     return res.data.data
   } catch (error) {
@@ -46,9 +46,9 @@ export async function getMovieReviews(movieId: string, signal?: AbortSignal) {
 // Thêm signal
 export async function getReviews(params: GetReviewsParams = {}, signal?: AbortSignal) {
   try {
-    const res = await api.get<ReviewListResponse>('/admin/reviews', { 
+    const res = await api.get<ReviewListResponse>('/admin/reviews', {
       params,
-      signal // 🟢 Truyền signal
+      signal, // 🟢 Truyền signal
     })
     return res.data.data
   } catch (error) {

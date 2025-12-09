@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Film, X } from 'lucide-react';
+import { Button } from '@/components/ui/button'
+import { Film, X } from 'lucide-react'
 
 interface BookingHeaderProps {
-  onClose?: () => void;
+  onClose?: () => void
 }
 
 export function BookingHeader({ onClose }: BookingHeaderProps) {
@@ -10,9 +10,8 @@ export function BookingHeader({ onClose }: BookingHeaderProps) {
     <header className="bg-bg-primary py-4 sticky top-0 z-10">
       <div className="max-w-[1400px]  mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-          </div>
-          <Button 
+          <div className="flex items-center gap-2"></div>
+          <Button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-primary hover:bg-accent flex items-center justify-center transition-colors"
           >
@@ -21,5 +20,5 @@ export function BookingHeader({ onClose }: BookingHeaderProps) {
         </div>
       </div>
     </header>
-  );
+  )
 }

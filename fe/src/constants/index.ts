@@ -36,23 +36,23 @@ export const DEFAULT_REVIEW_LIST: PaginatedReviewData = {
   pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
   statistics: {
     avgRating: 0,
-    totalReviews: 0
-  }
+    totalReviews: 0,
+  },
 }
 export const DEFAULT_SCHEDULE_LIST: PaginatedScheduleData = {
   schedules: [],
-  pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 }
+  pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
 }
 export const DEFAULT_BOOKING_LIST: PaginatedBookingData = {
   bookings: [],
-  pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 }
+  pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
 }
 export const DEFAULT_REVIEWS_LIST: PaginatedReviewData = {
   reviews: [],
   pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
   statistics: {
     avgRating: 0,
-    totalReviews: 0
-  }
+    totalReviews: 0,
+  },
 }
-export const MAXSTARS = 5;
+export const MAXSTARS = 5

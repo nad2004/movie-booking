@@ -1,34 +1,34 @@
-import { Movie } from "./movie";
+import { Movie } from './movie'
 import type { ApiResponse } from './apiTemplate'
-import { Pagination } from "./apiTemplate";
+import { Pagination } from './apiTemplate'
 // ======================
 // GENRE INTERFACE
 // ======================
 export interface Genre {
-  _id: string;
+  _id: string
 
-  name: string;
-  slug?: string;
+  name: string
+  slug?: string
 
-  description?: string;
-  icon?: string;
-  color?: string;
-  displayOrder: number;
+  description?: string
+  icon?: string
+  color?: string
+  displayOrder: number
 
-  isActive: boolean;
+  isActive: boolean
 
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
+  createdAt?: string | Date
+  updatedAt?: string | Date
 
   // Virtuals
-  movies?: Movie[];
-  movieCount?: number;
+  movies?: Movie[]
+  movieCount?: number
 }
 
 export interface GenreListData {
-  items: Genre[];
-  pagination: Pagination;
+  items: Genre[]
+  pagination: Pagination
 }
 
-export type GenreApiResponse = ApiResponse<Genre>;
-export type GenreListResponse = ApiResponse<GenreListData>;
+export type GenreApiResponse = ApiResponse<Genre>
+export type GenreListResponse = ApiResponse<GenreListData>

@@ -1,15 +1,15 @@
-import { MapPin, Clock, Calendar, Ticket } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { CartItem } from '@/types';
-import { BookedSeat } from '@/types/booking';
-import { Schedule } from '@/types/schedule';
+import { MapPin, Clock, Calendar, Ticket } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { CartItem } from '@/types'
+import { BookedSeat } from '@/types/booking'
+import { Schedule } from '@/types/schedule'
 
 interface BookingSummaryProps {
-  movieTitle: string;
-  selectedSchedule: Schedule | null;
-  selectedSeats: BookedSeat[];
-  cartItems: CartItem[];
-  total: number;
+  movieTitle: string
+  selectedSchedule: Schedule | null
+  selectedSeats: BookedSeat[]
+  cartItems: CartItem[]
+  total: number
 }
 
 export function BookingSummary({
@@ -19,7 +19,7 @@ export function BookingSummary({
   cartItems,
   total,
 }: BookingSummaryProps) {
-  const formatPrice = (price: number) => price.toLocaleString('vi-VN') + ' đ';
+  const formatPrice = (price: number) => price.toLocaleString('vi-VN') + ' đ'
 
   return (
     <div className="w-full lg:w-[380px] flex-shrink-0">
@@ -31,11 +31,14 @@ export function BookingSummary({
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                 {/* Truy cập nested object theater */}
-                <span>{selectedSchedule.theater?.name} - {selectedSchedule.roomName}</span>
+                <span>
+                  {selectedSchedule.theater?.name} - {selectedSchedule.roomName}
+                </span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" /> {new Date(selectedSchedule.showDate).toLocaleDateString()}
+                  <Calendar className="w-4 h-4" />{' '}
+                  {new Date(selectedSchedule.showDate).toLocaleDateString()}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" /> {selectedSchedule.startTime}
@@ -59,7 +62,7 @@ export function BookingSummary({
           </div>
           {selectedSeats.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
-              {selectedSeats.map((seat) => (
+              {selectedSeats.map(seat => (
                 <Badge key={seat.seatNumber} variant="outline" className="bg-bg-secondary">
                   {seat.seatNumber} ({seat.seatType})
                 </Badge>
@@ -76,11 +79,13 @@ export function BookingSummary({
             <div className="flex justify-between items-center">
               <span className="font-semibold text-text-primary">Bắp nước</span>
               <span className="font-bold text-primary">
-                {formatPrice(cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0))}
+                {formatPrice(
+                  cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0)
+                )}
               </span>
             </div>
             <div className="space-y-2">
-              {cartItems.map((item) => (
+              {cartItems.map(item => (
                 <div key={item.product._id} className="flex justify-between text-sm">
                   <span className="text-text-secondary">
                     {item.quantity}x {item.product.name}
@@ -99,5 +104,5 @@ export function BookingSummary({
         </div>
       </div>
     </div>
-  );
+  )
 }

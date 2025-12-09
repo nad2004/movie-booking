@@ -1,30 +1,36 @@
 'use client'
 
-import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Film, CalendarIcon, Calendar } from 'lucide-react';
-import { Movie } from '@/types/movie';
+import { Card } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Film, CalendarIcon, Calendar } from 'lucide-react'
+import { Movie } from '@/types/movie'
 
 interface MovieSelectorProps {
-  movies: Movie[];
-  selectedMovieId: string;
-  onSelectMovie: (id: string) => void;
-  selectedDate: string;
-  onSelectDate: (date: string) => void;
-  showAllDates: boolean;
-  onToggleAllDates: (show: boolean) => void;
+  movies: Movie[]
+  selectedMovieId: string
+  onSelectMovie: (id: string) => void
+  selectedDate: string
+  onSelectDate: (date: string) => void
+  showAllDates: boolean
+  onToggleAllDates: (show: boolean) => void
 }
 
-export function MovieSelector({ 
-  movies, 
-  selectedMovieId, 
-  onSelectMovie, 
-  selectedDate, 
+export function MovieSelector({
+  movies,
+  selectedMovieId,
+  onSelectMovie,
+  selectedDate,
   onSelectDate,
   showAllDates,
-  onToggleAllDates
+  onToggleAllDates,
 }: MovieSelectorProps) {
   return (
     <Card className="p-4 border border-gray-200 shadow-sm">
@@ -34,7 +40,7 @@ export function MovieSelector({
         </div>
         <h3 className="font-semibold text-gray-900 text-sm">Bộ lọc suất chiếu</h3>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Chọn Phim */}
         <div className="space-y-1.5">
@@ -48,7 +54,7 @@ export function MovieSelector({
               <SelectItem value="ALL">
                 <span className="font-semibold text-primary">🎬 Tất cả phim</span>
               </SelectItem>
-              
+
               {movies.length === 0 ? (
                 <SelectItem value="no-movie" disabled>
                   Không có phim nào
@@ -68,19 +74,19 @@ export function MovieSelector({
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-gray-700">Ngày Chiếu</label>
           <div className="relative">
-             <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-             <Input 
-                type="date" 
-                className="pl-9 bg-white"
-                value={selectedDate}
-                onChange={(e) => {
-                  onSelectDate(e.target.value)
-                  // Tự động tắt "Tất cả ngày" khi chọn ngày cụ thể
-                  if (showAllDates) {
-                    onToggleAllDates(false)
-                  }
-                }}
-             />
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="date"
+              className="pl-9 bg-white"
+              value={selectedDate}
+              onChange={e => {
+                onSelectDate(e.target.value)
+                // Tự động tắt "Tất cả ngày" khi chọn ngày cụ thể
+                if (showAllDates) {
+                  onToggleAllDates(false)
+                }
+              }}
+            />
           </div>
         </div>
 
@@ -89,7 +95,7 @@ export function MovieSelector({
           <label className="text-xs font-medium text-gray-700">Hoặc xem tất cả</label>
           <Button
             type="button"
-            variant={showAllDates ? "default" : "outline"}
+            variant={showAllDates ? 'default' : 'outline'}
             className={`w-full ${showAllDates ? 'bg-primary text-white' : 'border-gray-300 hover:bg-gray-50'}`}
             onClick={() => onToggleAllDates(!showAllDates)}
           >
@@ -109,9 +115,7 @@ export function MovieSelector({
                 Tất cả ngày
               </span>
             )}
-            {showAllDates && selectedMovieId === 'ALL' && (
-              <span className="mx-1">•</span>
-            )}
+            {showAllDates && selectedMovieId === 'ALL' && <span className="mx-1">•</span>}
             {selectedMovieId === 'ALL' && (
               <span className="flex items-center gap-1">
                 <Film className="w-3 h-3" />
@@ -122,5 +126,5 @@ export function MovieSelector({
         </div>
       )}
     </Card>
-  );
+  )
 }

@@ -32,19 +32,18 @@ import { GenerateWorkScheduleDTO } from '@/types/work-schedule'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 // --- Validation Schema ---
-const generateScheduleSchema = z.object({
-  theaterId: z.string().min(1, 'Vui lòng chọn rạp'),
-  fromDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu'),
-  toDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc'),
-  templateIds: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 ca mẫu'),
-  skipExisting: z.boolean(),
-}).refine(
-  (data) => new Date(data.fromDate) <= new Date(data.toDate),
-  {
+const generateScheduleSchema = z
+  .object({
+    theaterId: z.string().min(1, 'Vui lòng chọn rạp'),
+    fromDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu'),
+    toDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc'),
+    templateIds: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 ca mẫu'),
+    skipExisting: z.boolean(),
+  })
+  .refine(data => new Date(data.fromDate) <= new Date(data.toDate), {
     message: 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc',
     path: ['toDate'],
-  }
-)
+  })
 
 type GenerateScheduleFormData = z.infer<typeof generateScheduleSchema>
 
@@ -64,12 +63,14 @@ export default function GenerateScheduleModal({
   defaultToDate,
 }: GenerateScheduleModalProps) {
   // --- API Hooks ---
-  const { data: templatesData, isLoading: isLoadingTemplates } = useShiftTemplates({ isActive: true })
-  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({limit: 100})
+  const { data: templatesData, isLoading: isLoadingTemplates } = useShiftTemplates({
+    isActive: true,
+  })
+  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({ limit: 100 })
   const { generate } = useWorkScheduleMutations()
 
   // --- Memoized Data ---
-  const templates = useMemo(() => templatesData|| [], [templatesData])
+  const templates = useMemo(() => templatesData || [], [templatesData])
   const theaters = useMemo(() => theatersData?.theaters || [], [theatersData])
 
   // --- React Hook Form ---
@@ -113,7 +114,11 @@ export default function GenerateScheduleModal({
       if (checked) {
         setValue('templateIds', [...currentIds, templateId], { shouldValidate: true })
       } else {
-        setValue('templateIds', currentIds.filter(id => id !== templateId), { shouldValidate: true })
+        setValue(
+          'templateIds',
+          currentIds.filter(id => id !== templateId),
+          { shouldValidate: true }
+        )
       }
     },
     [selectedTemplateIds, setValue]
@@ -133,11 +138,11 @@ export default function GenerateScheduleModal({
         }
 
         await generate.mutateAsync(payload)
-        
+
         toast.success('Sinh lịch thành công!', {
           description: `Đã tạo lịch từ ${data.fromDate} đến ${data.toDate}`,
         })
-        
+
         onOpenChange(false)
       } catch (error: any) {
         toast.error('Lỗi khi sinh lịch', {
@@ -187,12 +192,13 @@ export default function GenerateScheduleModal({
                     >
                       <SelectValue placeholder="Chọn rạp" />
                     </SelectTrigger>
-                    <SelectContent className='max-h-[300px] overflow-y-auto'>
-                      {theaters && theaters.map(theater => (
-                        <SelectItem key={theater._id} value={theater._id}>
-                          {theater.name}
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="max-h-[300px] overflow-y-auto">
+                      {theaters &&
+                        theaters.map(theater => (
+                          <SelectItem key={theater._id} value={theater._id}>
+                            {theater.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -281,7 +287,7 @@ export default function GenerateScheduleModal({
                       <Checkbox
                         id={template._id}
                         checked={selectedTemplateIds?.includes(template._id)}
-                        onCheckedChange={(checked) =>
+                        onCheckedChange={checked =>
                           handleTemplateToggle(template._id, checked as boolean)
                         }
                       />
@@ -329,12 +335,7 @@ export default function GenerateScheduleModal({
           </div>
 
           <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
               Hủy
             </Button>
             <Button

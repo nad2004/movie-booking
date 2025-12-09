@@ -27,7 +27,9 @@ export default function LichChieuHomNay() {
     theaterId: activeCinema?._id,
     showDate: selectedDate,
   })
-  const schedules = useMemo(() => {return scheduleData?.schedules || []}, [scheduleData])
+  const schedules = useMemo(() => {
+    return scheduleData?.schedules || []
+  }, [scheduleData])
   const handleSelectCity = (city: string) => {
     setSelectedCity(city)
     setManualCinema(undefined)

@@ -28,26 +28,26 @@ export function ImageWithFallback(props: ImageWithFallbackProps) {
       style={style}
     >
       <div className="flex items-center justify-center w-full h-full">
-        <Image 
-          src={ERROR_IMG_SRC} 
-          alt="Error loading image" 
+        <Image
+          src={ERROR_IMG_SRC}
+          alt="Error loading image"
           width={numWidth || 400}
           height={numHeight || 400}
-          {...rest} 
+          {...rest}
         />
       </div>
     </div>
   ) : (
-    <Image 
-      src={src || ERROR_IMG_SRC} 
-      alt={alt} 
-      className={className} 
-      style={style} 
-      width={numWidth|| 400}
-      height={numHeight|| 400}
+    <Image
+      src={src || ERROR_IMG_SRC}
+      alt={alt}
+      className={className}
+      style={style}
+      width={numWidth || 400}
+      height={numHeight || 400}
       fill={fill}
-      {...rest} 
-      onError={handleError} 
+      {...rest}
+      onError={handleError}
     />
   )
 }

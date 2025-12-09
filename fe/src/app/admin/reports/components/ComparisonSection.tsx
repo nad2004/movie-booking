@@ -1,6 +1,6 @@
 import { Users } from 'lucide-react'
 import { SectionHeader } from './SectionHeader'
-import { YearFilter } from '../../components/YearFilter';
+import { YearFilter } from '../../components/YearFilter'
 import {
   ResponsiveContainer,
   BarChart,
@@ -14,22 +14,22 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  Radar
+  Radar,
 } from 'recharts'
 import { useTopEmployees } from '@/lib/api/report'
 
 interface ComparisonSectionProps {
-  selectedYear: number;
-  onYearChange: (year: number) => void;
+  selectedYear: number
+  onYearChange: (year: number) => void
 }
 
 interface ComparisonDataRow {
-  metric: string;
-  [key: string]: string | number; // Allow dynamic employee names as keys
+  metric: string
+  [key: string]: string | number // Allow dynamic employee names as keys
 }
 
 export const ComparisonSection = ({ selectedYear, onYearChange }: ComparisonSectionProps) => {
-  const { data: employeesData, isLoading } = useTopEmployees(selectedYear);
+  const { data: employeesData, isLoading } = useTopEmployees(selectedYear)
 
   // Generate comparison data from top employees
   const comparisonData: ComparisonDataRow[] = [
@@ -38,22 +38,22 @@ export const ComparisonSection = ({ selectedYear, onYearChange }: ComparisonSect
     { metric: 'Ca làm việc' },
     { metric: 'Hiệu suất' },
     { metric: 'Doanh số' },
-  ];
+  ]
 
   // Add employee data to each metric
   if (employeesData?.items) {
     employeesData.items.slice(0, 3).forEach((emp, idx) => {
-      comparisonData.forEach((row) => {
+      comparisonData.forEach(row => {
         // Generate semi-realistic values based on employee's main value
-        const baseValue = emp.value;
-        const variance = Math.random() * 10;
-        row[emp.name] = Math.round(baseValue + variance);
-      });
-    });
+        const baseValue = emp.value
+        const variance = Math.random() * 10
+        row[emp.name] = Math.round(baseValue + variance)
+      })
+    })
   }
 
-  const employeeNames = employeesData?.items.slice(0, 3).map(emp => emp.name) || [];
-  const colors = ['#3b82f6', '#8b5cf6', '#f59e0b'];
+  const employeeNames = employeesData?.items.slice(0, 3).map(emp => emp.name) || []
+  const colors = ['#3b82f6', '#8b5cf6', '#f59e0b']
 
   return (
     <section className="bg-card rounded-lg border border-border p-6 mb-8">
@@ -63,10 +63,7 @@ export const ComparisonSection = ({ selectedYear, onYearChange }: ComparisonSect
           title="So Sánh Hiệu Suất"
           subtitle="So sánh các chỉ số giữa nhiều nhân viên"
         />
-        <YearFilter 
-          selectedYear={selectedYear}
-          onYearChange={onYearChange}
-        />
+        <YearFilter selectedYear={selectedYear} onYearChange={onYearChange} />
       </div>
 
       {isLoading ? (

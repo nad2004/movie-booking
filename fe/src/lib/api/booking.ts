@@ -74,7 +74,7 @@ export async function getMyBookings(params: GetMyBookingParams = {}, signal?: Ab
 export function useMyBookings(params: GetMyBookingParams = {}) {
   return useQuery({
     queryKey: ['my-bookings', params],
-    queryFn: ({signal}) => getMyBookings(params, signal),
+    queryFn: ({ signal }) => getMyBookings(params, signal),
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
@@ -83,7 +83,7 @@ export function useMyBookings(params: GetMyBookingParams = {}) {
 // Get booking by bookingCode (public API - no auth required)
 export async function getBookingByCode(bookingCode: string, signal?: AbortSignal) {
   try {
-    const res = await api.get<ApiResponse<TicketVerify>>(`/staff/tickets/check/${bookingCode}`,{
+    const res = await api.get<ApiResponse<TicketVerify>>(`/staff/tickets/check/${bookingCode}`, {
       signal: signal,
     })
     return res.data.data
@@ -96,7 +96,7 @@ export async function getBookingByCode(bookingCode: string, signal?: AbortSignal
 export function useBookingByCode(bookingCode: string | null) {
   return useQuery({
     queryKey: ['booking-by-code', bookingCode],
-    queryFn: ({signal}) => getBookingByCode(bookingCode!, signal),
+    queryFn: ({ signal }) => getBookingByCode(bookingCode!, signal),
     enabled: !!bookingCode,
     retry: false,
   })
@@ -126,7 +126,7 @@ export interface GetAdminBookingsParams {
 
 export async function getAdminBookings(params: GetAdminBookingsParams = {}, signal?: AbortSignal) {
   try {
-    const res = await api.get<BookingListResponse>('/admin/bookings', { params, signal: signal, })
+    const res = await api.get<BookingListResponse>('/admin/bookings', { params, signal: signal })
     return res.data.data
   } catch (error) {
     console.error('Fetch bookings failed', error)
@@ -150,7 +150,7 @@ export async function deleteBooking(id: string) {
 export function useAdminBookings(params: GetAdminBookingsParams) {
   return useQuery({
     queryKey: ['admin-bookings', params],
-    queryFn: ({signal}) => getAdminBookings(params, signal),
+    queryFn: ({ signal }) => getAdminBookings(params, signal),
     staleTime: 1000 * 60 * 2,
     placeholderData: previousData => previousData,
   })

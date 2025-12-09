@@ -1,11 +1,17 @@
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
-import { GetAdminBookingsParams } from "@/lib/api/booking";
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Search } from 'lucide-react'
+import { GetAdminBookingsParams } from '@/lib/api/booking'
 
 interface TicketToolbarProps {
-  params: GetAdminBookingsParams;
-  setParams: (params: GetAdminBookingsParams) => void;
+  params: GetAdminBookingsParams
+  setParams: (params: GetAdminBookingsParams) => void
 }
 
 export function TicketToolbar({ params, setParams }: TicketToolbarProps) {
@@ -17,15 +23,17 @@ export function TicketToolbar({ params, setParams }: TicketToolbarProps) {
         <Input
           placeholder="Tìm mã vé, tên khách hàng..."
           className="pl-9 bg-gray-50 border-gray-200 text-gray-900"
-          value={params.search || ""}
-          onChange={(e) => setParams({ ...params, search: e.target.value, page: 1 })}
+          value={params.search || ''}
+          onChange={e => setParams({ ...params, search: e.target.value, page: 1 })}
         />
       </div>
 
       {/* Filter Status */}
       <Select
-        value={params.status || "all"}
-        onValueChange={(val) => setParams({ ...params, status: val === "all" ? undefined : val, page: 1 })}
+        value={params.status || 'all'}
+        onValueChange={val =>
+          setParams({ ...params, status: val === 'all' ? undefined : val, page: 1 })
+        }
       >
         <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 text-gray-900">
           <SelectValue placeholder="Trạng thái" />
@@ -40,12 +48,12 @@ export function TicketToolbar({ params, setParams }: TicketToolbarProps) {
       </Select>
 
       {/* Filter Date */}
-      <Input 
-        type="date" 
+      <Input
+        type="date"
         className="w-auto bg-gray-50 border-gray-200 text-gray-900"
-        value={params.showDate || ""}
-        onChange={(e) => setParams({ ...params, showDate: e.target.value, page: 1 })}
+        value={params.showDate || ''}
+        onChange={e => setParams({ ...params, showDate: e.target.value, page: 1 })}
       />
     </div>
-  );
+  )
 }

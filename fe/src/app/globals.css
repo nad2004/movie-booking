@@ -218,7 +218,8 @@
 
 /* Pulse animation cho scan frame */
 @keyframes pulse-border {
-  0%, 100% {
+  0%,
+  100% {
     border-color: hsl(var(--primary));
     opacity: 1;
   }
@@ -234,7 +235,8 @@
 
 /* Glow effect cho corners */
 @keyframes corner-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 8px hsl(var(--primary) / 0.8);
   }
   50% {

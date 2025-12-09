@@ -39,15 +39,15 @@ type GroupedMovieSchedule = {
   schedules: Schedule[]
 }
 
-export default function ShowtimeClient({ 
-  cinemas, 
-  selectedCity, 
-  onCityChange 
+export default function ShowtimeClient({
+  cinemas,
+  selectedCity,
+  onCityChange,
 }: ShowtimeClientProps) {
   const [searchCinema, setSearchCinema] = useState('')
   const debouncedSearchCinema = useDebounce(searchCinema, 300)
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
-  
+
   const dateScrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
@@ -67,7 +67,7 @@ export default function ShowtimeClient({
   }, [filteredCinemas])
 
   const [selectedCinemaId, setSelectedCinemaId] = useState<string>(defaultCinemaId)
-  
+
   // Auto-select first cinema when filtered list changes
   useEffect(() => {
     if (defaultCinemaId && !selectedCinemaId) {
@@ -84,11 +84,14 @@ export default function ShowtimeClient({
     setSearchCinema(e.target.value)
   }, [])
 
-  const handleCityChange = useCallback((city: string) => {
-    onCityChange(city)
-    setSearchCinema('')
-    setSelectedCinemaId('')
-  }, [onCityChange])
+  const handleCityChange = useCallback(
+    (city: string) => {
+      onCityChange(city)
+      setSearchCinema('')
+      setSelectedCinemaId('')
+    },
+    [onCityChange]
+  )
 
   const handleCinemaSelect = useCallback((id: string) => {
     setSelectedCinemaId(id)
@@ -328,9 +331,7 @@ export default function ShowtimeClient({
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-foreground">
-                      {selectedCinema.name}
-                    </h3>
+                    <h3 className="font-semibold text-lg text-foreground">{selectedCinema.name}</h3>
                     <p className="text-sm text-muted-foreground">{selectedCinema.address}</p>
                   </div>
                 </div>

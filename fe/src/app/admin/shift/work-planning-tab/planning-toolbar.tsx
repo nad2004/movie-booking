@@ -9,24 +9,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
-import {
-  Sparkles,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
+import { Sparkles, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
 // Định nghĩa Props cần thiết
 interface PlanningToolbarProps {
-  theaters: any[] | undefined; // Hoặc type cụ thể nếu có
-  selectedTheaterId: string;
-  onTheaterChange: (val: string) => void;
-  currentDate: Date;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
-  onGenerate: () => void;
+  theaters: any[] | undefined // Hoặc type cụ thể nếu có
+  selectedTheaterId: string
+  onTheaterChange: (val: string) => void
+  currentDate: Date
+  onPrevMonth: () => void
+  onNextMonth: () => void
+  onGenerate: () => void
 }
 
 export default function PlanningToolbar({
@@ -36,10 +31,9 @@ export default function PlanningToolbar({
   currentDate,
   onPrevMonth,
   onNextMonth,
-  onGenerate
+  onGenerate,
 }: PlanningToolbarProps) {
-  
-  const formattedMonth = format(currentDate, 'MMMM, yyyy', { locale: vi });
+  const formattedMonth = format(currentDate, 'MMMM, yyyy', { locale: vi })
 
   return (
     <Card className="p-4 rounded-2xl border-gray-100 shadow-sm bg-white">
@@ -50,7 +44,7 @@ export default function PlanningToolbar({
             <SelectTrigger className="w-[220px] rounded-xl bg-gray-50 border-gray-200 focus:ring-[#6C63FF]">
               <SelectValue placeholder="Chọn rạp" />
             </SelectTrigger>
-            <SelectContent className='max-h-[300px] overflow-y-auto'>
+            <SelectContent className="max-h-[300px] overflow-y-auto">
               {theaters?.map((t: any) => (
                 <SelectItem key={t._id} value={t._id}>
                   {t.name}

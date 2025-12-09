@@ -52,7 +52,11 @@ export default function TicketManagementPage() {
   }, [pageFromUrl])
 
   // API
-  const { data: bookingData = DEFAULT_BOOKING_LIST, isLoading, isFetching } = useAdminBookings({
+  const {
+    data: bookingData = DEFAULT_BOOKING_LIST,
+    isLoading,
+    isFetching,
+  } = useAdminBookings({
     ...params,
     search: debouncedSearch,
   })

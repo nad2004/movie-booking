@@ -3,10 +3,10 @@ import type { NextRequest } from 'next/server'
 import { decodeJwt } from 'jose'
 
 // Define các path constants để dễ quản lý
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password'];
-const ADMIN_PATHS = ['/admin'];
-const STAFF_PATHS = ['/staff'];
-const CUSTOMER_PATHS = ['/profile', '/order-history', '/bookings', '/movies', '/showtimes'];
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password']
+const ADMIN_PATHS = ['/admin']
+const STAFF_PATHS = ['/staff']
+const CUSTOMER_PATHS = ['/profile', '/order-history', '/bookings', '/movies', '/showtimes']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
     try {
       const payload = decodeJwt(token)
       const role = (payload.role as string)?.toLowerCase() || 'user'
-      
+
       // Redirect về trang phù hợp với role
       if (role === 'admin') {
         return NextResponse.redirect(new URL('/admin', request.url))
@@ -32,11 +32,11 @@ export function middleware(request: NextRequest) {
   }
 
   // --- CASE 2: Chưa Login nhưng cố vào trang Protected ---
-  const isProtectedPath = 
+  const isProtectedPath =
     ADMIN_PATHS.some(path => pathname.startsWith(path)) ||
     STAFF_PATHS.some(path => pathname.startsWith(path)) ||
-    CUSTOMER_PATHS.some(path => pathname.startsWith(path));
-    
+    CUSTOMER_PATHS.some(path => pathname.startsWith(path))
+
   if (!token && isProtectedPath) {
     const url = new URL('/login', request.url)
     url.searchParams.set('callbackUrl', pathname)
@@ -58,7 +58,7 @@ export function middleware(request: NextRequest) {
         if (STAFF_PATHS.some(path => pathname.startsWith(path))) {
           return NextResponse.redirect(new URL('/admin', request.url))
         }
-        
+
         // Admin cố vào customer pages -> Redirect về /admin
         if (CUSTOMER_PATHS.some(path => pathname.startsWith(path)) || pathname === '/') {
           return NextResponse.redirect(new URL('/admin', request.url))
@@ -78,12 +78,11 @@ export function middleware(request: NextRequest) {
         if (ADMIN_PATHS.some(path => pathname.startsWith(path))) {
           return NextResponse.rewrite(new URL('/404', request.url))
         }
-        
+
         if (STAFF_PATHS.some(path => pathname.startsWith(path))) {
           return NextResponse.rewrite(new URL('/404', request.url))
         }
       }
-
     } catch (error) {
       const response = NextResponse.redirect(new URL('/login', request.url))
       response.cookies.delete('authToken')
@@ -95,7 +94,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }

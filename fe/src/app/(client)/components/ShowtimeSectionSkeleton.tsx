@@ -98,14 +98,14 @@ export function ShowtimeContentSkeleton() {
           <div className="flex gap-4">
             {/* Poster Skeleton */}
             <Skeleton className="w-20 h-28 rounded-lg flex-shrink-0" />
-            
+
             {/* Info Skeleton */}
             <div className="flex-1 space-y-3">
               <div className="space-y-2">
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
-              
+
               {/* Time Slots Skeleton */}
               <div className="flex flex-wrap gap-2">
                 {[...Array(6)].map((_, j) => (

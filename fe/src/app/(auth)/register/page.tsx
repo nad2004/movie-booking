@@ -26,7 +26,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
-  
+
   const { mutate: registerUser, isPending } = useRegister()
 
   // 3. Khởi tạo useForm (Đã bỏ confirmPassword)
@@ -161,7 +161,9 @@ export default function RegisterPage() {
                   {...register('phoneNumber')}
                 />
               </div>
-              {errors.phoneNumber && <p className="text-red-500 text-xs">{errors.phoneNumber.message}</p>}
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-xs">{errors.phoneNumber.message}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -192,10 +194,10 @@ export default function RegisterPage() {
             </div>
 
             {/* Register Button */}
-            <Button 
-                type="submit" 
-                disabled={isPending}
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium text-lg mt-4"
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium text-lg mt-4"
             >
               {isPending ? 'Creating account...' : 'Register'}
             </Button>

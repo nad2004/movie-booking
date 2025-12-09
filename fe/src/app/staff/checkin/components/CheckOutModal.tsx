@@ -1,57 +1,55 @@
 'use client'
 
-import { useState } from 'react';
-import { Clock, LogOut, AlertCircle } from 'lucide-react';
-import { AssignedEmployee } from '@/types/shift';
+import { useState } from 'react'
+import { Clock, LogOut, AlertCircle } from 'lucide-react'
+import { AssignedEmployee } from '@/types/shift'
 
 interface CheckOutModalProps {
-  assignment: AssignedEmployee;
-  currentTime: string;
-  isLoading: boolean;
-  onConfirm: (breakTime?: number) => void;
-  onCancel: () => void;
+  assignment: AssignedEmployee
+  currentTime: string
+  isLoading: boolean
+  onConfirm: (breakTime?: number) => void
+  onCancel: () => void
 }
 
 const calculateWorkDuration = (checkIn: string): number => {
-  const inTime = new Date(checkIn);
-  const now = new Date();
-  return Math.max(0, Math.floor((now.getTime() - inTime.getTime()) / 60000));
-};
+  const inTime = new Date(checkIn)
+  const now = new Date()
+  return Math.max(0, Math.floor((now.getTime() - inTime.getTime()) / 60000))
+}
 
 const formatTime = (isoString: string) => {
-  const date = new Date(isoString);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-};
+  const date = new Date(isoString)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
 
-export function CheckOutModal({ 
-  assignment, 
-  currentTime, 
-  isLoading, 
-  onConfirm, 
-  onCancel 
+export function CheckOutModal({
+  assignment,
+  currentTime,
+  isLoading,
+  onConfirm,
+  onCancel,
 }: CheckOutModalProps) {
-  const [breakTime, setBreakTime] = useState<string>('');
-  
-  const workDuration = assignment.checkInTime 
-    ? calculateWorkDuration(assignment.checkInTime)
-    : 0;
+  const [breakTime, setBreakTime] = useState<string>('')
+
+  const workDuration = assignment.checkInTime ? calculateWorkDuration(assignment.checkInTime) : 0
 
   const isEarlyCheckout = () => {
     // Logic kiểm tra checkout sớm dựa vào shift template
     // Tạm thời return false
-    return false;
-  };
+    return false
+  }
 
   const handleConfirm = () => {
-    const breakMinutes = breakTime ? parseFloat(breakTime) : undefined;
-    onConfirm(breakMinutes);
-  };
+    const breakMinutes = breakTime ? parseFloat(breakTime) : undefined
+    onConfirm(breakMinutes)
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-xl max-w-md w-full p-6">
         <h3 className="text-xl font-semibold text-foreground mb-4">Xác nhận Check-out</h3>
-        
+
         <div className="space-y-4 mb-6">
           <div className="p-4 bg-secondary/50 rounded-xl">
             <p className="text-sm text-muted-foreground mb-1">Thời gian check-out</p>
@@ -71,16 +69,14 @@ export function CheckOutModal({
           )}
 
           <div className="p-4 bg-secondary/50 rounded-xl">
-            <label className="text-sm text-muted-foreground mb-2 block">
-              Thời gian nghỉ (giờ)
-            </label>
+            <label className="text-sm text-muted-foreground mb-2 block">Thời gian nghỉ (giờ)</label>
             <input
               type="number"
               step="0.5"
               min="0"
               max="2"
               value={breakTime}
-              onChange={(e) => setBreakTime(e.target.value)}
+              onChange={e => setBreakTime(e.target.value)}
               placeholder="Ví dụ: 0.5 (30 phút)"
               className="w-full px-3 py-2 bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -130,5 +126,5 @@ export function CheckOutModal({
         </div>
       </div>
     </div>
-  );
+  )
 }

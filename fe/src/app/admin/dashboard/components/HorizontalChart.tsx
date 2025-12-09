@@ -1,5 +1,5 @@
 'use client'
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion'
 
 interface ChartData {
   name: string
@@ -13,7 +13,7 @@ interface HorizontalChartProps {
 }
 
 export function HorizontalChart({ data }: HorizontalChartProps) {
-  const maxValue = Math.max(...data.map(d => d.value));
+  const maxValue = Math.max(...data.map(d => d.value))
 
   return (
     <div className="space-y-6">
@@ -26,25 +26,25 @@ export function HorizontalChart({ data }: HorizontalChartProps) {
               {item.value.toLocaleString('vi-VN')} {item.unit}
             </span>
           </div>
-          
+
           {/* Bar Container */}
           <div className="h-9 w-full bg-gray-100 rounded-md relative overflow-hidden">
             {/* Animated Bar */}
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               whileInView={{ width: `${(item.value / maxValue) * 100}%` }}
-              transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
+              transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
               className={`h-full ${item.color} rounded-md flex items-center justify-end pr-3 shadow-sm`}
               suppressHydrationWarning
             >
               {/* Show value inside bar if wide enough */}
-              {(item.value / maxValue) > 0.2 && (
+              {item.value / maxValue > 0.2 && (
                 <span className="text-white text-xs font-semibold whitespace-nowrap">
                   {item.value.toLocaleString('vi-VN')} {item.unit}
                 </span>
               )}
             </motion.div>
-            
+
             {/* Grid lines */}
             <div className="absolute inset-0 flex pointer-events-none">
               <div className="flex-1 border-r border-dashed border-gray-200" />
@@ -55,7 +55,7 @@ export function HorizontalChart({ data }: HorizontalChartProps) {
           </div>
         </div>
       ))}
-      
+
       {/* X-Axis Scale */}
       <div className="flex justify-between text-[10px] text-gray-400 pt-2 border-t border-gray-100 mt-2">
         <span>0</span>
@@ -65,5 +65,5 @@ export function HorizontalChart({ data }: HorizontalChartProps) {
         <span>{maxValue.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}</span>
       </div>
     </div>
-  );
+  )
 }

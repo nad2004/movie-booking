@@ -1,39 +1,45 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useCreateStaff } from "../hooks/useUserMutations";
-import { useTheaters } from "@/lib/api/theaters";
-import { useNotification } from "@/providers/NotificationProvider";
-import { useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { useCreateStaff } from '../hooks/useUserMutations'
+import { useTheaters } from '@/lib/api/theaters'
+import { useNotification } from '@/providers/NotificationProvider'
+import { useMemo } from 'react'
+import { Loader2 } from 'lucide-react'
 
 const createStaffSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-  fullName: z.string().min(1, "Họ tên không được để trống"),
-  phoneNumber: z.string().min(10, "Số điện thoại không hợp lệ"),
-  assignedTheater: z.string().min(1, "Vui lòng chọn rạp"),
-});
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  fullName: z.string().min(1, 'Họ tên không được để trống'),
+  phoneNumber: z.string().min(10, 'Số điện thoại không hợp lệ'),
+  assignedTheater: z.string().min(1, 'Vui lòng chọn rạp'),
+})
 
-type CreateStaffFormData = z.infer<typeof createStaffSchema>;
+type CreateStaffFormData = z.infer<typeof createStaffSchema>
 
 interface CreateStaffModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) {
-  const { showSuccess, showError } = useNotification();
-  const createStaffMutation = useCreateStaff();
-  
+  const { showSuccess, showError } = useNotification()
+  const createStaffMutation = useCreateStaff()
+
   // Fetch theaters
-  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({limit: 100});
-  const theaters = useMemo(() => theatersData?.theaters || [], [theatersData]);
+  const { data: theatersData, isLoading: isLoadingTheaters } = useTheaters({ limit: 100 })
+  const theaters = useMemo(() => theatersData?.theaters || [], [theatersData])
 
   const {
     register,
@@ -43,23 +49,23 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
     reset,
   } = useForm<CreateStaffFormData>({
     resolver: zodResolver(createStaffSchema),
-  });
+  })
 
   const onSubmit = async (data: CreateStaffFormData) => {
     try {
-      await createStaffMutation.mutateAsync(data);
-      showSuccess("Tạo tài khoản nhân viên thành công!");
-      reset();
-      onOpenChange(false);
+      await createStaffMutation.mutateAsync(data)
+      showSuccess('Tạo tài khoản nhân viên thành công!')
+      reset()
+      onOpenChange(false)
     } catch (error: any) {
-      showError("Lỗi!", error.response?.data?.message || "Có lỗi xảy ra");
+      showError('Lỗi!', error.response?.data?.message || 'Có lỗi xảy ra')
     }
-  };
+  }
 
   const handleClose = () => {
-    reset();
-    onOpenChange(false);
-  };
+    reset()
+    onOpenChange(false)
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -78,12 +84,10 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
               id="email"
               type="email"
               placeholder="staff@cinema.com"
-              className={`${errors.email ? "border-red-500" : ""}`}
-              {...register("email")}
+              className={`${errors.email ? 'border-red-500' : ''}`}
+              {...register('email')}
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
           </div>
 
           {/* Password */}
@@ -95,12 +99,10 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
               id="password"
               type="password"
               placeholder="Nhập mật khẩu"
-              className={`${errors.password ? "border-red-500" : ""}`}
-              {...register("password")}
+              className={`${errors.password ? 'border-red-500' : ''}`}
+              {...register('password')}
             />
-            {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password.message}</p>
-            )}
+            {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
           </div>
 
           {/* Full Name */}
@@ -111,12 +113,10 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
             <Input
               id="fullName"
               placeholder="Nguyễn Văn A"
-              className={`${errors.fullName ? "border-red-500" : ""}`}
-              {...register("fullName")}
+              className={`${errors.fullName ? 'border-red-500' : ''}`}
+              {...register('fullName')}
             />
-            {errors.fullName && (
-              <p className="text-red-500 text-sm">{errors.fullName.message}</p>
-            )}
+            {errors.fullName && <p className="text-red-500 text-sm">{errors.fullName.message}</p>}
           </div>
 
           {/* Phone Number */}
@@ -127,8 +127,8 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
             <Input
               id="phoneNumber"
               placeholder="0901234567"
-              className={`${errors.phoneNumber ? "border-red-500" : ""}`}
-              {...register("phoneNumber")}
+              className={`${errors.phoneNumber ? 'border-red-500' : ''}`}
+              {...register('phoneNumber')}
             />
             {errors.phoneNumber && (
               <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>
@@ -155,13 +155,13 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger 
-                      className={`rounded-xl ${errors.assignedTheater ? "border-red-500" : ""}`}
+                    <SelectTrigger
+                      className={`rounded-xl ${errors.assignedTheater ? 'border-red-500' : ''}`}
                     >
                       <SelectValue placeholder="Chọn rạp chiếu phim" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] overflow-y-auto">
-                      {theaters.map((theater) => (
+                      {theaters.map(theater => (
                         <SelectItem key={theater._id} value={theater._id}>
                           {theater.name} - {theater.address}
                         </SelectItem>
@@ -192,11 +192,11 @@ export function CreateStaffModal({ open, onOpenChange }: CreateStaffModalProps) 
               className="flex-1 bg-primary hover:bg-primary/90"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
+              {isSubmitting ? 'Đang tạo...' : 'Tạo tài khoản'}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,13 +1,19 @@
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
-import { GetProductsParams } from "@/lib/api/products";
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Search, Plus } from 'lucide-react'
+import { GetProductsParams } from '@/lib/api/products'
 
 interface ProductToolbarProps {
-  params: GetProductsParams;
-  setParams: (params: Partial<GetProductsParams>) => void;
-  onOpenAdd: () => void;
+  params: GetProductsParams
+  setParams: (params: Partial<GetProductsParams>) => void
+  onOpenAdd: () => void
 }
 
 export function ProductToolbar({ params, setParams, onOpenAdd }: ProductToolbarProps) {
@@ -20,14 +26,14 @@ export function ProductToolbar({ params, setParams, onOpenAdd }: ProductToolbarP
           <Input
             placeholder="Tìm kiếm sản phẩm..."
             className="pl-9 bg-gray-50 border-gray-200"
-            value={params.search || ""}
-            onChange={(e) => setParams({ search: e.target.value })}
+            value={params.search || ''}
+            onChange={e => setParams({ search: e.target.value })}
           />
         </div>
 
         <Select
-          value={params.category || "all"}
-          onValueChange={(val) => setParams({ category: val === "all" ? undefined : val as any })}
+          value={params.category || 'all'}
+          onValueChange={val => setParams({ category: val === 'all' ? undefined : (val as any) })}
         >
           <SelectTrigger className="w-40 bg-gray-50 border-gray-200">
             <SelectValue placeholder="Danh mục" />
@@ -42,8 +48,8 @@ export function ProductToolbar({ params, setParams, onOpenAdd }: ProductToolbarP
         </Select>
 
         <Select
-          value={params.sortBy || "createdAt"}
-          onValueChange={(val) => setParams({ sortBy: val })}
+          value={params.sortBy || 'createdAt'}
+          onValueChange={val => setParams({ sortBy: val })}
         >
           <SelectTrigger className="w-40 bg-gray-50 border-gray-200">
             <SelectValue placeholder="Sắp xếp" />
@@ -62,5 +68,5 @@ export function ProductToolbar({ params, setParams, onOpenAdd }: ProductToolbarP
         <Plus className="w-4 h-4" /> Thêm sản phẩm
       </Button>
     </div>
-  );
+  )
 }
