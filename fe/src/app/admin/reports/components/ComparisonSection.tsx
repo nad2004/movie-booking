@@ -46,7 +46,7 @@ export const ComparisonSection = ({ selectedYear, onYearChange }: ComparisonSect
       comparisonData.forEach((row) => {
         // Generate semi-realistic values based on employee's main value
         const baseValue = emp.value;
-        const variance = Math.random() * 10 - 5;
+        const variance = Math.random() * 10;
         row[emp.name] = Math.round(baseValue + variance);
       });
     });

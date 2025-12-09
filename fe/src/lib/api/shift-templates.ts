@@ -2,47 +2,38 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
 import { ShiftTemplateResponse } from "@/types/shift"; 
 import { useNotification } from "@/providers/NotificationProvider";
-import axios from "axios"; // Import axios để check isCancel
+import axios from "axios";
 
 // --- DTO Types ---
-
-// Params để lọc danh sách (nếu cần sau này)
 export interface GetShiftTemplateParams {
-  search?: string;   // Tìm theo tên hoặc code
-  isActive?: boolean; // Lọc theo trạng thái
+  search?: string;
+  active?: boolean;
 }
 
-// Data object khi tạo mới (loại bỏ id)
 export interface ShiftTemplateCreateDTO {
   code: string;
   name: string;
-  startTime: string; // HH:mm
-  endTime: string;   // HH:mm
+  startTime: string;
+  endTime: string;
   color: string;
   isActive: boolean;
 }
 
-// --- 1. Raw API Functions ---
-
-// Thêm signal
+// --- Raw API Functions ---
 export async function getShiftTemplates(params: GetShiftTemplateParams = {}, signal?: AbortSignal) {
   try {
     const res = await api.get<ShiftTemplateResponse>("/shift-templates", {
       params,
-      signal, // 🟢 Truyền signal
+      signal,
     });
     return res.data.data; 
   } catch (error) {
-    // 🟢 Check cancel
     if (axios.isCancel(error)) {
         throw error;
     }
-    // Nếu lỗi khác (không phải cancel) thì trả về mảng rỗng để không crash UI
     return []; 
   }
 }
-
-// --- Mutations (Không cần signal) ---
 
 export async function createShiftTemplate(data: ShiftTemplateCreateDTO) {
   const res = await api.post("/shift-templates", data);
@@ -59,25 +50,26 @@ export async function deleteShiftTemplate(id: string) {
   return res.data;
 }
 
-// --- 2. Custom Hooks (React Query) ---
+// 🆕 Hàm kích hoạt lại ca mẫu
+export async function activateShiftTemplate(id: string) {
+  const res = await api.patch(`/shift-templates/${id}/activate`);
+  return res.data;
+}
 
-// Hook lấy danh sách (GET)
+// --- Custom Hooks ---
 export function useShiftTemplates(params: GetShiftTemplateParams = {}) {
   return useQuery({
     queryKey: ["shift-templates", params],
-    // 🟢 Lấy signal từ context
     queryFn: ({ signal }) => getShiftTemplates(params, signal),
-    staleTime: 1000 * 60 * 5, // Cache 5 phút
+    staleTime: 1000 * 60 * 5,
     retry: 2,
   });
 }
 
-// Hook Mutation tổng hợp (Create / Update / Delete)
 export function useShiftTemplateMutations() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotification()
   
-  // Create
   const createMutation = useMutation({
     mutationFn: (data: ShiftTemplateCreateDTO) => createShiftTemplate(data),
     onSuccess: () => {
@@ -87,7 +79,6 @@ export function useShiftTemplateMutations() {
     onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   });
 
-  // Update
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ShiftTemplateCreateDTO }) =>
       updateShiftTemplate(id, data),
@@ -98,7 +89,6 @@ export function useShiftTemplateMutations() {
     onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   });
 
-  // Delete
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteShiftTemplate(id),
     onSuccess: () => {
@@ -108,9 +98,20 @@ export function useShiftTemplateMutations() {
     onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
   });
 
+  // 🆕 Mutation kích hoạt lại
+  const activateMutation = useMutation({
+    mutationFn: (id: string) => activateShiftTemplate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-templates"] });
+      showSuccess('Kích hoạt thành công')
+    },
+    onError: (error: any) => showError('Lỗi!', error.response?.data?.message),
+  });
+
   return {
     create: createMutation,
     update: updateMutation,
-    remove: deleteMutation, 
+    remove: deleteMutation,
+    activate: activateMutation, // 🆕 Export activate
   };
 }

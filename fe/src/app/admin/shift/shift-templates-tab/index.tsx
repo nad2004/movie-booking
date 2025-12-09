@@ -18,13 +18,16 @@ export default function ShiftTemplatesTab() {
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [isUpdateOpen, setUpdateOpen] = useState(false);
   const [isDeleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
 
   // 2. State dữ liệu đang chọn
   const [selectedTemplate, setSelectedTemplate] = useState<ShiftTemplate | null>(null);
 
   // 3. API Hooks (React Query)
-  const { data: templates = [], isLoading } = useShiftTemplates();
-  const { create, update, remove } = useShiftTemplateMutations();
+  const { data: templates = [], isLoading } = useShiftTemplates({ 
+    active: activeTab === 'active' ? true : false 
+  });
+  const { create, update, remove, activate } = useShiftTemplateMutations();
   
   const isCreating = create.isPending;
   // const isUpdating = update.isPending; // Nếu cần dùng loading cho update
@@ -60,7 +63,9 @@ export default function ShiftTemplatesTab() {
     await remove.mutateAsync(selectedTemplate._id);
     setDeleteAlertOpen(false);
   }
-
+  const handleActivate = async (t: ShiftTemplate) => {
+    await activate.mutateAsync(t._id);
+  }
   return (
     <div className="space-y-6">
       {/* Header Component */}
@@ -72,6 +77,9 @@ export default function ShiftTemplatesTab() {
         isLoading={isLoading}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
+        onActivate={handleActivate}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       {/* Modals Area - Giữ logic popup tại container này */}
