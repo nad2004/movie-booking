@@ -54,7 +54,7 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
             <p className="text-sm font-medium text-text-primary">Phương thức thanh toán:</p>
             <div className="flex items-center gap-3 p-3 border-2 border-primary bg-primary/5 rounded-xl">
               <Wallet className="w-6 h-6 text-primary" />
-              <span className="font-semibold text-primary">Cổng thanh toán VNPAY</span>
+              <span className="font-semibold text-primary">Cổng thanh toán</span>
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@ export function StepPayment({ paymentUrl, bookingCode, totalAmount }: StepPaymen
               <Button asChild className="w-full bg-primary hover:bg-primary/90 h-12 text-base">
                 <Link href={paymentUrl}>
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Mở trang thanh toán VNPAY
+                  Mở trang thanh toán
                 </Link>
               </Button>
             ) : (

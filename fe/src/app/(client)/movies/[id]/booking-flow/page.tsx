@@ -9,8 +9,8 @@ import { BookingSummary } from './components/BookingSummary'
 import { StepShowtime } from './components/steps/StepShowtime'
 import { StepSeatSelection } from './components/steps/StepSeatSelection'
 import { StepCombo } from './components/steps/StepCombo'
+import { StepPaymentMethod } from './components/steps/StepPaymentMethod'
 import { StepPayment } from './components/steps/StepPayment'
-import { StepSuccess } from './components/steps/StepSuccess'
 import { useParams, useSearchParams } from 'next/navigation'
 
 export default function BookingPage() {
@@ -20,7 +20,7 @@ export default function BookingPage() {
   const searchParams = useSearchParams()
   const preSelectedScheduleId = searchParams.get('scheduleId') || undefined
 
-  const movieTitle = 'Đặt vé xem phim' // Bạn có thể fetch thêm tên phim nếu muốn
+  const movieTitle = 'Đặt vé xem phim'
 
   const {
     currentStep,
@@ -30,20 +30,19 @@ export default function BookingPage() {
     handleSeatClick,
     cartItems,
     updateCartItem,
-    // Payment method không cần truyền xuống StepPayment nữa vì đã hardcode VNPAY
+    paymentMethod,
+    setPaymentMethod,
     schedules,
     isLoadingSchedules,
     totalAmount,
     nextStep,
     prevStep,
-
-    // New states from updated useBooking
     isProcessing,
     createdBookingData,
     paymentUrl,
   } = useBooking({ movieId, preSelectedScheduleId })
 
-  // --- Logic Render Step ---
+  // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -67,6 +66,8 @@ export default function BookingPage() {
       case 3:
         return <StepCombo cartItems={cartItems} updateCartItem={updateCartItem} />
       case 4:
+        return <StepPaymentMethod selectedMethod={paymentMethod} onSelect={setPaymentMethod} />
+      case 5:
         return (
           <StepPayment
             paymentUrl={paymentUrl}
@@ -74,15 +75,28 @@ export default function BookingPage() {
             totalAmount={totalAmount}
           />
         )
-      case 5:
-        return (
-          <StepSuccess
-            bookingData={createdBookingData}
-            onClose={() => (window.location.href = '/')}
-          />
-        )
       default:
         return null
+    }
+  }
+
+  // Điều kiện disable nút tiếp tục
+  const isNextDisabled = () => {
+    if (isProcessing) return true
+
+    switch (currentStep) {
+      case 1:
+        return !selectedSchedule
+      case 2:
+        return selectedSeats.length === 0
+      case 3:
+        return false // Có thể bỏ qua combo
+      case 4:
+        return !paymentMethod // Phải chọn phương thức thanh toán
+      case 5:
+        return true // Ở bước cuối không có nút tiếp tục
+      default:
+        return false
     }
   }
 
@@ -103,8 +117,7 @@ export default function BookingPage() {
                 <Button
                   variant="outline"
                   onClick={prevStep}
-                  // Chặn back khi đang ở bước 4 (đã tạo đơn rồi không back lại chọn combo được)
-                  disabled={currentStep === 1 || currentStep === 4}
+                  disabled={currentStep === 1}
                   className="rounded-full px-6 h-12 gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" /> Quay lại
@@ -112,12 +125,7 @@ export default function BookingPage() {
 
                 <Button
                   onClick={nextStep}
-                  disabled={
-                    (currentStep === 1 && !selectedSchedule) ||
-                    (currentStep === 2 && selectedSeats.length === 0) ||
-                    isProcessing ||
-                    currentStep === 4
-                  }
+                  disabled={isNextDisabled()}
                   className="rounded-full px-8 bg-primary hover:bg-primary/90 text-white h-12 gap-2 shadow-lg shadow-primary/20 flex items-center"
                 >
                   {isProcessing ? (
@@ -127,8 +135,7 @@ export default function BookingPage() {
                     </>
                   ) : (
                     <>
-                      {/* Ở bước 4 nút sẽ đổi text để xác nhận hoàn tất */}
-                      {'Tiếp tục'}
+                      {currentStep === 4 ? 'Thanh toán' : 'Tiếp tục'}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   )}

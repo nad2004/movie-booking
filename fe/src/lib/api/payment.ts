@@ -9,20 +9,36 @@ export interface PaymentResponse {
   orderId?: string
 }
 
-// API Call
-export const createPaymentUrlApi = async (bookingId: string): Promise<PaymentResponse> => {
+// API Calls
+export const createVNPayUrlApi = async (bookingId: string): Promise<PaymentResponse> => {
   const res = await api.post(`/bookings/${bookingId}/payment/vnpay`)
   return res.data.data
 }
 
-// Hook
-export const useCreatePaymentUrl = () => {
+export const createMoMoUrlApi = async (bookingId: string): Promise<PaymentResponse> => {
+  const res = await api.post(`/bookings/${bookingId}/payment/momo`)
+  return res.data.data
+}
+
+// Hooks
+export const useCreateVNPayUrl = () => {
   const { showSuccess, showError } = useNotification()
 
   return useMutation({
-    mutationFn: (bookingId: string) => createPaymentUrlApi(bookingId),
+    mutationFn: (bookingId: string) => createVNPayUrlApi(bookingId),
     onError: (error: any) => {
-      showError('Không thể tạo link thanh toán', 'Vui lòng thử lại!')
+      showError('Không thể tạo link thanh toán VNPAY', 'Vui lòng thử lại!')
+    },
+  })
+}
+
+export const useCreateMoMoUrl = () => {
+  const { showSuccess, showError } = useNotification()
+
+  return useMutation({
+    mutationFn: (bookingId: string) => createMoMoUrlApi(bookingId),
+    onError: (error: any) => {
+      showError('Không thể tạo link thanh toán MoMo', 'Vui lòng thử lại!')
     },
   })
 }

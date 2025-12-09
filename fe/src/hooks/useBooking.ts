@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react'
 import { BookedSeat } from '@/types/booking'
 import { Schedule } from '@/types/schedule'
-import { CartItem, PaymentMethodType } from '../types'
+import { CartItem } from '../types'
 import { useCreateBooking } from '@/hooks/useCreateBooking'
-import { useCreatePaymentUrl } from '@/lib/api/payment'
+import { useCreateVNPayUrl, useCreateMoMoUrl } from '@/lib/api/payment'
 import { useSchedules } from '@/lib/api/schedules'
 import { toast } from 'sonner'
 import type { Product } from '@/types/product'
 import type { BookingResponseData } from '@/types/booking'
-// Thêm import Seat
 import type { Seat } from '@/types/theater'
 
 export const STEPS = [
@@ -16,6 +15,7 @@ export const STEPS = [
   { number: 2, label: 'Chọn ghế' },
   { number: 3, label: 'Bắp nước' },
   { number: 4, label: 'Thanh toán' },
+  { number: 5, label: 'Xác nhận' },
 ]
 
 export const RESERVED_SEATS = ['A5', 'B3', 'C6', 'D1', 'E8']
@@ -35,14 +35,17 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [selectedSeats, setSelectedSeats] = useState<BookedSeat[]>([])
   const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('VNPAY')
+  const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'momo' | null>(null)
 
   const [createdBookingData, setCreatedBookingData] = useState<BookingResponseData | null>(null)
   const [paymentUrl, setPaymentUrl] = useState<string>('')
 
   // --- API HOOKS ---
-  const { mutate: createBooking, isPending: isCreatingBooking } = useCreateBooking()
-  const { mutate: createPayment, isPending: isCreatingPayment } = useCreatePaymentUrl()
+  // Change 1: Sử dụng mutateAsync để xử lý tuần tự (await)
+  const { mutateAsync: createBookingAsync, isPending: isCreatingBooking } = useCreateBooking()
+  
+  const { mutate: createVNPayPayment, isPending: isCreatingVNPay } = useCreateVNPayUrl()
+  const { mutate: createMoMoPayment, isPending: isCreatingMoMo } = useCreateMoMoUrl()
 
   // --- LOGIC TÍNH TOÁN ---
   const totalAmount = useMemo(() => {
@@ -66,25 +69,20 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   }
 
   // --- HANDLERS ---
-  // SỬA ĐỔI: Nhận object Seat, tự tính giá dựa trên selectedSchedule
   const handleSeatClick = (seat: Seat) => {
     if (!selectedSchedule) {
       toast.error('Vui lòng chọn suất chiếu trước')
       return
     }
 
-    // Kiểm tra ghế hardcode reserved (nếu cần giữ logic cũ)
     if (RESERVED_SEATS.includes(seat.seatNumber)) return
 
     const isSelected = selectedSeats.some(s => s.seatNumber === seat.seatNumber)
 
     if (isSelected) {
-      // Bỏ chọn
       setSelectedSeats(prev => prev.filter(s => s.seatNumber !== seat.seatNumber))
     } else {
-      // Chọn mới -> Tính giá
       const price = getSeatPrice(seat.seatType)
-
       setSelectedSeats(prev => [...prev, { ...seat, price }])
     }
   }
@@ -102,10 +100,17 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     })
   }
 
-  // --- CORE LOGIC: TẠO ĐƠN & LẤY LINK THANH TOÁN ---
-  const handleCreateTransaction = () => {
-    if (!selectedSchedule) return toast.error('Vui lòng chọn suất chiếu')
-    if (selectedSeats.length === 0) return toast.error('Vui lòng chọn ít nhất 1 ghế')
+  // --- CORE LOGIC: TẠO ĐƠN (BƯỚC 3 -> 4) ---
+  // Change 2: Hàm này giờ là async và trả về dữ liệu thay vì void
+  const handleCreateBooking = async () => {
+    if (!selectedSchedule) {
+      toast.error('Vui lòng chọn suất chiếu')
+      return null
+    }
+    if (selectedSeats.length === 0) {
+      toast.error('Vui lòng chọn ít nhất 1 ghế')
+      return null
+    }
 
     const bookingPayload = {
       scheduleId: selectedSchedule._id,
@@ -122,39 +127,76 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
       voucherCode: '',
     }
 
-    createBooking(bookingPayload, {
-      onSuccess: bookingRes => {
-        const bookingData = bookingRes.data
-        setCreatedBookingData(bookingData as BookingResponseData)
+    try {
+      // Await API response
+      const bookingRes = await createBookingAsync(bookingPayload)
+      const bookingData = bookingRes.data as BookingResponseData
+      
+      // Update state (cho UI hiển thị nếu cần)
+      setCreatedBookingData(bookingData)
+      toast.success('Đã tạo đơn hàng!')
+      
+      // Return data ngay lập tức cho step tiếp theo
+      return bookingData
+    } catch (error) {
+      // Lỗi đã được catch bởi React Query hoặc Global handler, nhưng ta catch thêm để return null
+      console.error(error)
+      return null
+    }
+  }
 
-        const bookingId = bookingData.bookingId || (bookingData as BookingResponseData).bookingId
+  // --- CORE LOGIC: TẠO LINK THANH TOÁN (BƯỚC 4 -> 5) ---
+  // Change 3: Nhận bookingId làm tham số
+  const handleCreatePayment = (bookingId: string) => {
+    if (!paymentMethod) return toast.error('Vui lòng chọn phương thức thanh toán')
 
-        createPayment(bookingId, {
-          onSuccess: paymentRes => {
-            setPaymentUrl(paymentRes.paymentUrl)
-            toast.success('Đã tạo đơn hàng & link thanh toán!')
-            setCurrentStep(4)
-          },
-        })
-      },
-    })
+    const onSuccessHandler = (res: any, method: string) => {
+        setPaymentUrl(res.paymentUrl)
+        toast.success(`Đã tạo link thanh toán ${method}!`)
+        setCurrentStep(5)
+    }
+
+    if (paymentMethod === 'vnpay') {
+      createVNPayPayment(bookingId, {
+        onSuccess: (res) => onSuccessHandler(res, 'VNPAY')
+      })
+    } else if (paymentMethod === 'momo') {
+      createMoMoPayment(bookingId, {
+        onSuccess: (res) => onSuccessHandler(res, 'MoMo')
+      })
+    }
   }
 
   // --- NAVIGATION ---
-  const nextStep = () => {
-    if (currentStep === 3) {
-      handleCreateTransaction()
-      return
-    }
+  const nextStep = async () => {
+    // Bước 4 -> 5: Tạo link thanh toán
     if (currentStep === 4) {
-      setCurrentStep(5)
+      if (!paymentMethod) {
+         toast.error('Vui lòng chọn phương thức thanh toán')
+         return
+      }
+
+      // Change 4: Chạy tuần tự: Tạo đơn -> Lấy ID -> Tạo Payment
+      try {
+          const bookingData = await handleCreateBooking()
+          
+          if (bookingData) {
+             const bookingId = bookingData.bookingId || (bookingData as any)._id
+             handleCreatePayment(bookingId)
+          }
+      } catch (error) {
+          // Error handling
+      }
       return
     }
+
+    // Các bước khác
     if (currentStep < 5) setCurrentStep(prev => prev + 1)
   }
 
   const prevStep = () => {
-    if (currentStep === 4) return
+    // Không cho quay lại từ bước 5 (đã thanh toán)
+    if (currentStep === 5) return
     if (currentStep > 1) setCurrentStep(prev => prev - 1)
   }
 
@@ -173,7 +215,8 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     totalAmount,
     paymentUrl,
     createdBookingData,
-    isProcessing: isCreatingBooking || isCreatingPayment,
+    // Gom tất cả trạng thái loading
+    isProcessing: isCreatingBooking || isCreatingVNPay || isCreatingMoMo,
     nextStep,
     prevStep,
   }

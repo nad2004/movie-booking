@@ -3,7 +3,7 @@
 import { Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useBookingDetail } from '@/lib/api/booking'
-import { StepSuccess } from '@/app/(client)/movies/[id]/booking-flow/components/steps/StepSuccess' // Import component StepSuccess cũ
+import { StepSuccess } from '@/app/(client)/payment/success/StepSuccess' // Import component StepSuccess cũ
 import { Loader2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
