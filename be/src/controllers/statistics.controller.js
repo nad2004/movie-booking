@@ -673,104 +673,96 @@ const statisticsController = {
       return errorResponse(res, "Lỗi server", 500);
     }
   },
+
+  //------------------- FIXED CONTROLLERS BELOW ------------------//
   //  Dashboard Summary Overview
   getSummaryOverview: async (req, res) => {
     try {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-      
+
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-      // 1. Tổng số tài khoản
+      // 1. Tổng số tài khoản & 2. Số lượng phim & 3. Số rạp (GIỮ NGUYÊN)
       const [totalAccounts, newAccountsThisMonth] = await Promise.all([
         User.countDocuments({}),
-        User.countDocuments({ createdAt: { $gte: startOfMonth } })
+        User.countDocuments({ createdAt: { $gte: startOfMonth } }),
       ]);
 
-      // 2. Số lượng phim
       const [totalMovies, newMoviesThisMonth] = await Promise.all([
         Movie.countDocuments({ isDeleted: false }),
-        Movie.countDocuments({ isDeleted: false, createdAt: { $gte: startOfMonth } })
+        Movie.countDocuments({ isDeleted: false, createdAt: { $gte: startOfMonth } }),
       ]);
 
-      // 3. Số rạp
       const [totalTheaters, newTheatersThisMonth] = await Promise.all([
         Theater.countDocuments({ isActive: true }),
-        Theater.countDocuments({ isActive: true, createdAt: { $gte: startOfMonth } })
+        Theater.countDocuments({ isActive: true, createdAt: { $gte: startOfMonth } }),
       ]);
 
-      // 4. Số vé bán ra (Tickets)
-      const ticketsAggregation = await Booking.aggregate([
-        {
-          $match: {
-            status: "Hoàn tất",
-            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalTickets: { $sum: { $size: "$seats" } }
-          }
-        }
+      const calcStats = async (startDate, endDate) => {
+        const stats = await Booking.aggregate([
+          // 1. Lấy dữ liệu Online
+          {
+            $match: {
+              status: "Hoàn tất",
+              createdAt: { $gte: startDate, $lte: endDate },
+            },
+          },
+          {
+            $project: {
+              seatsCount: { $size: "$seats" },
+              revenue: "$totalAmount",
+            },
+          },
+          // 2. Gộp dữ liệu Offline (Tại quầy)
+          {
+            $unionWith: {
+              coll: "countertransactions",
+              pipeline: [
+                {
+                  $match: {
+                    status: "completed",
+                    createdAt: { $gte: startDate, $lte: endDate },
+                  },
+                },
+                {
+                  $project: {
+                    seatsCount: { $size: "$seats" },
+                    revenue: "$totalAmount",
+                  },
+                },
+              ],
+            },
+          },
+          // 3. Tính tổng
+          {
+            $group: {
+              _id: null,
+              totalTickets: { $sum: "$seatsCount" },
+              totalRevenue: { $sum: "$revenue" },
+            },
+          },
+        ]);
+        return stats[0] || { totalTickets: 0, totalRevenue: 0 };
+      };
+
+      // Chạy song song cho tháng này và tháng trước
+      const [statsThisMonth, statsLastMonth] = await Promise.all([
+        calcStats(startOfMonth, endOfMonth),
+        calcStats(startOfLastMonth, endOfLastMonth),
       ]);
-      const ticketsThisMonth = ticketsAggregation[0]?.totalTickets || 0;
-      
-      // Calculate ticket difference compared to last month
-      const lastMonthTicketsAgg = await Booking.aggregate([
-         {
-          $match: {
-            status: "Hoàn tất",
-            createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalTickets: { $sum: { $size: "$seats" } }
-          }
-        }
-      ]);
-      const ticketsLastMonth = lastMonthTicketsAgg[0]?.totalTickets || 0;
-      const ticketDiff = ticketsThisMonth - ticketsLastMonth;
+
+      // Tính toán vé
+      const ticketsThisMonth = statsThisMonth.totalTickets;
+      const ticketDiff = ticketsThisMonth - statsLastMonth.totalTickets;
       const ticketDiffSign = ticketDiff >= 0 ? "+" : "";
 
+      // Tính toán doanh thu
+      const revenueThisMonth = statsThisMonth.totalRevenue;
+      const revenueLastMonth = statsLastMonth.totalRevenue;
 
-      // 5. Doanh thu tháng
-      const revenueThisMonthAgg = await Booking.aggregate([
-        {
-          $match: {
-            status: "Hoàn tất",
-            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalRevenue: { $sum: "$totalAmount" }
-          }
-        }
-      ]);
-      const revenueThisMonth = revenueThisMonthAgg[0]?.totalRevenue || 0;
-
-      const revenueLastMonthAgg = await Booking.aggregate([
-        {
-          $match: {
-            status: "Hoàn tất",
-            createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalRevenue: { $sum: "$totalAmount" }
-          }
-        }
-      ]);
-      const revenueLastMonth = revenueLastMonthAgg[0]?.totalRevenue || 0;
-      
       let revenueGrowth = 0;
       if (revenueLastMonth > 0) {
         revenueGrowth = ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100;
@@ -779,41 +771,37 @@ const statisticsController = {
       }
       const revenueGrowthSign = revenueGrowth >= 0 ? "+" : "";
 
-
       const cards = [
         {
           title: "Tổng số tài khoản",
           value: totalAccounts,
           subLabel: `+${newAccountsThisMonth} tài khoản mới`,
-          description: "so với tháng trước" // Note: Logic strictly asks for "so với tháng trước" description but logic was "new this month". I'll keep user requirement text but logically it usually implies comparison. 
-          // Actually "new accounts this month" implies growth. If user wants strictly comparison users count diff, that's different.
-          // User request: "subLabel": "+0 tài khoản mới", "description": "so với tháng trước"
-          // I will stick to "new this month" as the subLabel value as it fits "+X tài khoản mới".
+          description: "tài khoản mới trong tháng",
         },
         {
           title: "Số lượng phim",
           value: totalMovies,
           subLabel: `+${newMoviesThisMonth} phim mới`,
-          description: "so với tháng trước"
+          description: "phim mới trong tháng",
         },
         {
           title: "Số rạp",
           value: totalTheaters,
           subLabel: `+${newTheatersThisMonth} rạp mới`,
-          description: "so với tháng trước"
+          description: "rạp mới trong tháng",
         },
         {
           title: "Số vé bán ra trong tháng",
           value: ticketsThisMonth,
           subLabel: `${ticketDiffSign}${ticketDiff} vé`,
-          description: "so với tháng trước"
+          description: "so với tháng trước",
         },
         {
           title: "Doanh thu tháng",
           value: revenueThisMonth,
           subLabel: `${revenueGrowthSign}${revenueGrowth.toFixed(1)}%`,
-          description: "tăng trưởng so với tháng trước"
-        }
+          description: "so với tháng trước",
+        },
       ];
 
       return successResponse(res, { cards });
@@ -831,37 +819,65 @@ const statisticsController = {
       const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
       const topMovies = await Booking.aggregate([
+        // 1. Lọc Online
         {
           $match: {
             status: "Hoàn tất",
-            createdAt: { $gte: startOfYear, $lte: endOfYear }
-          }
+            createdAt: { $gte: startOfYear, $lte: endOfYear },
+          },
         },
+        {
+          $project: {
+            movieTitle: 1,
+            ticketCount: { $size: "$seats" },
+          },
+        },
+        // 2. Gộp Offline
+        {
+          $unionWith: {
+            coll: "countertransactions",
+            pipeline: [
+              {
+                $match: {
+                  status: "completed",
+                  createdAt: { $gte: startOfYear, $lte: endOfYear },
+                },
+              },
+              {
+                $project: {
+                  movieTitle: 1,
+                  ticketCount: { $size: "$seats" },
+                },
+              },
+            ],
+          },
+        },
+        // 3. Group và đếm
         {
           $group: {
             _id: "$movieTitle",
-            totalTickets: { $sum: { $size: "$seats" } }
-          }
+            totalTickets: { $sum: "$ticketCount" },
+          },
         },
         { $sort: { totalTickets: -1 } },
-        { $limit: 5 }
+        { $limit: 5 },
       ]);
 
-      const items = topMovies.map(movie => ({
+      const items = topMovies.map((movie) => ({
         name: movie._id,
-        value: movie.totalTickets
+        value: movie.totalTickets,
       }));
 
-       // Pad to 5 items
+      // Pad to 5 items
       while (items.length < 5) {
         items.push({ name: "Chưa có dữ liệu", value: 0 });
       }
 
       return successResponse(res, {
         title: "Top 5 Phim Xem Nhiều Nhất",
-        subTitle: "Xếp hạng theo lượt xem",
+        subTitle: "Xếp hạng theo lượt xem (Online + Tại quầy)",
         year,
-        items
+        items,
       });
     } catch (error) {
       console.error("Get top movies error:", error);
@@ -877,38 +893,65 @@ const statisticsController = {
       const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
       const topCinemas = await Booking.aggregate([
+        // 1. Lọc Online
         {
           $match: {
             status: "Hoàn tất",
-            createdAt: { $gte: startOfYear, $lte: endOfYear }
-          }
+            createdAt: { $gte: startOfYear, $lte: endOfYear },
+          },
         },
+        {
+          $project: {
+            theaterName: 1,
+            amount: "$totalAmount",
+          },
+        },
+        // 2. Gộp Offline
+        {
+          $unionWith: {
+            coll: "countertransactions",
+            pipeline: [
+              {
+                $match: {
+                  status: "completed",
+                  createdAt: { $gte: startOfYear, $lte: endOfYear },
+                },
+              },
+              {
+                $project: {
+                  theaterName: 1,
+                  amount: "$totalAmount",
+                },
+              },
+            ],
+          },
+        },
+        // 3. Group và tính tổng tiền
         {
           $group: {
             _id: "$theaterName",
-            totalRevenue: { $sum: "$totalAmount" }
-          }
+            totalRevenue: { $sum: "$amount" },
+          },
         },
         { $sort: { totalRevenue: -1 } },
-        { $limit: 5 }
+        { $limit: 5 },
       ]);
 
-      const items = topCinemas.map(cinema => ({
+      const items = topCinemas.map((cinema) => ({
         name: cinema._id,
         // Convert to Million VND
-        value: parseFloat((cinema.totalRevenue / 1000000).toFixed(2)) 
+        value: parseFloat((cinema.totalRevenue / 1000000).toFixed(2)),
       }));
 
-       // Pad to 5 items
       while (items.length < 5) {
         items.push({ name: "Chưa có dữ liệu", value: 0 });
       }
 
       return successResponse(res, {
         title: "Top 5 Rạp Doanh Thu Cao Nhất",
-        subTitle: "Đơn vị: Triệu VND",
+        subTitle: "Đơn vị: Triệu VND (Online + Tại quầy)",
         year,
-        items
+        items,
       });
     } catch (error) {
       console.error("Get top cinemas error:", error);
@@ -926,22 +969,22 @@ const statisticsController = {
         {
           $match: {
             status: "completed",
-            createdAt: { $gte: startOfYear, $lte: endOfYear }
-          }
+            createdAt: { $gte: startOfYear, $lte: endOfYear },
+          },
         },
         {
           $group: {
             _id: "$staffName",
-            totalRevenue: { $sum: "$totalAmount" }
-          }
+            totalRevenue: { $sum: "$totalAmount" },
+          },
         },
         { $sort: { totalRevenue: -1 } },
-        { $limit: 3 }
+        { $limit: 3 },
       ]);
 
-      const items = topEmployees.map(emp => ({
+      const items = topEmployees.map((emp) => ({
         name: emp._id,
-        value: emp.totalRevenue
+        value: emp.totalRevenue,
       }));
 
       // Pad to 3 items
@@ -953,7 +996,7 @@ const statisticsController = {
         title: "Top 3 Nhân Viên Xuất Sắc",
         subTitle: "Xếp hạng theo doanh thu bán hàng",
         year,
-        items
+        items,
       });
     } catch (error) {
       console.error("Get top employees error:", error);
@@ -973,35 +1016,35 @@ const statisticsController = {
         {
           $match: {
             status: "Đã duyệt", // Only counting approved reviews
-            createdAt: { $gte: startOfYear, $lte: endOfYear }
-          }
+            createdAt: { $gte: startOfYear, $lte: endOfYear },
+          },
         },
         {
           $group: {
             _id: "$movie",
             avgRating: { $avg: "$rating" },
-            count: { $sum: 1 }
-          }
+            count: { $sum: 1 },
+          },
         },
         {
-           $lookup: {
-             from: "movies",
-             localField: "_id",
-             foreignField: "_id",
-             as: "movieInfo"
-           }
+          $lookup: {
+            from: "movies",
+            localField: "_id",
+            foreignField: "_id",
+            as: "movieInfo",
+          },
         },
         { $unwind: "$movieInfo" },
         { $sort: { avgRating: -1, count: -1 } },
-        { $limit: 3 }
+        { $limit: 3 },
       ]);
 
-      const items = topMovies.map(m => ({
+      const items = topMovies.map((m) => ({
         name: m.movieInfo.title,
-        value: parseFloat(m.avgRating.toFixed(1))
+        value: parseFloat(m.avgRating.toFixed(1)),
       }));
 
-       // Pad to 3 items
+      // Pad to 3 items
       while (items.length < 3) {
         items.push({ name: "Chưa có dữ liệu", value: 0 });
       }
@@ -1010,7 +1053,7 @@ const statisticsController = {
         title: "Top 3 Phim Hiệu Suất Cao",
         subTitle: "Xếp hạng theo đánh giá trung bình",
         year,
-        items
+        items,
       });
     } catch (error) {
       console.error("Get top performance movies error:", error);
@@ -1029,24 +1072,24 @@ const statisticsController = {
         {
           $match: {
             showDate: { $gte: startOfYear, $lte: endOfYear },
-            status: { $in: ["Đang mở bán vé", "Sắp đầy", "Hết vé", "Đã chiếu"] }
-          }
+            status: "Đã chiếu",
+          },
         },
         {
           $lookup: {
             from: "theaters",
             localField: "theater",
             foreignField: "_id",
-            as: "theaterInfo"
-          }
+            as: "theaterInfo",
+          },
         },
         { $unwind: "$theaterInfo" },
         {
           $group: {
             _id: "$theaterInfo.name",
             totalSeats: { $sum: "$totalSeats" },
-            bookedSeats: { $sum: "$bookedSeatsCount" }
-          }
+            bookedSeats: { $sum: "$bookedSeatsCount" },
+          },
         },
         {
           $project: {
@@ -1055,18 +1098,18 @@ const statisticsController = {
               $cond: [
                 { $eq: ["$totalSeats", 0] },
                 0,
-                { $multiply: [{ $divide: ["$bookedSeats", "$totalSeats"] }, 100] }
-              ]
-            }
-          }
+                { $multiply: [{ $divide: ["$bookedSeats", "$totalSeats"] }, 100] },
+              ],
+            },
+          },
         },
         { $sort: { occupancyRate: -1 } },
-        { $limit: 3 }
+        { $limit: 3 },
       ]);
 
-      const items = topCinemas.map(c => ({
+      const items = topCinemas.map((c) => ({
         name: c.name,
-        value: parseFloat(c.occupancyRate.toFixed(1))
+        value: parseFloat(c.occupancyRate.toFixed(1)),
       }));
 
       // Pad to 3 items
@@ -1078,7 +1121,7 @@ const statisticsController = {
         title: "Top 3 Rạp Hoạt Động Hiệu Quả",
         subTitle: "Xếp hạng theo tỷ lệ lấp đầy",
         year,
-        items
+        items,
       });
     } catch (error) {
       console.error("Get top effective cinemas error:", error);
@@ -1107,19 +1150,19 @@ const statisticsController = {
         staff: employeeId,
         period: "monthly",
         startDate: { $gte: startDate },
-        endDate: { $lte: endDate }
+        endDate: { $lte: endDate },
       }).populate("staff", "fullName email position");
 
       if (!kpi) {
         // Option: we could calculate on the fly, but for now just return empty state or 404.
         // Let's return a structured empty response so FE doesn't break.
         return successResponse(res, {
-            period: "monthly",
-            month,
-            year,
-            staffId: employeeId,
-            message: "Chưa có dữ liệu KPI cho tháng này",
-            kpiData: null
+          period: "monthly",
+          month,
+          year,
+          staffId: employeeId,
+          message: "Chưa có dữ liệu KPI cho tháng này",
+          kpiData: null,
         });
       }
 
@@ -1142,16 +1185,16 @@ const statisticsController = {
         {
           $match: {
             period: "monthly",
-            startDate: { $gte: startOfYear, $lte: endOfYear }
-          }
+            startDate: { $gte: startOfYear, $lte: endOfYear },
+          },
         },
         {
           $group: {
             _id: { $month: "$startDate" },
-            avgScore: { $avg: "$performance.overallScore" }
-          }
+            avgScore: { $avg: "$performance.overallScore" },
+          },
         },
-        { $sort: { _id: 1 } }
+        { $sort: { _id: 1 } },
       ]);
 
       // 2. Theater Efficiency Trend (Average Monthly Occupancy)
@@ -1160,15 +1203,15 @@ const statisticsController = {
         {
           $match: {
             showDate: { $gte: startOfYear, $lte: endOfYear },
-            status: { $in: ["Đang mở bán vé", "Sắp đầy", "Hết vé", "Đã chiếu"] }
-          }
+            status: "Đã chiếu",
+          },
         },
         {
           $group: {
             _id: { $month: "$showDate" },
             totalSeats: { $sum: "$totalSeats" },
-            bookedSeats: { $sum: "$bookedSeatsCount" }
-          }
+            bookedSeats: { $sum: "$bookedSeatsCount" },
+          },
         },
         {
           $project: {
@@ -1177,32 +1220,32 @@ const statisticsController = {
               $cond: [
                 { $eq: ["$totalSeats", 0] },
                 0,
-                { $multiply: [{ $divide: ["$bookedSeats", "$totalSeats"] }, 100] }
-              ]
-            }
-          }
+                { $multiply: [{ $divide: ["$bookedSeats", "$totalSeats"] }, 100] },
+              ],
+            },
+          },
         },
-        { $sort: { _id: 1 } }
+        { $sort: { _id: 1 } },
       ]);
 
       // Construct Response 12 Months
       const monthsData = [];
       for (let i = 1; i <= 12; i++) {
-        const staffMonth = staffTrend.find(m => m._id === i);
-        const theaterMonth = theaterTrend.find(m => m._id === i);
+        const staffMonth = staffTrend.find((m) => m._id === i);
+        const theaterMonth = theaterTrend.find((m) => m._id === i);
 
         monthsData.push({
           tenThang: `Tháng ${i}`,
           values: [
             {
               name: "Hiệu suất nhân viên",
-              value: staffMonth ? parseFloat(staffMonth.avgScore.toFixed(1)) : 0
+              value: staffMonth ? parseFloat(staffMonth.avgScore.toFixed(1)) : 0,
             },
             {
               name: "Hiệu suất rạp",
-              value: theaterMonth ? parseFloat(theaterMonth.occupancyRate.toFixed(1)) : 0
-            }
-          ]
+              value: theaterMonth ? parseFloat(theaterMonth.occupancyRate.toFixed(1)) : 0,
+            },
+          ],
         });
       }
 
@@ -1210,7 +1253,7 @@ const statisticsController = {
         title: "Xu Hướng Hiệu Suất",
         subTitle: "Theo dõi sự thay đổi theo thời gian",
         year,
-        months: monthsData
+        months: monthsData,
       });
     } catch (error) {
       console.error("Get performance trend error:", error);
@@ -1226,47 +1269,77 @@ const statisticsController = {
       const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
       const stats = await Booking.aggregate([
+        // 1. Lọc Online
         {
           $match: {
             status: "Hoàn tất",
-            createdAt: { $gte: startOfYear, $lte: endOfYear }
-          }
+            createdAt: { $gte: startOfYear, $lte: endOfYear },
+          },
         },
         {
-          $group: {
-            _id: { $month: "$createdAt" },
-            totalRevenue: { $sum: "$totalAmount" },
-            totalViews: { $sum: { $size: "$seats" } }
-          }
+          $project: {
+            month: { $month: "$createdAt" }, // Lấy tháng (1-12)
+            revenue: "$totalAmount",
+            views: { $size: "$seats" },
+          },
         },
-        { $sort: { _id: 1 } }
+        // 2. Gộp Offline
+        {
+          $unionWith: {
+            coll: "countertransactions",
+            pipeline: [
+              {
+                $match: {
+                  status: "completed",
+                  createdAt: { $gte: startOfYear, $lte: endOfYear },
+                },
+              },
+              {
+                $project: {
+                  month: { $month: "$createdAt" },
+                  revenue: "$totalAmount",
+                  views: { $size: "$seats" },
+                },
+              },
+            ],
+          },
+        },
+        // 3. Group theo tháng
+        {
+          $group: {
+            _id: "$month",
+            totalRevenue: { $sum: "$revenue" },
+            totalViews: { $sum: "$views" },
+          },
+        },
+        { $sort: { _id: 1 } },
       ]);
 
       // Construct Response 12 Months
       const monthsData = [];
       for (let i = 1; i <= 12; i++) {
-        const stat = stats.find(m => m._id === i);
+        const stat = stats.find((m) => m._id === i);
 
         monthsData.push({
           tenThang: `Tháng ${i}`,
           values: [
             {
-              name: "Doanh thu (x1000)",
-              value: stat ? Math.round(stat.totalRevenue / 1000) : 0
+              name: "Doanh thu (Triệu VNĐ)",
+              value: stat ? parseFloat((stat.totalRevenue / 1000000).toFixed(2)) : 0,
             },
             {
               name: "Lượt xem",
-              value: stat ? stat.totalViews : 0
-            }
-          ]
+              value: stat ? stat.totalViews : 0,
+            },
+          ],
         });
       }
 
       return successResponse(res, {
         title: "Doanh thu & Lượt xem",
-        subTitle: "Thống kê theo từng tháng",
+        subTitle: "Thống kê theo từng tháng (Tổng hợp)",
         year,
-        months: monthsData
+        months: monthsData,
       });
     } catch (error) {
       console.error("Get revenue and views error:", error);
@@ -1283,7 +1356,7 @@ const statisticsController = {
         return errorResponse(res, "Employee IDs are required", 400);
       }
 
-      const ids = employeeIds.split(",").map(id => id.trim());
+      const ids = employeeIds.split(",").map((id) => id.trim());
       const queryYear = parseInt(year) || new Date().getFullYear();
       const queryMonth = parseInt(month) || new Date().getMonth() + 1;
 
@@ -1294,27 +1367,49 @@ const statisticsController = {
         staff: { $in: ids },
         period: "monthly",
         startDate: { $gte: startDate },
-        endDate: { $lte: endDate }
+        endDate: { $lte: endDate },
       }).populate("staff", "fullName");
 
+      const kpiMap = new Map();
+      kpiData.forEach((kpi) => {
+        if (kpi.staff) kpiMap.set(kpi.staff._id.toString(), kpi);
+      });
+
       // Normalize return data
-      const comparison = kpiData.map(kpi => ({
-        staffId: kpi.staff._id,
-        staffName: kpi.staff.fullName,
-        stats: {
-          Sales: kpi.sales?.revenueAchievement || 0,
-          Service: (kpi.customerService?.customerSatisfactionScore || 0) * 20, // Scale 5 -> 100
-          Operations: kpi.operational?.validationAccuracy || 0,
-          Attendance: kpi.attendance?.onTimeRate || 0,
-          Quality: kpi.quality?.qualityScore || 0
-        },
-        overallScore: kpi.performance?.overallScore || 0
-      }));
+      const comparison = await Promise.all(
+        ids.map(async (id) => {
+          const kpi = kpiMap.get(id);
+
+          if (!kpi) {
+            // Nếu không tìm thấy KPI, query lấy tên nhân viên để hiển thị (fallback)
+            const user = await User.findById(id).select("fullName");
+            return {
+              staffId: id,
+              staffName: user ? user.fullName : "Unknown",
+              stats: { Sales: 0, Service: 0, Operations: 0, Attendance: 0, Quality: 0 },
+              overallScore: 0,
+            };
+          }
+
+          return {
+            staffId: kpi.staff._id,
+            staffName: kpi.staff.fullName,
+            stats: {
+              Sales: kpi.sales?.revenueAchievement || 0,
+              Service: (kpi.customerService?.customerSatisfactionScore || 0) * 20,
+              Operations: kpi.operational?.validationAccuracy || 0,
+              Attendance: kpi.attendance?.onTimeRate || 0,
+              Quality: kpi.quality?.qualityScore || 0,
+            },
+            overallScore: kpi.performance?.overallScore || 0,
+          };
+        })
+      );
 
       return successResponse(res, {
         year: queryYear,
         month: queryMonth,
-        comparison
+        comparison,
       });
     } catch (error) {
       console.error("Get performance comparison error:", error);
