@@ -1,7 +1,8 @@
 "use client"
-import { Movie, MovieListResponse, MovieDetailResponse, MovieCreateDTO, MovieUpdateDTO} from '@/types/movie'
+import { Movie, MovieListResponse, MovieDetailResponse, MovieCreateDTO, MovieUpdateDTO } from '@/types/movie'
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
+import axios from "axios"; // Import axios để check isCancel
 
 // Cập nhật interface dựa trên hình ảnh Swagger
 export interface GetMoviesParams {
@@ -25,18 +26,24 @@ export interface GetMoviesParams {
   order?: 'asc' | 'desc',  // Thứ tự sắp xếp (tăng dần / giảm dần)
 }
 
-export async function getMovies(params: GetMoviesParams = {}) {
+// Thêm tham số signal để support hủy request
+export async function getMovies(params: GetMoviesParams = {}, signal?: AbortSignal) {
   try {
     // Axios sẽ tự động serialize object params thành query string
-    // Ví dụ: { page: 1, genres: "abc,xyz" } -> /movies?page=1&genres=abc,xyz
     const res = await api.get<MovieListResponse>("/movies", {
       headers: { "Cache-Control": "no-store" },
-      params: params, 
+      params: params,
+      signal: signal, // 🟢 Truyền signal vào axios config
     });
     return res.data.data
   } catch (error) {
+    // 🟢 Nếu là lỗi do hủy request (user chuyển trang), ném lỗi ra để React Query xử lý đúng luồng
+    if (axios.isCancel(error)) {
+        throw error;
+    }
+
     console.error("Failed to fetch movies", error)
-    // Trả về cấu trúc mặc định để tránh crash UI
+    // Trả về cấu trúc mặc định để tránh crash UI (chỉ khi lỗi thật, không phải cancel)
     return {
       movies: [],
       pagination: { currentPage: 0, totalPages: 0, totalItems: 0, itemsPerPage: 0 },
@@ -44,17 +51,22 @@ export async function getMovies(params: GetMoviesParams = {}) {
   }
 }
 
-export async function getMovieDetail(id: string): Promise<Movie> {
+export async function getMovieDetail(id: string, signal?: AbortSignal): Promise<Movie> {
   if (!id) throw new Error("Movie ID is required");
 
   try {
     const res = await api.get<MovieDetailResponse>(`/movies/${id}`, {
-      headers: { "Cache-Control": "no-store" }
+      headers: { "Cache-Control": "no-store" },
+      signal: signal, // 🟢 Truyền signal vào axios config
     });
 
     return res.data.data
 
   } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+        throw error;
+    }
     console.error("Failed to fetch movie detail", error);
     throw new Error("Failed to fetch movie detail");
   }
@@ -62,26 +74,29 @@ export async function getMovieDetail(id: string): Promise<Movie> {
 
 export function useMovies(params: GetMoviesParams) {
   return useQuery({
-    queryKey: ["movies", params], // queryKey sẽ tự động thay đổi khi params thay đổi -> trigger refetch
-    queryFn: () => getMovies(params),
+    queryKey: ["movies", params], // queryKey thay đổi -> trigger refetch -> cancel request cũ
+    // 🟢 Lấy signal từ context của queryFn
+    queryFn: ({ signal }) => getMovies(params, signal),
     staleTime: 1000 * 60 * 10, // 10 phút
     retry: 2,
-    placeholderData: (previousData) => previousData, // Giữ dữ liệu cũ khi đang fetch trang mới (giúp UI không bị nháy)
+    placeholderData: (previousData) => previousData, // Giữ dữ liệu cũ khi fetch trang mới
   });
 }
 
 export function useMovieDetail(id: string) {
   return useQuery({
     queryKey: ["movieDetail", id],
-    queryFn: () => getMovieDetail(id),
+    // 🟢 Lấy signal từ context
+    queryFn: ({ signal }) => getMovieDetail(id, signal),
     staleTime: 1000 * 60 * 10,
     retry: 2,
     enabled: !!id,
   });
 }
 
+// --- Các hàm Mutation (Thường không cần signal vì ta muốn nó hoàn thành dù user chuyển trang) ---
+
 export async function createMovie(data: MovieCreateDTO) {
-  // Lưu ý: Endpoint admin thường có prefix /admin hoặc dùng chung /movies nhưng check quyền
   // Dựa vào ảnh Swagger: POST /admin/movies
   const res = await api.post("/admin/movies", data);
   return res.data;
@@ -110,5 +125,5 @@ export async function uploadMoviePoster(movieId: string, file: File) {
     },
   });
   
-  return res.data; // Returns: { success: true, message: "...", data: { url: "...", publicId: "..." } }
+  return res.data; 
 }

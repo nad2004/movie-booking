@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
-import { ShiftTemplateResponse } from "@/types/shift"; // Đảm bảo đường dẫn import đúng file shift.ts của bạn
+import { ShiftTemplateResponse } from "@/types/shift"; 
 import { useNotification } from "@/providers/NotificationProvider";
+import axios from "axios"; // Import axios để check isCancel
+
 // --- DTO Types ---
 
 // Params để lọc danh sách (nếu cần sau này)
@@ -20,18 +22,27 @@ export interface ShiftTemplateCreateDTO {
   isActive: boolean;
 }
 
-// --- 1. Raw API Functions (Giống mẫu schedules.ts) ---
+// --- 1. Raw API Functions ---
 
-export async function getShiftTemplates(params: GetShiftTemplateParams = {}) {
+// Thêm signal
+export async function getShiftTemplates(params: GetShiftTemplateParams = {}, signal?: AbortSignal) {
   try {
     const res = await api.get<ShiftTemplateResponse>("/shift-templates", {
       params,
+      signal, // 🟢 Truyền signal
     });
     return res.data.data; 
   } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+        throw error;
+    }
+    // Nếu lỗi khác (không phải cancel) thì trả về mảng rỗng để không crash UI
     return []; 
   }
 }
+
+// --- Mutations (Không cần signal) ---
 
 export async function createShiftTemplate(data: ShiftTemplateCreateDTO) {
   const res = await api.post("/shift-templates", data);
@@ -54,22 +65,22 @@ export async function deleteShiftTemplate(id: string) {
 export function useShiftTemplates(params: GetShiftTemplateParams = {}) {
   return useQuery({
     queryKey: ["shift-templates", params],
-    queryFn: () => getShiftTemplates(params),
+    // 🟢 Lấy signal từ context
+    queryFn: ({ signal }) => getShiftTemplates(params, signal),
     staleTime: 1000 * 60 * 5, // Cache 5 phút
     retry: 2,
   });
 }
 
 // Hook Mutation tổng hợp (Create / Update / Delete)
-// Giúp bạn gọi hàm và tự động reload lại danh sách sau khi thành công
 export function useShiftTemplateMutations() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotification()
+  
   // Create
   const createMutation = useMutation({
     mutationFn: (data: ShiftTemplateCreateDTO) => createShiftTemplate(data),
     onSuccess: () => {
-      // Sau khi tạo thành công, báo cho React Query data đã cũ -> tự động fetch lại
       queryClient.invalidateQueries({ queryKey: ["shift-templates"] });
       showSuccess('Tạo thành công')
     },
@@ -100,6 +111,6 @@ export function useShiftTemplateMutations() {
   return {
     create: createMutation,
     update: updateMutation,
-    remove: deleteMutation, // Đổi tên thành remove để tránh trùng từ khóa delete
+    remove: deleteMutation, 
   };
 }

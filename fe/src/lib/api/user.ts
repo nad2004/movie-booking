@@ -2,6 +2,7 @@ import { User, UserListResponse } from "@/types/user";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
 import { ApiResponse } from "@/types/apiTemplate";
+import axios from "axios"; // Import axios để check isCancel
 
 // --- Params ---
 export interface GetUsersParams {
@@ -31,11 +32,19 @@ export interface AssignTheaterDTO {
 // --- API Functions ---
 
 // 1. Get List
-export async function getUsers(params: GetUsersParams = {}) {
+// Thêm signal
+export async function getUsers(params: GetUsersParams = {}, signal?: AbortSignal) {
   try {
-    const res = await api.get<UserListResponse>("/admin/users", { params });
+    const res = await api.get<UserListResponse>("/admin/users", { 
+      params,
+      signal, // 🟢 Truyền signal
+    });
     return res.data.data;
   } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+      throw error;
+    }
     console.error("Fetch users failed", error);
     return { 
         users: [], 
@@ -45,10 +54,24 @@ export async function getUsers(params: GetUsersParams = {}) {
 }
 
 // 2. Get Detail
-export async function getUserDetail(id: string) {
-  const res = await api.get<ApiResponse<User>>(`/admin/users/${id}`);
-  return res.data.data;
+// Thêm signal
+export async function getUserDetail(id: string, signal?: AbortSignal) {
+  try {
+    const res = await api.get<ApiResponse<User>>(`/admin/users/${id}`, {
+      signal // 🟢 Truyền signal
+    });
+    return res.data.data;
+  } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+      throw error;
+    }
+    // Ném lỗi ra ngoài nếu không phải là cancel (vì hàm này không return fallback null)
+    throw error;
+  }
 }
+
+// --- Mutations (Không cần signal) ---
 
 // 3. Update Role
 export async function updateUserRole(id: string, data: UpdateRoleDTO) {
@@ -79,7 +102,8 @@ export async function assignTheaterToStaff(data: AssignTheaterDTO) {
 export function useUsers(params: GetUsersParams) {
   return useQuery({
     queryKey: ["users", params],
-    queryFn: () => getUsers(params),
+    // 🟢 Lấy signal từ context
+    queryFn: ({ signal }) => getUsers(params, signal),
     staleTime: 1000 * 60 * 5,
     placeholderData: (previousData) => previousData,
   });
@@ -88,7 +112,8 @@ export function useUsers(params: GetUsersParams) {
 export function useUserDetail(id: string | null) {
   return useQuery({
     queryKey: ["user-detail", id],
-    queryFn: () => getUserDetail(id!),
+    // 🟢 Lấy signal từ context
+    queryFn: ({ signal }) => getUserDetail(id!, signal),
     enabled: !!id,
   });
 }

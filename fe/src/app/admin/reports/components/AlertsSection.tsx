@@ -12,9 +12,10 @@ export const AlertsSection = () => (
       subtitle="Các vấn đề cần được chú ý và xử lý"
     />
     <div className="space-y-3">
-      {MOCK_DATA.alerts.map((alert) => (
+      Chức năng đang phát triển
+      {/* {MOCK_DATA.alerts.map((alert) => (
         <AlertItem key={alert.id} alert={alert} />
-      ))}
+      ))} */}
     </div>
   </section>
 );

@@ -10,6 +10,7 @@ import {
   AssignedEmployee,
 } from '@/types/shift'
 import { useNotification } from '@/providers/NotificationProvider'
+import axios from 'axios' // Import axios để check isCancel
 
 // ========================================
 // 1. RAW API FUNCTIONS
@@ -19,7 +20,8 @@ import { useNotification } from '@/providers/NotificationProvider'
  * GET /work-schedules/daily-roster
  * Lấy danh sách phân công nhân sự theo ngày
  */
-export async function getDailyRoster(params: GetDailyRosterParams) {
+// Thêm signal
+export async function getDailyRoster(params: GetDailyRosterParams, signal?: AbortSignal) {
   try {
     const res = await api.get<DailyRosterResponse>('/work-schedules/daily-roster', {
       params: {
@@ -27,89 +29,77 @@ export async function getDailyRoster(params: GetDailyRosterParams) {
         date: params.date,
         shiftCode: params.shiftCode,
       },
+      signal, // 🟢 Truyền signal
     })
     return res.data.data
   } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+      throw error
+    }
     console.error('Failed to fetch daily roster', error)
     return null
   }
 }
 
 /**
- * POST /assignments/bulk
- * Phân công nhân sự hàng loạt
- */
-export async function bulkAssignStaff(data: BulkAssignmentDTO) {
-  const res = await api.post('/assignments/bulk', data)
-  return res.data
-}
-
-/**
- * POST /assignments (Single assignment)
- * Phân công 1 nhân viên vào 1 ca
- */
-export async function createAssignment(data: CreateAssignmentDTO) {
-  const res = await api.post('/assignments', data)
-  return res.data
-}
-
-/**
- * PUT /assignments/:id
- * Cập nhật thông tin phân công
- */
-export async function updateAssignment(id: string, data: UpdateAssignmentDTO) {
-  const res = await api.put(`/assignments/${id}`, data)
-  return res.data
-}
-
-/**
- * DELETE /assignments/:id
- * Xóa phân công
- */
-export async function deleteAssignment(id: string) {
-  const res = await api.delete(`/assignments/${id}`)
-  return res.data
-}
-
-/**
- * POST /assignments/check-in
- * Nhân viên check-in vào ca
- * Body: { workScheduleId: string }
- */
-export async function checkInAssignment(workScheduleId: string) {
-  const res = await api.post('/assignments/check-in', { workScheduleId })
-  return res.data
-}
-
-/**
- * POST /assignments/check-out
- * Nhân viên check-out khỏi ca
- * Body: { workScheduleId: string }
- */
-export async function checkOutAssignment(workScheduleId: string) {
-  const res = await api.post('/assignments/check-out', { workScheduleId })
-  return res.data
-}
-
-/**
  * GET /assignments/of-user/{userId}
  * Lấy danh sách ca làm của một nhân viên
- * Hỗ trợ lọc theo ngày hoặc khoảng thời gian
  */
+// Thêm signal
 export async function getUserAssignments(userId: string, params?: { 
   from?: string
   to?: string
   date?: string
   page?: number
   limit?: number
-}) {
+}, signal?: AbortSignal) {
   try {
-    const res = await api.get(`/assignments/of-user/${userId}`, { params })
+    const res = await api.get(`/assignments/of-user/${userId}`, { 
+      params,
+      signal, // 🟢 Truyền signal
+    })
     return res.data.data
   } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+      throw error
+    }
     console.error('Failed to fetch user assignments', error)
     return { assignments: [], pagination: null }
   }
+}
+
+// --- Mutations (Không cần signal) ---
+
+export async function bulkAssignStaff(data: BulkAssignmentDTO) {
+  const res = await api.post('/assignments/bulk', data)
+  return res.data
+}
+
+export async function createAssignment(data: CreateAssignmentDTO) {
+  const res = await api.post('/assignments', data)
+  return res.data
+}
+
+export async function updateAssignment(id: string, data: UpdateAssignmentDTO) {
+  const res = await api.put(`/assignments/${id}`, data)
+  return res.data
+}
+
+export async function deleteAssignment(id: string) {
+  const res = await api.delete(`/assignments/${id}`)
+  return res.data
+}
+
+export async function checkInAssignment(workScheduleId: string) {
+  const res = await api.post('/assignments/check-in', { workScheduleId })
+  return res.data
+}
+
+export async function checkOutAssignment(workScheduleId: string) {
+  const res = await api.post('/assignments/check-out', { workScheduleId })
+  return res.data
 }
 
 // ========================================
@@ -122,7 +112,8 @@ export async function getUserAssignments(userId: string, params?: {
 export function useDailyRoster(params: GetDailyRosterParams) {
   return useQuery({
     queryKey: ['daily-roster', params],
-    queryFn: () => getDailyRoster(params),
+    // 🟢 Lấy signal từ context
+    queryFn: ({ signal }) => getDailyRoster(params, signal),
     staleTime: 1000 * 60 * 2,
     retry: 2,
     enabled: !!params.theaterId && !!params.date,
@@ -186,7 +177,7 @@ export function useAssignmentMutations() {
     },
   })
 
-  // Check-in - now requires workScheduleId
+  // Check-in
   const checkInMutation = useMutation({
     mutationFn: (workScheduleId: string) => checkInAssignment(workScheduleId),
     onSuccess: () => {
@@ -199,7 +190,7 @@ export function useAssignmentMutations() {
     },
   })
 
-  // Check-out - now requires workScheduleId
+  // Check-out
   const checkOutMutation = useMutation({
     mutationFn: (workScheduleId: string) => checkOutAssignment(workScheduleId),
     onSuccess: () => {
@@ -228,7 +219,6 @@ export function useAssignmentMutations() {
 
 /**
  * Hook lấy assignments của 1 user cụ thể
- * GET /assignments/of-user/{userId}
  */
 export function useUserAssignments(
   userId: string, 
@@ -242,7 +232,8 @@ export function useUserAssignments(
 ) {
   return useQuery({
     queryKey: ['user-assignments', userId, params],
-    queryFn: () => getUserAssignments(userId, params),
+    // 🟢 Lấy signal
+    queryFn: ({ signal }) => getUserAssignments(userId, params, signal),
     staleTime: 1000 * 60 * 5,
     enabled: !!userId,
   })
@@ -250,20 +241,25 @@ export function useUserAssignments(
 
 /**
  * Hook lấy assignments của 1 schedule cụ thể
- * GET /assignments?workScheduleId=xxx
  */
 export function useScheduleAssignments(scheduleId: string) {
   return useQuery({
     queryKey: ['schedule-assignments', scheduleId],
-    queryFn: async () => {
+    // 🟢 Lấy signal và truyền trực tiếp vào inline queryFn
+    queryFn: async ({ signal }) => {
       try {
         const res = await api.get('/assignments', {
           params: {
             workScheduleId: scheduleId,
           },
+          signal, // 🟢 Truyền signal
         })
         return res.data.data
       } catch (error) {
+        // 🟢 Check cancel
+        if (axios.isCancel(error)) {
+          throw error
+        }
         console.error('Failed to fetch schedule assignments', error)
         return []
       }

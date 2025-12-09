@@ -5,7 +5,6 @@ import { Poppins } from 'next/font/google'
 import NextTopLoader from 'nextjs-toploader'
 import './globals.css'
 import ClientProvider from './ClientProvider'
-
 // Thêm fallback để giảm CLS nếu font load chậm
 const poppins = Poppins({
   subsets: ['latin'],
@@ -16,7 +15,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: 'CineBooking - Đặt vé xem phim online',
-  description: 'Nền tảng đặt vé xem phim hàng đầu Việt Nam',
+  description: 'Nền tảng đặt vé xem phim hàng đầu Việt Nam'
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

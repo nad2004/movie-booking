@@ -11,7 +11,8 @@ export function UpcomingMoviesList() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {upcomingMovies.map((movie) => (
+          Chức năng đang phát triển
+          {/* {upcomingMovies.map((movie) => (
             <div key={movie.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -24,7 +25,7 @@ export function UpcomingMoviesList() {
               </div>
               <Badge variant="outline" className="bg-white text-xs">{movie.status}</Badge>
             </div>
-          ))}
+          ))} */}
         </div>
       </CardContent>
     </Card>

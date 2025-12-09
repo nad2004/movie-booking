@@ -14,10 +14,11 @@ export interface GetBookingParams {
   status?: string
 }
 
-export async function getBookings(params: GetBookingParams = {}) {
+export async function getBookings(params: GetBookingParams = {}, signal?: AbortSignal) {
   try {
     const res = await api.get<BookingListResponse>('/bookings/my-bookings', {
       params,
+      signal: signal,
     })
     return res.data.data
   } catch (error) {
@@ -37,7 +38,7 @@ export async function getBookings(params: GetBookingParams = {}) {
 export function useBookings(params: GetBookingParams = {}) {
   return useQuery({
     queryKey: ['bookings', params],
-    queryFn: () => getBookings(params),
+    queryFn: ({ signal }) => getBookings(params, signal),
     staleTime: 1000 * 60 * 10,
     retry: 2,
   })
@@ -49,10 +50,11 @@ export interface GetMyBookingParams {
   status?: string
 }
 
-export async function getMyBookings(params: GetMyBookingParams = {}) {
+export async function getMyBookings(params: GetMyBookingParams = {}, signal?: AbortSignal) {
   try {
     const res = await api.get<BookingListResponse>('/bookings/my-bookings', {
       params,
+      signal: signal,
     })
     return res.data.data
   } catch (error) {
@@ -72,16 +74,18 @@ export async function getMyBookings(params: GetMyBookingParams = {}) {
 export function useMyBookings(params: GetMyBookingParams = {}) {
   return useQuery({
     queryKey: ['my-bookings', params],
-    queryFn: () => getMyBookings(params),
+    queryFn: ({signal}) => getMyBookings(params, signal),
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
 }
 
 // Get booking by bookingCode (public API - no auth required)
-export async function getBookingByCode(bookingCode: string) {
+export async function getBookingByCode(bookingCode: string, signal?: AbortSignal) {
   try {
-    const res = await api.get<ApiResponse<TicketVerify>>(`/staff/tickets/check/${bookingCode}`)
+    const res = await api.get<ApiResponse<TicketVerify>>(`/staff/tickets/check/${bookingCode}`,{
+      signal: signal,
+    })
     return res.data.data
   } catch (error: any) {
     console.error('Failed to fetch booking by code', error)
@@ -92,7 +96,7 @@ export async function getBookingByCode(bookingCode: string) {
 export function useBookingByCode(bookingCode: string | null) {
   return useQuery({
     queryKey: ['booking-by-code', bookingCode],
-    queryFn: () => getBookingByCode(bookingCode!),
+    queryFn: ({signal}) => getBookingByCode(bookingCode!, signal),
     enabled: !!bookingCode,
     retry: false,
   })
@@ -120,9 +124,9 @@ export interface GetAdminBookingsParams {
   showDate?: string
 }
 
-export async function getAdminBookings(params: GetAdminBookingsParams = {}) {
+export async function getAdminBookings(params: GetAdminBookingsParams = {}, signal?: AbortSignal) {
   try {
-    const res = await api.get<BookingListResponse>('/admin/bookings', { params })
+    const res = await api.get<BookingListResponse>('/admin/bookings', { params, signal: signal, })
     return res.data.data
   } catch (error) {
     console.error('Fetch bookings failed', error)
@@ -146,7 +150,7 @@ export async function deleteBooking(id: string) {
 export function useAdminBookings(params: GetAdminBookingsParams) {
   return useQuery({
     queryKey: ['admin-bookings', params],
-    queryFn: () => getAdminBookings(params),
+    queryFn: ({signal}) => getAdminBookings(params, signal),
     staleTime: 1000 * 60 * 2,
     placeholderData: previousData => previousData,
   })

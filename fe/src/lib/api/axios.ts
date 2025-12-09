@@ -6,7 +6,7 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false,
+  withCredentials: true,
 });
 
 // Request Interceptor
@@ -15,6 +15,7 @@ api.interceptors.request.use(
     const token = Cookies.get("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // console.log('🔹 Axios Interceptor: Attached Token', token);
     }
     return config;
   },

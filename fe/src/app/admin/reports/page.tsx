@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { TopPerformersSection } from './components/TopPerformersSection';
 import { KPIDetailSection } from './components/KPIDetailSection';
 import { TrendsSection } from './components/TrendsSection';
@@ -20,6 +20,7 @@ interface KPIData {
   shifts: number;
   performance: number;
 }
+
 export interface Alert {
   id: number;
   type: 'warning' | 'danger' | 'info';
@@ -28,46 +29,8 @@ export interface Alert {
   time: string;
 }
 
-
-// Custom Hooks
-const useKPICalculation = () => {
-  const [isCalculating, setIsCalculating] = useState(false);
-
-  const calculateKPI = useCallback(() => {
-    setIsCalculating(true);
-    setTimeout(() => {
-      setIsCalculating(false);
-      alert('KPI đã được tính toán và cập nhật thành công!');
-    }, 1500);
-  }, []);
-
-  return { isCalculating, calculateKPI };
-};
-
-const useEmployeeSelection = (initialId: number = 1) => {
-  const [selectedEmployee, setSelectedEmployee] = useState(initialId);
-  return { selectedEmployee, setSelectedEmployee };
-};
-
-// Mock Data
+// Mock Data (keep for KPI section and alerts)
 export const MOCK_DATA = {
-  topPerformers: {
-    employees: [
-      { id: 1, name: 'Nguyễn Văn An', value: 95, subValue: 1250000, trend: 'up' as const },
-      { id: 2, name: 'Trần Thị Bình', value: 92, subValue: 1180000, trend: 'up' as const },
-      { id: 3, name: 'Lê Văn Cường', value: 88, subValue: 1050000, trend: 'down' as const },
-    ],
-    movies: [
-      { id: 1, name: 'Avatar: The Way of Water', value: 5200000, subValue: 8500, trend: 'up' as const },
-      { id: 2, name: 'Avengers: Endgame', value: 4800000, subValue: 7800, trend: 'up' as const },
-      { id: 3, name: 'The Dark Knight', value: 4200000, subValue: 6900, trend: 'down' as const },
-    ],
-    theaters: [
-      { id: 1, name: 'Rạp Trung tâm', value: 94, subValue: 8500000, trend: 'up' as const },
-      { id: 2, name: 'Rạp Quận 1', value: 89, subValue: 7200000, trend: 'up' as const },
-      { id: 3, name: 'Rạp Quận 7', value: 85, subValue: 6800000, trend: 'down' as const },
-    ],
-  },
   employees: [
     { id: 1, name: 'Nguyễn Văn An' },
     { id: 2, name: 'Trần Thị Bình' },
@@ -82,21 +45,6 @@ export const MOCK_DATA = {
     4: { kpi: 82, completion: 80, shifts: 24, performance: 83 },
     5: { kpi: 78, completion: 75, shifts: 22, performance: 79 },
   },
-  trendData: [
-    { month: 'T1', nhanVien: 85, rap: 88, doanhThu: 4200, luotXem: 6800 },
-    { month: 'T2', nhanVien: 87, rap: 89, doanhThu: 4500, luotXem: 7200 },
-    { month: 'T3', nhanVien: 89, rap: 91, doanhThu: 4800, luotXem: 7600 },
-    { month: 'T4', nhanVien: 91, rap: 90, doanhThu: 5100, luotXem: 8100 },
-    { month: 'T5', nhanVien: 90, rap: 92, doanhThu: 5300, luotXem: 8400 },
-    { month: 'T6', nhanVien: 92, rap: 94, doanhThu: 5500, luotXem: 8800 },
-  ],
-  comparisonData: [
-    { metric: 'KPI', 'Nguyễn Văn An': 95, 'Trần Thị Bình': 92, 'Lê Văn Cường': 88 },
-    { metric: 'Hoàn thành', 'Nguyễn Văn An': 92, 'Trần Thị Bình': 88, 'Lê Văn Cường': 85 },
-    { metric: 'Ca làm việc', 'Nguyễn Văn An': 93, 'Trần Thị Bình': 87, 'Lê Văn Cường': 83 },
-    { metric: 'Hiệu suất', 'Nguyễn Văn An': 94, 'Trần Thị Bình': 90, 'Lê Văn Cường': 87 },
-    { metric: 'Doanh số', 'Nguyễn Văn An': 96, 'Trần Thị Bình': 91, 'Lê Văn Cường': 86 },
-  ],
   alerts: [
     {
       id: 1,
@@ -131,8 +79,22 @@ export const MOCK_DATA = {
 
 // Main Component
 export default function Performance() {
-  const { selectedEmployee, setSelectedEmployee } = useEmployeeSelection();
-  const { isCalculating, calculateKPI } = useKPICalculation();
+  const currentYear = new Date().getFullYear();
+  const [selectedEmployee, setSelectedEmployee] = useState(1);
+  const [isCalculating, setIsCalculating] = useState(false);
+  
+  // Year states for different sections
+  const [topPerformersYear, setTopPerformersYear] = useState(currentYear);
+  const [trendsYear, setTrendsYear] = useState(currentYear);
+  const [comparisonYear, setComparisonYear] = useState(currentYear);
+
+  const calculateKPI = () => {
+    setIsCalculating(true);
+    setTimeout(() => {
+      setIsCalculating(false);
+      alert('KPI đã được tính toán và cập nhật thành công!');
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-8">
@@ -145,7 +107,10 @@ export default function Performance() {
           </p>
         </div>
 
-        <TopPerformersSection />
+        <TopPerformersSection 
+          selectedYear={topPerformersYear}
+          onYearChange={setTopPerformersYear}
+        />
         
         <KPIDetailSection
           selectedEmployee={selectedEmployee}
@@ -154,9 +119,15 @@ export default function Performance() {
           calculateKPI={calculateKPI}
         />
         
-        <TrendsSection />
+        <TrendsSection 
+          selectedYear={trendsYear}
+          onYearChange={setTrendsYear}
+        />
         
-        <ComparisonSection />
+        <ComparisonSection 
+          selectedYear={comparisonYear}
+          onYearChange={setComparisonYear}
+        />
         
         <AlertsSection />
       </div>

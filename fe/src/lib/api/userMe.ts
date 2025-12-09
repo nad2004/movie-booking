@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/axios";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios"; // Import axios để check isCancel
 
 import { User } from "@/types/user"; // Đảm bảo bạn đã có type User
 import { ApiResponse } from "@/types/apiTemplate"; // Hoặc type response chung của bạn
@@ -11,13 +12,52 @@ export interface UpdateProfileDTO {
   // Thêm các trường khác nếu backend hỗ trợ sau này (vd: dateOfBirth)
 }
 
+export interface SetPasswordDTO {
+  newPassword: string;
+}
+
+// Định nghĩa response cho /auth/me
+type MeResponse = ApiResponse<User>;
+
+// --- 1. API lấy thông tin user hiện tại ---
+
+// Thêm signal
+export async function getMe(signal?: AbortSignal) {
+  try {
+    const res = await api.get<MeResponse>("/auth/me", {
+      signal, // 🟢 Truyền signal vào config axios
+    });
+    return res.data.data;
+  } catch (error) {
+    // 🟢 Check cancel: Nếu request bị hủy, throw ngay để React Query xử lý
+    if (axios.isCancel(error)) {
+      throw error;
+    }
+
+    // Không log lỗi 401 để tránh rác console (vì interceptor đã xử lý)
+    throw error;
+  }
+}
+
+// --- 2. Hook useMe ---
+export function useMe() {
+  return useQuery({
+    queryKey: ["me"], // Key định danh cho user hiện tại
+    // 🟢 Lấy signal từ context và truyền vào hàm fetch
+    queryFn: ({ signal }) => getMe(signal),
+    staleTime: 1000 * 60 * 5, // Cache 5 phút
+    retry: 1, // Thử lại 1 lần nếu lỗi
+    refetchOnWindowFocus: false, // Không fetch lại khi switch tab để đỡ lag
+  });
+}
+
+// --- Mutations (Không cần signal) ---
+
 export async function updateProfileApi(data: UpdateProfileDTO) {
   // Gọi PUT /users/profile
   const res = await api.put("/users/profile", data);
   return res.data;
 }
-
-
 
 export async function uploadAvatarApi(file: File) {
   const formData = new FormData();
@@ -29,34 +69,6 @@ export async function uploadAvatarApi(file: File) {
     },
   });
   return res.data;
-}
-
-// Định nghĩa response cho /auth/me
-type MeResponse = ApiResponse<User>;
-
-// --- 1. API lấy thông tin user hiện tại ---
-export async function getMe() {
-  try {
-    const res = await api.get<MeResponse>("/auth/me");
-    return res.data.data;
-  } catch (error) {
-    // Không log lỗi 401 để tránh rác console (vì interceptor đã xử lý)
-    throw error;
-  }
-}
-
-// --- 2. Hook useMe ---
-export function useMe() {
-  return useQuery({
-    queryKey: ["me"], // Key định danh cho user hiện tại
-    queryFn: getMe,
-    staleTime: 1000 * 60 * 5, // Cache 5 phút
-    retry: 1, // Thử lại 1 lần nếu lỗi
-    refetchOnWindowFocus: false, // Không fetch lại khi switch tab để đỡ lag
-  });
-}
-export interface SetPasswordDTO {
-  newPassword: string;
 }
 
 // API gọi endpoint set-password

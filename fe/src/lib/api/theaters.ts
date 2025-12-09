@@ -1,6 +1,8 @@
 import { TheaterListResponse } from "@/types/theater";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/axios";
+import axios from "axios"; // Import axios để check isCancel
+
 export interface GetTheatersParams {
   page?: number
   limit?: number
@@ -10,15 +12,23 @@ export interface GetTheatersParams {
   sortBy?: string
   order?: string
 }
-export async function getTheaters(params: GetTheatersParams = {}) {
+
+// Thêm tham số signal
+export async function getTheaters(params: GetTheatersParams = {}, signal?: AbortSignal) {
   try {
-    const res = await api.get<TheaterListResponse>("/theaters?", {
+    const res = await api.get<TheaterListResponse>("/theaters", {
       params: { ...params },
+      signal, // 🟢 Truyền signal vào config axios
     });
 
     return res.data.data;
 
   } catch (error) {
+    // 🟢 Check cancel
+    if (axios.isCancel(error)) {
+      throw error;
+    }
+
     console.error("Failed to fetch theaters", error);
 
     return {
@@ -32,10 +42,12 @@ export async function getTheaters(params: GetTheatersParams = {}) {
     };
   }
 }
+
 export function useTheaters(params: GetTheatersParams) {
   return useQuery({
     queryKey: ["theaters", params],
-    queryFn:() => getTheaters(params),
+    // 🟢 Lấy signal từ context
+    queryFn: ({ signal }) => getTheaters(params, signal),
     staleTime: 1000 * 60 * 10, // cache 10 phút
     retry: 2,
   });
@@ -65,6 +77,7 @@ export interface TheaterUpdateDTO extends Partial<TheaterCreateDTO>{
   isDeleted?: boolean;
 }
 
+// --- Mutations (Không cần signal) ---
 
 // CREATE
 export async function createTheater(data: TheaterCreateDTO) {
