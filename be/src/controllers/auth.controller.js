@@ -10,6 +10,17 @@ const authController = {
     try {
       const { username, email, password, fullName, phoneNumber } = req.body;
 
+      // Helper function to set refresh token cookie
+      const setRefreshTokenCookie = (res, refreshToken) => {
+        const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production", // true in production
+          sameSite: "strict", // Prevent CSRF
+          expires: refreshTokenExpires,
+        });
+      };
+
       // Validate input
       if (!email || !password || !fullName) {
         return errorResponse(res, "Email, mật khẩu và họ tên là bắt buộc", 400);
@@ -71,9 +82,11 @@ const authController = {
       //   },
       // };
 
+      setRefreshTokenCookie(res, refreshToken);
+
       const data = {
         accessToken,
-        refreshToken,
+        // refreshToken, // No longer sending refresh token in body
         user: {
           _id: newUser._id,
           email: newUser.email,
@@ -133,9 +146,23 @@ const authController = {
       user.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       await user.save();
 
+      // Lưu refresh token
+      // Note: Helper function setRefreshTokenCookie is not available in this scope effectively unless defined outside or repeated. 
+      // Better to define it outside authController or just repeat logic for now to avoid large refactor, or define it at top of file. 
+      // Actually, defining it inside each method is wet. Let's define it as a standalone helper or just repeat the 5 lines.
+      // Repeating for simplicity and safety in this refactor.
+      
+      const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: refreshTokenExpires,
+      });
+
       const data = {
         accessToken,
-        refreshToken,
+        // refreshToken,
         user: {
           // id: user._id,
           _id: user._id,
@@ -208,9 +235,18 @@ const authController = {
       user.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       await user.save();
 
+      // Lưu refresh token cookie
+      const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: refreshTokenExpires,
+      });
+
       const data = {
         accessToken,
-        refreshToken,
+        // refreshToken,
         user: {
           // id: user._id,
           _id: user._id,
@@ -278,6 +314,9 @@ const authController = {
       user.refreshTokenExpires = null;
 
       await user.save(); //  Pre-save hook sẽ hash
+
+      // Clear cookie
+      res.clearCookie("refreshToken");
 
       return successResponse(res, {}, "Đổi mật khẩu thành công");
     } catch (error) {
@@ -400,7 +439,8 @@ const authController = {
 
   refreshToken: async (req, res) => {
     try {
-      const { refreshToken } = req.body;
+      // Lấy token từ cookie
+      const refreshToken = req.cookies.refreshToken;
 
       if (!refreshToken) {
         return errorResponse(res, "Refresh token là bắt buộc", 400);
@@ -427,11 +467,20 @@ const authController = {
       user.refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       await user.save();
 
+      // Set new cookie
+      const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: refreshTokenExpires,
+      });
+
       return successResponse(
         res,
         {
           accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
+          // refreshToken: newRefreshToken, // Cookie only
         },
         "Refresh token thành công"
       );

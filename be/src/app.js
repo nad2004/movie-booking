@@ -1,18 +1,18 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
+import express from "express";
+// import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import morgan from "morgan";
-import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
-
+import morgan from "morgan";
+import { specs, swaggerUi } from "./config/swagger.js";
 import routes from "./routes/index.js";
 import redisService from "./services/redis.service.js";
 import websocketService from "./services/websocket.service.js";
-import { specs, swaggerUi } from "./config/swagger.js";
-import { successResponse, errorResponse } from "./utils/response.js";
+// import { successResponse, errorResponse } from "./utils/response.js";
 import { errorHandler, notFoundHandler } from "./utils/errors.js";
 
 const app = express();
@@ -33,6 +33,7 @@ app.use(
 // Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser()); // Use cookie-parser
 
 // Ghi log
 if (process.env.NODE_ENV === "development") {
