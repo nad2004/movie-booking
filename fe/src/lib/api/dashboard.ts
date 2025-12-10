@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/axios'
 import { useQuery } from '@tanstack/react-query'
-import axios from 'axios' // Import axios để check isCancel
+import axios from 'axios'
 
 // --- 1. Types ---
 export interface DashboardCard {
@@ -59,6 +59,64 @@ export interface TopCinemasResponse {
   data: TopCinemasData
 }
 
+// 🟢 Employee KPI Response
+export interface EmployeeKPIData {
+  period: string
+  month: number
+  year: number
+  staffId: string
+  message: string
+  kpiData: {
+    kpi: number
+    completion: number
+    shifts: number
+    performance: number
+  } | null
+}
+
+export interface EmployeeKPIResponse {
+  success: boolean
+  message: string
+  data: EmployeeKPIData
+}
+
+// 🟢 Employee KPI Params
+export interface EmployeeKPIParams {
+  employeeId: string
+  month?: number
+  year?: number
+}
+
+// 🟢 Employee Comparison Types
+export interface EmployeeStats {
+  Sales: number
+  Service: number
+  Operations: number
+  Attendance: number
+  Quality: number
+}
+
+export interface EmployeeComparison {
+  staffId: string
+  staffName: string
+  stats: EmployeeStats
+}
+
+export interface EmployeeComparisonData {
+  comparison: EmployeeComparison[]
+}
+
+export interface EmployeeComparisonResponse {
+  success: boolean
+  data: EmployeeComparisonData
+}
+
+export interface EmployeeComparisonParams {
+  employeeIds: string[]
+  month?: number
+  year?: number
+}
+
 // Chart data type for component
 export interface ChartDataItem {
   name: string
@@ -69,15 +127,13 @@ export interface ChartDataItem {
 
 // --- 2. API Functions ---
 
-// Thêm tham số signal
 export async function getDashboardSummary(signal?: AbortSignal) {
   try {
     const res = await api.get<DashboardSummaryResponse>('/admin/dashboard/sumary-overview', {
-      signal, // 🟢 Truyền signal vào axios config
+      signal,
     })
     return res.data.data
   } catch (error) {
-    // 🟢 Check cancel
     if (axios.isCancel(error)) {
       throw error
     }
@@ -90,11 +146,10 @@ export async function getTopMovies(year?: number, signal?: AbortSignal) {
   try {
     const res = await api.get<TopMoviesResponse>('/admin/dashboard/top-movies', {
       params: year ? { year } : undefined,
-      signal, // 🟢 Truyền signal
+      signal,
     })
     return res.data.data
   } catch (error) {
-    // 🟢 Check cancel
     if (axios.isCancel(error)) {
       throw error
     }
@@ -107,15 +162,75 @@ export async function getTopCinemas(year?: number, signal?: AbortSignal) {
   try {
     const res = await api.get<TopCinemasResponse>('/admin/dashboard/top-cinemas', {
       params: year ? { year } : undefined,
-      signal, // 🟢 Truyền signal
+      signal,
     })
     return res.data.data
   } catch (error) {
-    // 🟢 Check cancel
     if (axios.isCancel(error)) {
       throw error
     }
     console.error('Fetch top cinemas failed', error)
+    return null
+  }
+}
+
+// 🟢 Get Employee KPI with month/year params
+export async function getEmployeeKPI(params: EmployeeKPIParams, signal?: AbortSignal) {
+  try {
+    const queryParams: Record<string, string | number> = {
+      employeeId: params.employeeId,
+    }
+    
+    if (params.month) {
+      queryParams.month = params.month
+    }
+    
+    if (params.year) {
+      queryParams.year = params.year
+    }
+
+    const res = await api.get<EmployeeKPIResponse>('/admin/employee/kpi', {
+      params: queryParams,
+      signal,
+    })
+    return res.data.data
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      throw error
+    }
+    console.error('Fetch employee KPI failed', error)
+    return null
+  }
+}
+
+// 🟢 Get Employee Comparison
+export async function getEmployeeComparison(
+  params: EmployeeComparisonParams,
+  signal?: AbortSignal
+) {
+  try {
+    const queryParams: Record<string, string | number> = {
+      employeeIds: params.employeeIds.join(','),
+    }
+
+    if (params.month) {
+      queryParams.month = params.month
+    }
+
+    if (params.year) {
+      queryParams.year = params.year
+    }
+
+    const res = await api.get<EmployeeComparisonResponse>('/admin/performance/compare', {
+      params: queryParams,
+      signal,
+    })
+    return res.data.data
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      throw error
+    }
+    console.error('Fetch employee comparison failed', error)
     return null
   }
 }
@@ -125,30 +240,47 @@ export async function getTopCinemas(year?: number, signal?: AbortSignal) {
 export function useDashboardSummary() {
   return useQuery({
     queryKey: ['dashboard-summary'],
-    // 🟢 Lấy signal từ context
     queryFn: ({ signal }) => getDashboardSummary(signal),
-    staleTime: 1000 * 60 * 2, // 2 phút
-    refetchInterval: 1000 * 60 * 5, // Tự động refetch mỗi 5 phút
+    staleTime: 1000 * 60 * 2,
+    refetchInterval: 1000 * 60 * 5,
   })
 }
 
 export function useTopMovies(year?: number) {
   return useQuery({
     queryKey: ['top-movies', year],
-    // 🟢 Lấy signal từ context
     queryFn: ({ signal }) => getTopMovies(year, signal),
-    staleTime: 1000 * 60 * 5, // 5 phút
-    enabled: !!year, // Chỉ fetch khi có year
+    staleTime: 1000 * 60 * 5,
+    enabled: !!year,
   })
 }
 
 export function useTopCinemas(year?: number) {
   return useQuery({
     queryKey: ['top-cinemas', year],
-    // 🟢 Lấy signal từ context
     queryFn: ({ signal }) => getTopCinemas(year, signal),
-    staleTime: 1000 * 60 * 5, // 5 phút
-    enabled: !!year, // Chỉ fetch khi có year
+    staleTime: 1000 * 60 * 5,
+    enabled: !!year,
+  })
+}
+
+// 🟢 Employee KPI Hook with month/year params
+export function useEmployeeKPI(params: EmployeeKPIParams | null) {
+  return useQuery({
+    queryKey: ['employee-kpi', params?.employeeId, params?.month, params?.year],
+    queryFn: ({ signal }) => getEmployeeKPI(params!, signal),
+    staleTime: 1000 * 60 * 2,
+    enabled: !!params?.employeeId,
+  })
+}
+
+// 🟢 Employee Comparison Hook
+export function useEmployeeComparison(params: EmployeeComparisonParams | null) {
+  return useQuery({
+    queryKey: ['employee-comparison', params?.employeeIds, params?.month, params?.year],
+    queryFn: ({ signal }) => getEmployeeComparison(params!, signal),
+    staleTime: 1000 * 60 * 2,
+    enabled: !!params && params.employeeIds.length > 0,
   })
 }
 

@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { TopPerformersSection } from './components/TopPerformersSection'
 import { KPIDetailSection } from './components/KPIDetailSection'
 import { TrendsSection } from './components/TrendsSection'
 import { ComparisonSection } from './components/ComparisonSection'
 import { AlertsSection } from './components/AlertsSection'
+import { useUsers } from '@/lib/api/user'
+import { useEmployeeKPI } from '@/lib/api/dashboard'
 
 export interface TopPerformer {
   id: number
@@ -12,13 +14,6 @@ export interface TopPerformer {
   value: number
   subValue: number
   trend: 'up' | 'down'
-}
-
-interface KPIData {
-  kpi: number
-  completion: number
-  shifts: number
-  performance: number
 }
 
 export interface Alert {
@@ -29,22 +24,8 @@ export interface Alert {
   time: string
 }
 
-// Mock Data (keep for KPI section and alerts)
+// Mock Data for alerts only
 export const MOCK_DATA = {
-  employees: [
-    { id: 1, name: 'Nguyễn Văn An' },
-    { id: 2, name: 'Trần Thị Bình' },
-    { id: 3, name: 'Lê Văn Cường' },
-    { id: 4, name: 'Phạm Thị Dung' },
-    { id: 5, name: 'Hoàng Văn Em' },
-  ],
-  kpiData: {
-    1: { kpi: 95, completion: 92, shifts: 28, performance: 94 },
-    2: { kpi: 92, completion: 88, shifts: 26, performance: 90 },
-    3: { kpi: 88, completion: 85, shifts: 25, performance: 87 },
-    4: { kpi: 82, completion: 80, shifts: 24, performance: 83 },
-    5: { kpi: 78, completion: 75, shifts: 22, performance: 79 },
-  },
   alerts: [
     {
       id: 1,
@@ -80,13 +61,49 @@ export const MOCK_DATA = {
 // Main Component
 export default function Performance() {
   const currentYear = new Date().getFullYear()
-  const [selectedEmployee, setSelectedEmployee] = useState(1)
+  const currentMonth = new Date().getMonth() + 1 // JavaScript months are 0-indexed
+
   const [isCalculating, setIsCalculating] = useState(false)
 
   // Year states for different sections
   const [topPerformersYear, setTopPerformersYear] = useState(currentYear)
   const [trendsYear, setTrendsYear] = useState(currentYear)
   const [comparisonYear, setComparisonYear] = useState(currentYear)
+
+  // 🟢 KPI filter states
+  const [kpiMonth, setKpiMonth] = useState<number>(currentMonth)
+  const [kpiYear, setKpiYear] = useState<number>(currentYear)
+
+  // 🟢 Comparison filter states
+  const [comparisonMonth, setComparisonMonth] = useState<number>(currentMonth)
+  const [comparisonEmployeeIds, setComparisonEmployeeIds] = useState<string[]>([])
+
+  // 🟢 Fetch staff users
+  const { data: usersData, isLoading: isLoadingStaff } = useUsers({
+    role: 'staff',
+    limit: 100, // Get all staff
+  })
+
+  // 🟢 Selected employee state
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+
+  // 🟢 Auto-select first employee when data loads
+  useMemo(() => {
+    if (usersData?.users && usersData.users.length > 0 && !selectedEmployeeId) {
+      setSelectedEmployeeId(usersData.users[0]._id)
+    }
+  }, [usersData, selectedEmployeeId])
+
+  // 🟢 Fetch KPI data for selected employee with month/year
+  const { data: kpiData, isLoading: isLoadingKPI } = useEmployeeKPI(
+    selectedEmployeeId
+      ? {
+          employeeId: selectedEmployeeId,
+          month: kpiMonth,
+          year: kpiYear,
+        }
+      : null
+  )
 
   const calculateKPI = () => {
     setIsCalculating(true)
@@ -112,16 +129,35 @@ export default function Performance() {
           onYearChange={setTopPerformersYear}
         />
 
-        <KPIDetailSection
-          selectedEmployee={selectedEmployee}
-          setSelectedEmployee={setSelectedEmployee}
-          isCalculating={isCalculating}
-          calculateKPI={calculateKPI}
-        />
+        {kpiData && (
+          <KPIDetailSection
+            employees={usersData?.users || []}
+            selectedEmployeeId={selectedEmployeeId}
+            setSelectedEmployeeId={setSelectedEmployeeId}
+            kpiData={kpiData}
+            isLoadingStaff={isLoadingStaff}
+            isLoadingKPI={isLoadingKPI}
+            isCalculating={isCalculating}
+            calculateKPI={calculateKPI}
+            month={kpiMonth}
+            year={kpiYear}
+            onMonthChange={setKpiMonth}
+            onYearChange={setKpiYear}
+          />
+        )}
 
         <TrendsSection selectedYear={trendsYear} onYearChange={setTrendsYear} />
 
-        <ComparisonSection selectedYear={comparisonYear} onYearChange={setComparisonYear} />
+        <ComparisonSection
+          selectedYear={comparisonYear}
+          onYearChange={setComparisonYear}
+          employees={usersData?.users || []}
+          selectedEmployeeIds={comparisonEmployeeIds}
+          onEmployeeIdsChange={setComparisonEmployeeIds}
+          month={comparisonMonth}
+          onMonthChange={setComparisonMonth}
+          isLoadingStaff={isLoadingStaff}
+        />
 
         <AlertsSection />
       </div>
