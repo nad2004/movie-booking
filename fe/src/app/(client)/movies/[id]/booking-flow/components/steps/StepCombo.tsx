@@ -34,7 +34,6 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
       )
     }
 
-    // Logic chọn icon dựa trên category
     let icon = '🍿'
     switch (product.category) {
       case 'Drink':
@@ -104,7 +103,7 @@ export function StepCombo({ cartItems, updateCartItem }: StepComboProps) {
                 }`}
               >
                 {/* Product Image */}
-                <div className="w-20 h-20 bg-bg-primary rounded-xl flex items-center justify-center shadow-sm border border-gray-100 flex-shrink-0 overflow-hidden relative">
+                <div className="w-20 h-20 bg-bg-primary rounded-xl flex items-center justify-center shadow-sm border border-gray-100 shrink-0 overflow-hidden relative">
                   {renderProductImage(product)}
                   {isOutOfStock && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
