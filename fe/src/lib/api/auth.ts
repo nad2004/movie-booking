@@ -34,6 +34,7 @@ export const resetPasswordApi = async (
   const response = await api.post<ResetPasswordResponse>('/auth/reset-password', data)
   return response.data
 }
+
 export const changePasswordApi = async (
   data: ChangePasswordRequest
 ): Promise<ChangePasswordResponse> => {
@@ -42,7 +43,16 @@ export const changePasswordApi = async (
 }
 
 export const googleLoginApi = async (data: GoogleLoginRequest): Promise<LoginResponse> => {
-  // Gửi trực tiếp thông tin user sang Backend để lưu/đăng nhập
   const response = await api.post<LoginResponse>('/auth/google-login', data)
   return response.data
+}
+
+// API Refresh Token mới
+export const refreshTokenApi = async (): Promise<{ accessToken: string }> => {
+  const response = await api.post<{ 
+    success: boolean
+    message: string
+    data: { accessToken: string } 
+  }>('/auth/refresh-token')
+  return response.data.data
 }
