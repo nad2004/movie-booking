@@ -137,20 +137,15 @@
  *     tags: [Authentication]
  *     summary: Làm mới access token
  *     description: |
- *       Sử dụng refresh token để lấy access token mới khi access token hiện tại đã hết hạn.
- *       Refresh token có thời hạn 30 ngày, access token có thời hạn 7 ngày.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [refreshToken]
- *             properties:
- *               refreshToken:
- *                 type: string
- *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2M..."
- *                 description: Refresh token nhận được từ lúc đăng nhập/đăng ký
+ *       Sử dụng refresh token để lấy access token mới.
+ *       Refresh token được tự động gửi kèm qua Cookie (HttpOnly).
+ *     parameters:
+ *       - in: cookie
+ *         name: refreshToken
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Refresh Token (HttpOnly Cookie)
  *     responses:
  *       200:
  *         description: Làm mới token thành công
@@ -172,12 +167,8 @@
  *                       type: string
  *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *                       description: Access token mới (7 ngày)
- *                     refreshToken:
- *                       type: string
- *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *                       description: Refresh token mới (30 ngày)
  *       400:
- *         description: Thiếu refresh token
+ *         description: Thiếu refresh token trong Cookie
  *         content:
  *           application/json:
  *             schema:
