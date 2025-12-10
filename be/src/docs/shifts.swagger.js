@@ -353,6 +353,33 @@
 
 /**
  * @swagger
+ * /work-schedules/{workScheduleId}:
+ *   delete:
+ *     tags: [WorkSchedules]
+ *     summary: Xóa lịch làm việc
+ *     description: Xóa lịch làm việc theo ID.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workScheduleId
+ *         required: true
+ *         description: ID của lịch làm việc cần xóa.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Đã xóa lịch làm việc và các phân công chờ liên quan.
+ *       400:
+ *         description: Không thể xóa vì đã có nhân viên check-in hoặc ca đã hoàn thành.
+ *       404:
+ *         description: Không tìm thấy lịch làm việc.
+ *       500:
+ *         description: Lỗi server.
+ */
+
+/**
+ * @swagger
  * /theaters/{theaterId}/roster:
  *   get:
  *     tags: [WorkSchedules]

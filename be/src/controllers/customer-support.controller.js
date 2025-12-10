@@ -1,56 +1,76 @@
 import Complaint from "../models/complaint.model.js";
 import Incident from "../models/incident.model.js";
 import User from "../models/user.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
 import { AuthorizationError, NotFoundError } from "../utils/errors.js";
+import { errorResponse, successResponse } from "../utils/response.js";
+
+// Hàm hỗ trợ tạo ID 
+const generateComplaintId = () => {
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `CP${dateStr}${randomStr}`;
+};
 
 const customerSupportController = {
-  // ============================================
-  // COMPLAINT MANAGEMENT
-  // ============================================
-
   // Create complaint
   createComplaint: async (req, res) => {
     try {
-      const staff = await User.findById(req.userId);
+      const staff = await User.findById(req.userId).populate("staffInfo.assignedTheater");
       if (!staff || staff.role !== "staff") {
         throw new AuthorizationError("Chỉ nhân viên mới có thể tạo khiếu nại");
       }
+      const { 
+        customerName, 
+        customerPhone, 
+        customerEmail, 
+        bookingCode, 
+        category, 
+        title, 
+        description, 
+        priority 
+      } = req.body;
 
-      const { customerName, customerPhone, customerEmail, bookingCode, category, title, description, priority } =
-        req.body;
+      const finalCustomerName = customerName || "Nội bộ (Nhân viên báo cáo)";
+      const finalCustomerPhone = customerPhone || "N/A";
+      const finalTitle = title || `Báo cáo ${category} bởi ${staff.fullName}`;
+
+      const newComplaintId = generateComplaintId();
 
       const complaint = new Complaint({
-        customerName,
-        customerPhone,
-        customerEmail,
+        complaintId: newComplaintId,
+        customerName: finalCustomerName,   // Dùng biến đã xử lý
+        customerPhone: finalCustomerPhone, // Dùng biến đã xử lý
+        customerEmail: customerEmail || "",
         bookingCode,
         category,
-        title,
+        title: finalTitle,
         description,
         priority: priority || "medium",
-        theater: staff.staffInfo?.assignedTheater,
+        
+        theater: staff.staffInfo?.assignedTheater?._id,
         theaterName: staff.staffInfo?.assignedTheater?.name || "Unknown",
+        
         receivedBy: staff._id,
         receivedByName: staff.fullName,
         status: "pending",
       });
 
-      // Add initial timeline entry
+      // ... (Phần timeline và save giữ nguyên)
       complaint.timeline.push({
         action: "created",
         performedBy: staff._id,
         performedByName: staff.fullName,
-        note: "Khiếu nại được tạo",
+        note: "Tạo mới",
         timestamp: new Date(),
       });
 
       await complaint.save();
+      return successResponse(res, { complaint }, "Tạo báo cáo thành công", 201);
 
-      return successResponse(res, { complaint }, "Tạo khiếu nại thành công", 201);
     } catch (error) {
-      console.error("Create complaint error:", error);
-      return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
+       // ... (xử lý lỗi giữ nguyên)
+       console.error(error);
+       return errorResponse(res, error.message, 500);
     }
   },
 

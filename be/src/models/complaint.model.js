@@ -19,11 +19,11 @@ const complaintSchema = new Schema(
     },
     customerName: {
       type: String,
-      required: true,
+      required: false,
     },
     customerPhone: {
       type: String,
-      required: true,
+      required: false,
     },
     customerEmail: {
       type: String,
@@ -69,7 +69,7 @@ const complaintSchema = new Schema(
 
     title: {
       type: String,
-      required: true,
+      required: false,
       maxlength: 200,
     },
 
