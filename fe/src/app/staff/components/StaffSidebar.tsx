@@ -9,7 +9,6 @@ export function StaffSidebar() {
     { id: 'xac-nhan-ve', label: 'Xác nhận vé', icon: ShieldCheck, path: '/staff/confirm-tickets' },
     { id: 'check-in', label: 'Check-in Ca làm', icon: Clock, path: '/staff/checkin' },
     { id: 'khach-hang', label: 'Khách hàng', icon: Users, path: '/staff/customers' },
-    { id: 'bao-cao', label: 'Báo cáo & KPI', icon: BarChart3, path: '/staff/reports' },
   ]
   const pathname = usePathname()
   return (
