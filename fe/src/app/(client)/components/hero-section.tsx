@@ -7,25 +7,98 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Movie } from '@/types/movie'
 import Image from 'next/image'
+
 interface MovieSectionProps {
   movies: Movie[]
+  isLoading?: boolean
 }
-export function HeroSection({ movies }: MovieSectionProps) {
+
+// Skeleton Component
+function HeroSkeleton() {
+  return (
+    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+      <div className="absolute inset-0">
+        {/* Background skeleton */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse" />
+        
+        {/* Overlay gradients */}
+        <div className="absolute inset-0 bg-linear-to-r from-background via-background/85 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background/60 via-transparent to-transparent" />
+      </div>
+
+      {/* Content skeleton */}
+      <div className="relative flex h-full items-center">
+        <div className="px-[25px] md:px-[60px] xl:px-[86px] max-w-[680px] space-y-6">
+          {/* Title skeleton */}
+          <div className="space-y-3">
+            <div className="h-12 md:h-16 bg-muted/30 rounded-lg w-3/4 animate-pulse" />
+            <div className="h-12 md:h-16 bg-muted/30 rounded-lg w-1/2 animate-pulse" />
+          </div>
+
+          {/* Metadata skeleton */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="h-5 bg-muted/30 rounded w-32 animate-pulse" />
+            <div className="h-5 w-5 bg-muted/30 rounded-full animate-pulse" />
+            <div className="h-5 bg-muted/30 rounded w-24 animate-pulse" />
+            <div className="h-5 w-5 bg-muted/30 rounded-full animate-pulse" />
+            <div className="h-5 bg-muted/30 rounded w-20 animate-pulse" />
+          </div>
+
+          {/* Description skeleton */}
+          <div className="space-y-2">
+            <div className="h-5 bg-muted/30 rounded w-full animate-pulse" />
+            <div className="h-5 bg-muted/30 rounded w-full animate-pulse" />
+            <div className="h-5 bg-muted/30 rounded w-3/4 animate-pulse" />
+          </div>
+
+          {/* Buttons skeleton */}
+          <div className="flex flex-wrap gap-3">
+            <div className="h-12 bg-muted/30 rounded-xl w-32 animate-pulse" />
+            <div className="h-12 bg-muted/30 rounded-xl w-40 animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation buttons skeleton */}
+      <div className="absolute bottom-8 right-8 flex gap-2">
+        <div className="h-10 w-10 bg-muted/30 rounded-md animate-pulse" />
+        <div className="h-10 w-10 bg-muted/30 rounded-md animate-pulse" />
+      </div>
+
+      {/* Indicators skeleton */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+        {[...Array(3)].map((_, index) => (
+          <div
+            key={index}
+            className="h-1 w-4 bg-muted/30 rounded-full animate-pulse"
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+export function HeroSection({ movies, isLoading = false }: MovieSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
+    if (movies.length === 0) return
+    
     const timer = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % movies.length)
     }, 5000)
     return () => clearInterval(timer)
   }, [movies.length])
 
-  const currentMovie = movies[currentIndex]
-  if (movies.length === 0) {
-    return <div>Không có thể loại nào để hiển thị.</div>
+  // Show skeleton while loading
+  if (isLoading || movies.length === 0) {
+    return <HeroSkeleton />
   }
+
+  const currentMovie = movies[currentIndex]
+
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden ">
+    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
@@ -83,7 +156,7 @@ export function HeroSection({ movies }: MovieSectionProps) {
                 <span className="text-muted-foreground">•</span>
                 <span className="uppercase">Đánh giá</span>
                 <span className="flex items-center gap-1 text-[hsl(var(--accent))] font-semibold">
-                  <Star className="h-4 w-4 fill-[hsl(var(--accent))]" />{' '}
+                  <Star className="h-4 w-4 fill-[hsl(var(--accent))]" />
                   {currentMovie.averageRating}/5
                 </span>
               </motion.div>
@@ -133,6 +206,7 @@ export function HeroSection({ movies }: MovieSectionProps) {
           size="icon"
           variant="outline"
           onClick={() => setCurrentIndex(prev => (prev === 0 ? movies.length - 1 : prev - 1))}
+          className="backdrop-blur-sm bg-background/80"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -140,6 +214,7 @@ export function HeroSection({ movies }: MovieSectionProps) {
           size="icon"
           variant="outline"
           onClick={() => setCurrentIndex(prev => (prev + 1) % movies.length)}
+          className="backdrop-blur-sm bg-background/80"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -154,6 +229,7 @@ export function HeroSection({ movies }: MovieSectionProps) {
             className={`h-1 rounded-full transition-all ${
               index === currentIndex ? 'w-8 bg-[hsl(var(--primary))]' : 'w-4 bg-muted-foreground/50'
             }`}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>

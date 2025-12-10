@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TheaterComboboxForm } from '@/app/admin/components/TheaterComboboxForm'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { useShiftTemplates } from '@/lib/api/shift-templates'
 import { useTheaters } from '@/lib/api/theaters'
@@ -177,31 +178,13 @@ export default function GenerateScheduleModal({
               <Label htmlFor="theaterId">
                 Áp dụng cho Rạp <span className="text-red-500">*</span>
               </Label>
-              <Controller
-                name="theaterId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={isLoadingTheaters}
-                  >
-                    <SelectTrigger
-                      id="theaterId"
-                      className={errors.theaterId ? 'border-red-500' : ''}
-                    >
-                      <SelectValue placeholder="Chọn rạp" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] overflow-y-auto">
-                      {theaters &&
-                        theaters.map(theater => (
-                          <SelectItem key={theater._id} value={theater._id}>
-                            {theater.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                )}
+              <TheaterComboboxForm
+                theaters={theaters}
+                value={watch('theaterId')} 
+                onValueChange={val => setValue('theaterId', val)}
+                placeholder="Chọn rạp chiếu..."
+                searchPlaceholder="Tìm kiếm rạp..."
+                showAllOption={false}
               />
               {errors.theaterId && (
                 <p className="text-xs text-red-500 flex items-center gap-1">

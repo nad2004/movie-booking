@@ -19,12 +19,100 @@ import {
 interface MovieCarouselProps {
   title: string
   movies: Movie[]
+  isLoading?: boolean
 }
 
-export function TopMovieCarousel({ title, movies }: MovieCarouselProps) {
-  if (movies.length === 0) {
-    return <div>Không có thể loại nào để hiển thị.</div>
+// Skeleton Component for Movie Card
+function MovieCardSkeleton() {
+  return (
+    <div className="group">
+      <div className="relative overflow-hidden rounded-2xl aspect-2/3 mb-3 bg-muted/30 animate-pulse">
+        {/* Poster skeleton */}
+        <div className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted/30" />
+        
+        {/* Rating badge skeleton */}
+        <div className="absolute top-2 right-2 px-2 py-1 bg-muted/50 backdrop-blur-sm rounded-lg w-12 h-6" />
+      </div>
+
+      <div className="space-y-2 px-1">
+        {/* Title skeleton */}
+        <div className="h-4 bg-muted/30 rounded w-3/4 animate-pulse" />
+        <div className="h-4 bg-muted/30 rounded w-1/2 animate-pulse" />
+        
+        {/* Duration skeleton */}
+        <div className="h-3 bg-muted/30 rounded w-20 animate-pulse" />
+      </div>
+    </div>
+  )
+}
+
+// Skeleton for entire carousel
+function CarouselSkeleton({ title }: { title: string }) {
+  return (
+    <section className="w-full mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
+          {title}
+        </h2>
+      </div>
+
+      {/* Skeleton carousel */}
+      <div className="relative">
+        <div className="flex gap-3 overflow-hidden">
+          {[...Array(6)].map((_, index) => (
+            <div
+              key={index}
+              className="
+                flex-shrink-0
+                w-[calc(50%-6px)]         /* mobile: 2 items */
+                sm:w-[calc(33.333%-8px)]  /* ≥640px: 3 items */
+                md:w-[calc(25%-9px)]      /* ≥768px: 4 items */
+                lg:w-[calc(20%-9.6px)]    /* ≥1024px: 5 items */
+                xl:w-[calc(16.666%-10px)] /* ≥1280px: 6 items */
+              "
+            >
+              <MovieCardSkeleton />
+            </div>
+          ))}
+        </div>
+
+        {/* Navigation buttons skeleton (hidden on mobile) */}
+        <div className="hidden md:block">
+          <div className="absolute left-0 top-1/3 -translate-y-1/2 -translate-x-1/2">
+            <div className="w-10 h-10 bg-muted/30 rounded-full animate-pulse" />
+          </div>
+          <div className="absolute right-0 top-1/3 -translate-y-1/2 translate-x-1/2">
+            <div className="w-10 h-10 bg-muted/30 rounded-full animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export function TopMovieCarousel({ title, movies, isLoading = false }: MovieCarouselProps) {
+  // Show skeleton while loading
+  if (isLoading) {
+    return <CarouselSkeleton title={title} />
   }
+
+  // Empty state
+  if (movies.length === 0) {
+    return (
+      <section className="w-full mb-4">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
+            {title}
+          </h2>
+        </div>
+        <div className="text-center py-12 bg-muted/10 rounded-2xl border-2 border-dashed border-muted">
+          <p className="text-muted-foreground">Không có phim nào để hiển thị.</p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="w-full mb-4">
       {/* Header */}
@@ -62,6 +150,7 @@ export function TopMovieCarousel({ title, movies }: MovieCarouselProps) {
     </section>
   )
 }
+
 function MovieCard({ movie, index }: { movie: Movie; index: number }) {
   return (
     <motion.div

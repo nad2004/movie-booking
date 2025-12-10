@@ -1,4 +1,3 @@
-'use client'
 
 import { WorkSchedule } from '@/types/work-schedule'
 import { Loader2, X } from 'lucide-react'

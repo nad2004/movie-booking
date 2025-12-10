@@ -12,6 +12,7 @@ import { useGenres } from '@/lib/api/genres'
 import { DEFAULT_GENRE_LIST } from '@/constants'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { CustomPagination, PaginationInfo } from '@/app/components/shared/custom-pagination'
+import type { Genre } from '@/types/genre'
 
 // --- CONSTANTS UI ---
 const movieTypes = ['Tất cả', 'Đang chiếu', 'Sắp chiếu']
@@ -21,22 +22,23 @@ const sortOptions = ['Mới nhất', 'Mới cập nhật', 'Điểm IMDb', 'Lư�
 export default function PhimLoc() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const pageFromUrl = parseInt(searchParams.get('page') || '1', 15)
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
   const itemsPerPage = 15
-  // --- 1. DRAFT STATE (Dữ liệu trên UI - Chưa gửi API) ---
+
+  // --- 1. DRAFT STATE ---
   const [showFilters, setShowFilters] = useState(true)
   const [selectedCountry, setSelectedCountry] = useState('Tất cả')
   const [selectedType, setSelectedType] = useState('Tất cả')
   const [selectedRating, setSelectedRating] = useState('P')
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([])
+  const [selectedGenreIds, setSelectedGenreIds] = useState<string[]>([]) // ✅ LƯU ID thay vì name
   const [selectedYear, setSelectedYear] = useState('Tất cả')
   const [customYear, setCustomYear] = useState('')
   const [selectedSort, setSelectedSort] = useState('Mới nhất')
 
-  const { data: listGenres = DEFAULT_GENRE_LIST } = useGenres({})
+  // ✅ Fetch genres từ API
+  const { data: genresData = DEFAULT_GENRE_LIST } = useGenres({})
+  const genres: Genre[] = genresData.items || []
 
-  // Lấy danh sách thể loại unique
-  const uniqueGenres = Array.from(new Set(listGenres.items.map(genre => genre.name)))
   const [queryParams, setQueryParams] = useState<GetMoviesParams>({
     page: pageFromUrl,
     limit: itemsPerPage,
@@ -44,14 +46,16 @@ export default function PhimLoc() {
     order: 'desc',
   })
 
-  // --- 3. FETCH DATA (Dựa trên queryParams) ---
+  // --- 3. FETCH DATA ---
   const {
     data: listMovies = DEFAULT_MOVIE_LIST,
-    isLoading, // Lấy trạng thái loading từ đây
-    isFetching, // Lấy thêm isFetching để biết khi nào đang refetch lại
+    isLoading,
+    isFetching,
   } = useMovies(queryParams)
+
   const totalPages = listMovies?.pagination?.totalPages || 1
   const totalItems = listMovies?.pagination?.totalItems || 0
+
   const { data: topMoviesData = DEFAULT_MOVIE_LIST } = useMovies({
     page: 1,
     limit: 10,
@@ -59,11 +63,11 @@ export default function PhimLoc() {
     order: 'desc',
   })
 
-  // --- 4. LOGIC XỬ LÝ KHI BẤM NÚT "LỌC KẾT QUẢ" ---
+  // --- 4. APPLY FILTER ---
   const handleApplyFilter = () => {
     const params: GetMoviesParams = {
       page: 1,
-      limit: 12,
+      limit: itemsPerPage,
       sortBy: selectedSort === 'Mới nhất' ? 'releaseDate' : 'view_count',
       order: 'desc',
       rating: selectedRating === 'P' ? undefined : selectedRating,
@@ -73,43 +77,19 @@ export default function PhimLoc() {
           : selectedType === 'Đang chiếu'
             ? 'showing'
             : 'coming_soon',
-      year: selectedYear === 'Tất cả' ? undefined : parseInt(selectedYear, 10),
       country: selectedCountry === 'Tất cả' ? undefined : selectedCountry,
-      genres: selectedGenres.length === 0 ? undefined : selectedGenres.join(','),
+      // ✅ Truyền genre IDs vào API
+      genres: selectedGenreIds.length === 0 ? undefined : selectedGenreIds.join(','),
     }
 
-    // A. Xử lý Genres
-    if (selectedGenres.length > 0) {
-      params.genres = selectedGenres.join(',')
-    }
-
-    // B. Xử lý Quốc gia
-    if (selectedCountry !== 'Tất cả') {
-      params.country = selectedCountry
-    }
-
-    // C. Xử lý Loại phim
-    if (selectedType === 'Đang chiếu') params.status = 'showing'
-    if (selectedType === 'Sắp chiếu') params.status = 'coming_soon'
-
-    // D. Xử lý Độ tuổi
-    // if (selectedRating !== 'Tất cả') {
-    //   const ageMatch = selectedRating.match(/\d+/)
-    //   if (ageMatch) {
-    //     params.minAge = parseInt(ageMatch[0], 10)
-    //   } else if (selectedRating.startsWith('P')) {
-    //     params.minAge = 0
-    //   }
-    // }
-
-    // E. Xử lý Năm
+    // Xử lý năm
     if (customYear) {
       params.year = parseInt(customYear, 10)
     } else if (selectedYear !== 'Tất cả') {
       params.year = parseInt(selectedYear, 10)
     }
 
-    // F. Xử lý Sắp xếp
+    // Xử lý sắp xếp
     switch (selectedSort) {
       case 'Mới nhất':
         params.sortBy = 'releaseDate'
@@ -132,33 +112,35 @@ export default function PhimLoc() {
         params.order = 'desc'
     }
 
-    // CẬP NHẬT STATE -> Kích hoạt useQuery chạy lại
     setQueryParams(params)
   }
 
-  // --- 5. HANDLERS UI ---
-  const toggleGenre = (genre: string) => {
-    if (selectedGenres.includes(genre)) {
-      setSelectedGenres(selectedGenres.filter(g => g !== genre))
+  // --- 5. HANDLERS ---
+  // ✅ Toggle genre bằng ID
+  const toggleGenreId = (genreId: string) => {
+    if (selectedGenreIds.includes(genreId)) {
+      setSelectedGenreIds(selectedGenreIds.filter(id => id !== genreId))
     } else {
-      setSelectedGenres([...selectedGenres, genre])
+      setSelectedGenreIds([...selectedGenreIds, genreId])
     }
   }
+
   useEffect(() => {
     setQueryParams(prev => ({ ...prev, page: pageFromUrl }))
   }, [pageFromUrl])
+
   const updateUrlParams = (newPage: number) => {
     const newSearchParams = new URLSearchParams(searchParams.toString())
     newSearchParams.set('page', newPage.toString())
     router.push(`?${newSearchParams.toString()}`, { scroll: false })
   }
 
-  // [Mới] Xử lý chuyển trang
   const handlePageChange = (page: number) => {
     setQueryParams(prev => ({ ...prev, page }))
     updateUrlParams(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
   return (
     <div className="min-h-screen bg-bg-primary">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
@@ -169,7 +151,6 @@ export default function PhimLoc() {
 
         {showFilters && (
           <FilterCard
-            // Truyền Props UI
             countries={COUNTRIES}
             selectedCountry={selectedCountry}
             onSelectCountry={setSelectedCountry}
@@ -179,31 +160,28 @@ export default function PhimLoc() {
             ratings={ratings}
             selectedRating={selectedRating}
             onSelectRating={setSelectedRating}
-            genres={uniqueGenres}
-            selectedGenres={selectedGenres}
-            onToggleGenre={toggleGenre}
+            // ✅ Truyền genres array với ID và name
+            genres={genres}
+            selectedGenreIds={selectedGenreIds}
+            onToggleGenreId={toggleGenreId}
             customYear={customYear}
             onSetCustomYear={setCustomYear}
             sortOptions={sortOptions}
             selectedSort={selectedSort}
             onSelectSort={setSelectedSort}
             onClose={() => setShowFilters(false)}
-            // THÊM PROPS MỚI
-            onApplyFilter={handleApplyFilter} // Hàm xử lý khi click nút
-            isLoading={isLoading || isFetching} // Trạng thái đang tải
+            onApplyFilter={handleApplyFilter}
+            isLoading={isLoading || isFetching}
           />
         )}
 
-        {/* <TopMovieCarousel title="🔥 Top Movies" movies={topMoviesData.movies} /> */}
-
         <div id="movie-list-section">
-          {/* Hiển thị loading overlay hoặc text */}
           {isLoading || isFetching ? (
             <div className="text-white py-4 text-center animate-pulse">Đang lọc phim...</div>
           ) : (
             <>
               <MovieList
-                title={`📽️ Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
+                title={`🎬 Kết quả lọc (${listMovies.pagination?.totalItems || 0} phim)`}
                 movies={listMovies.movies}
                 viewAllHref="#"
               />

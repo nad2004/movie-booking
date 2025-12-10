@@ -1,21 +1,16 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { TheaterCombobox } from '@/components/ui/combobox'
+import type { Theater } from '@/types/theater'
 import { Card } from '@/components/ui/card'
 import { Sparkles, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-
+import { Loader2 } from 'lucide-react'
 // Định nghĩa Props cần thiết
 interface PlanningToolbarProps {
-  theaters: any[] | undefined // Hoặc type cụ thể nếu có
+  theaters: Theater[] | undefined // Hoặc type cụ thể nếu có
   selectedTheaterId: string
   onTheaterChange: (val: string) => void
   currentDate: Date
@@ -40,19 +35,21 @@ export default function PlanningToolbar({
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="flex gap-3 items-center w-full md:w-auto">
           {/* Theater Select */}
-          <Select value={selectedTheaterId} onValueChange={onTheaterChange}>
-            <SelectTrigger className="w-[220px] rounded-xl bg-gray-50 border-gray-200 focus:ring-[#6C63FF]">
-              <SelectValue placeholder="Chọn rạp" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px] overflow-y-auto">
-              {theaters?.map((t: any) => (
-                <SelectItem key={t._id} value={t._id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
 
+          {theaters ? (
+            <TheaterCombobox
+              theaters={theaters}
+              value={selectedTheaterId}
+              onValueChange={onTheaterChange}
+              placeholder="Lọc theo rạp"
+              searchPlaceholder="Tìm kiếm rạp..."
+              className="w-[220px] rounded-xl bg-gray-50 border-gray-200 focus:ring-[#6C63FF]"
+            />
+          ) : (
+            <>
+              <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            </>
+          )}
           {/* Month Navigation */}
           <div className="flex items-center bg-gray-50 p-1 rounded-xl border border-gray-200 select-none">
             <Button

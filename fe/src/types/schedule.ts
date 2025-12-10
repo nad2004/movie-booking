@@ -1,6 +1,6 @@
 import type { ApiResponse } from './apiTemplate'
 import type { Pagination } from './apiTemplate'
-import type { Theater } from './theater'
+import type { Theater, Room } from './theater'
 import type { Movie } from './movie'
 // Ghế của suất chiếu (seatAvailability)
 export interface SeatAvailability {
@@ -18,11 +18,7 @@ export interface TicketPrices {
   vip?: number
   couple?: number
 }
-interface ScheduleRoom {
-  _id: string
-  name: string
-  roomType: string
-}
+
 
 // Dữ liệu 1 schedule
 export interface Schedule {
@@ -33,7 +29,7 @@ export interface Schedule {
 
   // Thông tin rạp & phòng
   theater: Theater
-  room: ScheduleRoom
+  room: Room
 
   // Thời gian
   showDate: string

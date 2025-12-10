@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Filter as FilterIcon, Loader2, RotateCcw } from 'lucide-react'
-import { cn } from '@/lib/utils' // Giả sử bạn có utility này từ shadcn/ui
+import { cn } from '@/lib/utils'
+import type { Genre } from '@/types/genre'
 
 // --- TYPES ---
 type FilterCardProps = {
@@ -18,9 +19,10 @@ type FilterCardProps = {
   ratings: string[]
   selectedRating: string
   onSelectRating: (value: string) => void
-  genres: string[]
-  selectedGenres: string[]
-  onToggleGenre: (value: string) => void
+  // ✅ Nhận genres array với đầy đủ thông tin
+  genres: Genre[]
+  selectedGenreIds: string[]
+  onToggleGenreId: (id: string) => void
   customYear: string
   onSetCustomYear: (value: string) => void
   sortOptions: string[]
@@ -29,7 +31,6 @@ type FilterCardProps = {
   onClose: () => void
   onApplyFilter: () => void
   isLoading: boolean
-  // Optional: Thêm prop reset nếu cần
   onResetFilter?: () => void
 }
 
@@ -40,8 +41,14 @@ type FilterButtonListProps = {
   className?: string
 }
 
-// --- SUB-COMPONENT: MEMOIZED LIST ---
-// Sử dụng memo để tránh re-render khi parent thay đổi state không liên quan (vd: nhập input year)
+// ✅ Component mới cho Genre với ID
+type GenreFilterListProps = {
+  genres: Genre[]
+  selectedIds: string[]
+  onToggleId: (id: string) => void
+  className?: string
+}
+
 const FilterButtonList = memo(
   ({ items, selectedItem, onSelect, className }: FilterButtonListProps) => {
     return (
@@ -73,6 +80,36 @@ const FilterButtonList = memo(
 )
 FilterButtonList.displayName = 'FilterButtonList'
 
+// ✅ Component riêng cho Genre filter
+const GenreFilterList = memo(
+  ({ genres, selectedIds, onToggleId, className }: GenreFilterListProps) => {
+    return (
+      <div className={cn('flex flex-wrap gap-2', className)}>
+        {genres.map(genre => {
+          const isSelected = selectedIds.includes(genre._id)
+
+          return (
+            <button
+              key={genre._id}
+              onClick={() => onToggleId(genre._id)}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
+                isSelected
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+              )}
+              type="button"
+            >
+              {genre.name}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+)
+GenreFilterList.displayName = 'GenreFilterList'
+
 // --- MAIN COMPONENT ---
 export default function FilterCard({
   countries,
@@ -85,8 +122,8 @@ export default function FilterCard({
   selectedRating,
   onSelectRating,
   genres,
-  selectedGenres,
-  onToggleGenre,
+  selectedGenreIds,
+  onToggleGenreId,
   customYear,
   onSetCustomYear,
   sortOptions,
@@ -99,19 +136,15 @@ export default function FilterCard({
 }: FilterCardProps) {
   return (
     <Card className="bg-card border-border shadow-lg p-6 mb-8 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
         <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground">
           <FilterIcon className="w-5 h-5 text-primary" />
           Bộ lọc tìm kiếm
         </h3>
-        {/* Nút đóng trên mobile hiển thị rõ hơn ở đây nếu cần */}
       </div>
 
       <div className="space-y-8">
-        {/* Grid Layout cho các nhóm filter nhỏ */}
-        <div className="grid grid-cols-1  gap-8">
-          {/* Cột 1 */}
+        <div className="grid grid-cols-1 gap-8">
           <div className="space-y-6">
             <div>
               <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
@@ -147,7 +180,6 @@ export default function FilterCard({
             </div>
           </div>
 
-          {/* Cột 2 */}
           <div className="space-y-6">
             <div>
               <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
@@ -177,16 +209,19 @@ export default function FilterCard({
           </div>
         </div>
 
-        {/* Thể loại (Chiếm full width vì thường nhiều item) */}
+        {/* ✅ Thể loại với GenreFilterList */}
         <div>
           <label className="text-sm font-semibold text-foreground mb-3 block uppercase tracking-wider opacity-80">
             Thể loại
           </label>
-          <FilterButtonList items={genres} selectedItem={selectedGenres} onSelect={onToggleGenre} />
+          <GenreFilterList
+            genres={genres}
+            selectedIds={selectedGenreIds}
+            onToggleId={onToggleGenreId}
+          />
         </div>
       </div>
 
-      {/* Footer Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8 pt-6 border-t border-border">
         <Button
           variant="outline"

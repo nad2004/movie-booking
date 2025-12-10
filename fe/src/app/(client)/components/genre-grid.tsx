@@ -3,27 +3,77 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { Genre } from '@/types/genre'
-const genres = [
-  { name: 'Hành động', icon: '⚡', color: 'from-red-500 to-orange-500' },
-  { name: 'Kinh dị', icon: '👻', color: 'from-purple-500 to-pink-500' },
-  { name: 'Hài', icon: '😂', color: 'from-yellow-500 to-green-500' },
-  { name: 'Tình cảm', icon: '💕', color: 'from-pink-500 to-rose-500' },
-  { name: 'Khoa học viễn tưởng', icon: '🚀', color: 'from-blue-500 to-cyan-500' },
-  { name: 'Hoạt hình', icon: '🎨', color: 'from-indigo-500 to-purple-500' },
-]
+
 interface GenresProps {
   genres: Genre[]
+  isLoading?: boolean
 }
-export function GenreGrid({ genres }: GenresProps) {
-  if (genres.length === 0) {
-    return <div>Không có thể loại nào để hiển thị.</div>
-  }
+
+// Skeleton for individual genre card
+function GenreCardSkeleton() {
   return (
-    <div className=" py-12   ">
+    <div className="relative flex items-center justify-center gap-3 h-28 md:h-32 rounded-2xl border border-border bg-bg-primary overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-muted/30 to-muted/10 animate-pulse" />
+      
+      {/* Icon skeleton */}
+      <div className="relative w-10 h-10 md:w-12 md:h-12 bg-muted/40 rounded-full animate-pulse" />
+      
+      {/* Text skeleton */}
+      <div className="relative h-5 bg-muted/40 rounded w-20 md:w-24 animate-pulse" />
+    </div>
+  )
+}
+
+// Skeleton for entire genre grid
+function GenreGridSkeleton() {
+  return (
+    <div className="py-12">
+      <div className="container">
+        {/* Header skeleton */}
+        <div className="mb-8">
+          <div className="h-7 bg-muted/30 rounded w-64 animate-pulse" />
+        </div>
+
+        {/* Grid skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, index) => (
+            <GenreCardSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function GenreGrid({ genres, isLoading = false }: GenresProps) {
+  // Show skeleton while loading
+  if (isLoading) {
+    return <GenreGridSkeleton />
+  }
+
+  // Empty state
+  if (genres.length === 0) {
+    return (
+      <div className="py-12">
+        <div className="container">
+          <h2 className="mb-8 text-start font-semibold text-foreground">
+            Khám phá theo thể loại
+          </h2>
+          <div className="text-center py-16 bg-muted/10 rounded-2xl border-2 border-dashed border-muted">
+            <p className="text-muted-foreground">Không có thể loại nào để hiển thị.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="py-12">
       <div className="container">
         <h2 className="mb-8 text-start font-semibold text-foreground">Khám phá theo thể loại</h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 ">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {genres.map((genre, index) => (
             <motion.div
               key={genre.name}

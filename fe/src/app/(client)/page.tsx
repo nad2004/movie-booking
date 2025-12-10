@@ -39,13 +39,7 @@ export default function HomePage() {
   }
   return (
     <div className="flex flex-col w-full overflow-x-hidden">
-      {loadingMovies ? (
-        <div className="flex items-center justify-center h-[600px]">
-          <span>Loading...</span>
-        </div>
-      ) : (
-        <HeroSection movies={listMovies?.movies} />
-      )}
+      <HeroSection movies={listMovies?.movies} isLoading={loadingMovies} />
 
       {errorMovies && (
         <div className="text-center text-red-500 py-4">
@@ -60,27 +54,27 @@ export default function HomePage() {
           py-12 space-y-16
         "
       >
-        <TopMovieCarousel title="🔥 Top Movies" movies={listMovies.movies} />
+        <TopMovieCarousel
+          title="🔥 Top Movies"
+          movies={listMovies.movies}
+          isLoading={loadingMovies}
+        />
 
         <MovieSection
           title="🎟️ Đang chiếu"
           movies={listMovies.movies.slice(5, 9)}
           viewAllHref="/movies"
+          isLoading={loadingMovies}
         />
 
         <MovieSection
           title="📅 Sắp chiếu"
           movies={listMovies.movies.slice(1, 5)}
           viewAllHref="/movies"
+          isLoading={loadingMovies}
         />
 
-        {loadingGenres ? (
-          <div className="text-center py-8">
-            <span>Đang tải thể loại...</span>
-          </div>
-        ) : (
-          <GenreGrid genres={listGenres.items} />
-        )}
+        <GenreGrid genres={listGenres.items} isLoading={loadingGenres} />
 
         {loadingTheater ? (
           <ShowtimeSectionSkeleton />

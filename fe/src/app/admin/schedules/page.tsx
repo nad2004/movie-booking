@@ -1,15 +1,18 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation' // [Mới]
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
+// API Hooks
 import { useSchedules } from '@/lib/api/schedules'
+import { useMovies } from '@/lib/api/movies' // [Mới] Fetch tại đây
+import { useTheaters } from '@/lib/api/theaters' // [Mới] Fetch tại đây
 import { useScheduleMutations } from './hooks/useScheduleMutations'
+
 import { ScheduleTable } from './components/ScheduleTable'
-// import { ScheduleStats } from './components/ScheduleStats';
 import { ScheduleFormDialog } from './components/ScheduleFormDialog'
 import { Schedule } from '@/types/schedule'
 import {
@@ -29,60 +32,65 @@ export default function ScheduleManagementPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // [Mới] Lấy page từ URL
   const pageFromUrl = parseInt(searchParams.get('page') || '1', 10)
-  const itemsPerPage = 10 // Giảm limit xuống để test phân trang
+  const itemsPerPage = 10
 
   // State
   const [date, setDate] = useState<Date | undefined>(new Date())
-  // [Mới] State page
   const [currentPage, setCurrentPage] = useState(pageFromUrl)
-
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [scheduleToEdit, setScheduleToEdit] = useState<Schedule | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  // Sync URL to State
   useEffect(() => {
     setCurrentPage(pageFromUrl)
   }, [pageFromUrl])
 
-  // Convert Date object sang YYYY-MM-DD để gọi API
   const formattedDate = date ? date.toLocaleDateString('en-CA') : undefined
 
-  // Fetch API
+  // 1. Fetch Schedules (Dữ liệu chính)
   const {
     data: scheduleData,
     isLoading,
     isFetching,
   } = useSchedules({
     showDate: formattedDate,
-    page: currentPage, // [Mới]
-    limit: itemsPerPage, // [Mới]
+    page: currentPage,
+    limit: itemsPerPage,
   })
 
-  // [Mới] Lấy thông tin phân trang từ API
+  // 2. [Mới] Fetch Resource Data (Phim & Rạp) để truyền vào Dialog
+  // Chỉ fetch khi Dialog mở hoặc sắp mở để tối ưu (hoặc fetch luôn tuỳ chiến lược cache)
+  const {
+    data: moviesData,
+    isLoading: isLoadingMovies,
+    isError: isErrorMovies,
+  } = useMovies({ limit: 100, status: 'Đang chiếu' })
+  const {
+    data: theatersData,
+    isLoading: isLoadingTheaters,
+    isError: isErrorTheaters,
+  } = useTheaters({ limit: 100 })
+
+  const isReferenceLoading = isLoadingMovies || isLoadingTheaters
+  const isReferenceError = isErrorMovies || isErrorTheaters
   const totalPages = scheduleData?.pagination?.totalPages || 1
   const totalItems = scheduleData?.pagination?.totalItems || 0
 
   const { deleteMutation } = useScheduleMutations()
 
-  // [Mới] Helper update URL
   const updateUrlParams = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('page', newPage.toString())
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
-  // Handlers
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     updateUrlParams(page)
-    // Scroll nhẹ lên đầu phần bảng (nếu cần)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // [Mới] Xử lý khi chọn ngày -> Reset về trang 1
   const handleDateChange = (newDate: Date | undefined) => {
     setDate(newDate)
     if (currentPage !== 1) {
@@ -106,6 +114,7 @@ export default function ScheduleManagementPage() {
       deleteMutation.mutate(deleteId, { onSuccess: () => setDeleteId(null) })
     }
   }
+
   const isTransitioning = useMemo(() => {
     return !isLoading && isFetching
   }, [isLoading, isFetching])
@@ -121,12 +130,8 @@ export default function ScheduleManagementPage() {
           </Button>
         </div>
 
-        {/* Stats (Commented out in original code) */}
-        {/* <ScheduleStats /> */}
-
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Cột Trái: Chọn Ngày */}
           <Card className="bg-white border-gray-200 p-4 h-fit shadow-sm">
             <div className="flex mb-2">
               <h3 className="text-gray-900 font-semibold mb-4 px-2 flex-1">Chọn Ngày Chiếu</h3>
@@ -140,19 +145,16 @@ export default function ScheduleManagementPage() {
             <Calendar
               mode="single"
               selected={date}
-              onSelect={handleDateChange} // Sử dụng handler mới
+              onSelect={handleDateChange}
               className="rounded-md border border-gray-100 w-full bg-gray-50 text-gray-950"
             />
           </Card>
 
-          {/* Cột Phải: Bảng Lịch Chiếu */}
           <div className="lg:col-span-3 space-y-4">
             {isLoading ? (
-              // Initial loading - show full skeleton
               <TableSkeleton />
             ) : (
               <>
-                {/* Show content */}
                 <Card className="bg-white border-gray-200 shadow-sm">
                   <div className="p-6 border-b border-gray-200">
                     <h3 className="text-gray-900 font-bold">
@@ -166,12 +168,10 @@ export default function ScheduleManagementPage() {
                     onDelete={id => setDeleteId(id)}
                   />
                 </Card>
-
-                {/* Show overlay during transitions (page change, tab change) */}
                 {isTransitioning && <LoadingOverlay />}
               </>
             )}
-            {/* [Mới] Phần phân trang */}
+
             <div className="pt-4">
               <PaginationInfo
                 currentPage={currentPage}
@@ -179,7 +179,6 @@ export default function ScheduleManagementPage() {
                 totalItems={totalItems}
                 itemsPerPage={itemsPerPage}
               />
-
               <CustomPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -191,11 +190,16 @@ export default function ScheduleManagementPage() {
         </div>
       </div>
 
-      {/* Dialogs */}
+      {/* Dialogs: Truyền Data & Loading state xuống */}
       <ScheduleFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         scheduleToEdit={scheduleToEdit}
+        // [Mới] Props
+        movies={moviesData?.movies || []}
+        theaters={theatersData?.theaters || []}
+        isReferenceLoading={isReferenceLoading}
+        isReferenceError={isReferenceError}
       />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

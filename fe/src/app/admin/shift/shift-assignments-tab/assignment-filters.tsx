@@ -11,13 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TheaterCombobox } from '@/components/ui/combobox'
+
 import { Search, Calendar } from 'lucide-react'
-
-interface Theater {
-  _id: string
-  name: string
-}
-
+import type { Theater } from '@/types/theater'
 interface AssignmentFiltersProps {
   theaters: Theater[]
   selectedTheaterId: string
@@ -56,22 +53,19 @@ export default function AssignmentFilters({
     },
     [onSearchChange]
   )
+
   return (
     <Card className="p-4 rounded-2xl border-gray-100 shadow-sm bg-white">
       <div className="flex flex-col md:flex-row gap-4 items-center">
         {/* Theater Select */}
-        <Select value={selectedTheaterId} onValueChange={onTheaterChange}>
-          <SelectTrigger className="w-full md:w-[220px] rounded-xl bg-gray-50 border-gray-200">
-            <SelectValue placeholder="Chọn rạp" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px] overflow-y-auto">
-            {theaters.map(t => (
-              <SelectItem key={t._id} value={t._id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <TheaterCombobox
+            theaters={theaters}
+            value={selectedTheaterId}
+            onValueChange={onTheaterChange}
+            placeholder="Lọc theo rạp"
+            searchPlaceholder="Tìm kiếm rạp..."
+            className='w-full md:w-[220px] rounded-xl bg-gray-50 border-gray-200'
+          />
 
         {/* Date Picker */}
         <div className="relative w-full md:w-[180px]">

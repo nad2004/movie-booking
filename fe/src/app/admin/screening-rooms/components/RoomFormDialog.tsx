@@ -15,10 +15,11 @@ import { Loader2 } from 'lucide-react'
 import { Theater, Room } from '@/types/theater'
 import { useRoomMutations } from '../hooks/useRoomMutations'
 import { generateSeatMap } from '@/lib/api/rooms'
-// Mở rộng type Room để có theaterId khi edit (do ta làm phẳng dữ liệu ở Page)
+import { TheaterComboboxForm } from '../../components/TheaterComboboxForm'
+
 export interface FlatRoom extends Room {
   theater: Theater
-  _id: string // Giả sử Room có _id (thường mongo subdoc sẽ có)
+  _id: string
 }
 
 interface RoomFormDialogProps {
@@ -46,9 +47,10 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
     },
   })
 
-  // Auto calculate total seats
   const rows = watch('rows')
   const cols = watch('seatsPerRow')
+  const theaterId = watch('theaterId')
+
   useEffect(() => {
     setValue('totalSeats', rows * cols)
   }, [rows, cols, setValue])
@@ -78,6 +80,10 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
   }, [roomToEdit, open, reset, setValue])
 
   const onSubmit = (data: any) => {
+    if (!data.theaterId && !isEditMode) {
+      return
+    }
+
     const seatMap = generateSeatMap(Number(data.rows), Number(data.seatsPerRow))
 
     const payload: any = {
@@ -88,11 +94,10 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
       totalSeats: Number(data.totalSeats),
       screenType: data.screenType,
       isActive: data.isActive === 'true',
-      seatMap: seatMap, // Gửi seatMap lên
+      seatMap: seatMap,
     }
 
     if (isEditMode && roomToEdit) {
-      // Khi update cần gửi cả theaterId cũ (để tìm path)
       updateMutation.mutate(
         { theaterId: roomToEdit.theater._id, roomId: roomToEdit._id, data: payload },
         { onSuccess: () => onOpenChange(false) }
@@ -113,37 +118,53 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+          {/* Tên Phòng */}
           <div className="space-y-2">
-            <Label>Tên Phòng</Label>
-            <Input {...register('roomName', { required: true })} placeholder="Phòng 1" />
+            <Label htmlFor="roomName">
+              Tên Phòng <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="roomName"
+              {...register('roomName', { required: true })}
+              placeholder="VD: Phòng 1, Screen A"
+            />
           </div>
 
+          {/* Rạp Chiếu */}
           <div className="space-y-2">
-            <Label>Rạp Chiếu</Label>
-            <Select
-              onValueChange={val => setValue('theaterId', val)}
-              defaultValue={watch('theaterId')}
-              disabled={isEditMode} // Thường không cho đổi rạp khi sửa phòng
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn rạp..." />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-50 text-gray-900">
-                {theaters.map(t => (
-                  <SelectItem key={t._id} value={t._id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="theater">
+              Rạp Chiếu <span className="text-red-500">*</span>
+            </Label>
+            {isEditMode ? (
+              <Input
+                value={roomToEdit?.theater.name || ''}
+                disabled
+                className="bg-gray-100 cursor-not-allowed"
+              />
+            ) : (
+              <>
+                <TheaterComboboxForm
+                  theaters={theaters}
+                  value={theaterId}
+                  onValueChange={(val) => setValue('theaterId', val)}
+                  placeholder="Chọn rạp chiếu..."
+                  searchPlaceholder="Tìm kiếm rạp..."
+                  showAllOption={false}
+                />
+                {!theaterId && (
+                  <p className="text-xs text-red-500">Vui lòng chọn rạp chiếu</p>
+                )}
+              </>
+            )}
           </div>
 
+          {/* Loại Phòng & Công Nghệ */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Loại Phòng</Label>
               <Select
                 onValueChange={val => setValue('roomType', val)}
-                defaultValue={watch('roomType')}
+                value={watch('roomType')}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -160,7 +181,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
               <Label>Công Nghệ Màn Hình</Label>
               <Select
                 onValueChange={val => setValue('screenType', val)}
-                defaultValue={watch('screenType')}
+                value={watch('screenType')}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -174,14 +195,15 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
             </div>
           </div>
 
+          {/* Cấu hình ghế */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Số Hàng</Label>
-              <Input type="number" {...register('rows')} />
+              <Input type="number" min="1" {...register('rows')} />
             </div>
             <div className="space-y-2">
-              <Label>Số Cột (Ghế/Hàng)</Label>
-              <Input type="number" {...register('seatsPerRow')} />
+              <Label>Số Cột</Label>
+              <Input type="number" min="1" {...register('seatsPerRow')} />
             </div>
             <div className="space-y-2">
               <Label>Tổng Ghế</Label>
@@ -189,11 +211,12 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
             </div>
           </div>
 
+          {/* Trạng Thái */}
           <div className="space-y-2">
             <Label>Trạng Thái</Label>
             <Select
               onValueChange={val => setValue('isActive', val)}
-              defaultValue={watch('isActive')}
+              value={watch('isActive')}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -205,16 +228,29 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
             </Select>
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
               Hủy
             </Button>
             <Button
               type="submit"
-              disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isLoading || (!isEditMode && !theaterId)}
+              className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Lưu'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  Đang lưu...
+                </>
+              ) : (
+                'Lưu'
+              )}
             </Button>
           </div>
         </form>

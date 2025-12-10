@@ -10,6 +10,7 @@ import { useMovieDetail } from '@/lib/api/movies'
 import { DEFAULT_MOVIE_DETAIL, MAXSTARS } from '@/constants'
 import Link from 'next/link'
 import { TrailerModal } from './TrailerModal'
+import { MovieHeaderSkeleton } from './MovieHeaderSkeleton'
 export function MovieHeader() {
   const { id } = useParams()
   const movieId = Array.isArray(id) ? id[0] : id
@@ -17,7 +18,7 @@ export function MovieHeader() {
   const [showTrailer, setShowTrailer] = useState(false)
   const router = useRouter()
   if (isLoading) {
-    return <div>Loading...</div>
+    return <MovieHeaderSkeleton />
   }
 
   if (error) {
@@ -86,10 +87,10 @@ export function MovieHeader() {
           </div>
 
           {/* Info boxes */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { icon: Clock, label: 'Thời lượng', value: movie.duration },
-              { icon: Ticket, label: 'Trạng thái', value: movie.status },
+              
               {
                 icon: Calendar,
                 label: 'Ra Mắt',

@@ -1,14 +1,8 @@
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Search, Plus, Building2 } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { Theater } from '@/types/theater'
+import { TheaterCombobox } from '@/components/ui/combobox'
 
 interface RoomToolbarProps {
   search: string
@@ -41,22 +35,15 @@ export function RoomToolbar({
           />
         </div>
 
-        {/* Filter Theater */}
-        <div className="relative min-w-[250px] bg-gray-50 text-gray-900">
-          <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-          <Select value={selectedTheater} onValueChange={onTheaterChange}>
-            <SelectTrigger className="pl-9 bg-gray-50 border-gray-200">
-              <SelectValue placeholder="Lọc theo rạp" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-50 text-gray-900 max-h-[300px] overflow-y-auto">
-              <SelectItem value="all">Tất cả các rạp</SelectItem>
-              {theaters.map(t => (
-                <SelectItem key={t._id} value={t._id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Filter Theater - Thay Select bằng Combobox */}
+        <div className="relative min-w-[250px]">
+          <TheaterCombobox
+            theaters={theaters}
+            value={selectedTheater}
+            onValueChange={onTheaterChange}
+            placeholder="Lọc theo rạp"
+            searchPlaceholder="Tìm kiếm rạp..."
+          />
         </div>
       </div>
 
