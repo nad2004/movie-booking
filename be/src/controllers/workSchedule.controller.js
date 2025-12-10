@@ -300,6 +300,60 @@ const workScheduleController = {
       return errorResponse(res, err.message || "Lỗi server", 500);
     }
   },
+
+  remove: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { workScheduleId: id } = req.params;
+
+      // 1. Tìm lịch làm việc
+      const schedule = await WorkSchedule.findById(id).session(session);
+      if (!schedule) {
+        await session.abortTransaction();
+        session.endSession();
+        return errorResponse(res, "Không tìm thấy lịch làm việc", 404);
+      }
+
+      // 2. Kiểm tra ràng buộc dữ liệu (Data Integrity)
+      // Không được xóa nếu đã có người check-in hoặc hoàn thành
+      const activeAssignments = await ShiftAssignment.countDocuments({
+        workScheduleId: id,
+        $or: [
+          { status: "active" },
+          { status: "completed" },
+          { checkInTime: { $ne: null } }, // Đã từng check-in
+        ],
+      }).session(session);
+
+      if (activeAssignments > 0) {
+        await session.abortTransaction();
+        session.endSession();
+        return errorResponse(
+          res,
+          "Không thể xóa lịch này vì đã có nhân viên đang làm việc hoặc đã hoàn thành ca.",
+          400
+        );
+      }
+
+      // 3. Xóa các phân công ở trạng thái 'pending' (nếu có)
+      // Vì lịch bị xóa thì phân công chờ cũng vô nghĩa
+      await ShiftAssignment.deleteMany({ workScheduleId: id }).session(session);
+
+      // 4. Xóa lịch làm việc
+      await WorkSchedule.findByIdAndDelete(id).session(session);
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return successResponse(res, null, "Đã xóa lịch làm việc và các phân công chờ liên quan");
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error("Remove schedule error:", err);
+      return errorResponse(res, err.message || "Lỗi server", 500);
+    }
+  },
 };
 
 export default workScheduleController;

@@ -196,12 +196,12 @@ router.get(
 
 // Customer support - Complaints
 router.post("/staff/complaints", authenticateToken, authorize("staff"), customerSupportController.createComplaint);
-router.get("/staff/complaints", authenticateToken, authorize("staff"), customerSupportController.getComplaints);
-router.get("/staff/complaints/:id", authenticateToken, authorize("staff"), customerSupportController.getComplaintById);
+router.get("/staff/complaints", authenticateToken, authorize("staff", "admin"), customerSupportController.getComplaints);
+router.get("/staff/complaints/:id", authenticateToken, authorize("staff", "admin"), customerSupportController.getComplaintById);
 router.put(
   "/staff/complaints/:id/status",
   authenticateToken,
-  authorize("staff"),
+  authorize("staff", "admin"),
   customerSupportController.updateComplaintStatus
 );
 router.post(
@@ -341,12 +341,9 @@ router.post("/qr-scanner/test", authenticateToken, authorize("admin"), qrScanner
 
 // Shift routes
 router.post("/shifts", authenticateToken, authorize("admin", "manager"), shiftController.createShift);
-
 router.get("/shifts", authenticateToken, authorize("admin", "manager", "staff"), shiftController.getShiftsFlexible);
-
 // Staff - view own theater shifts
 router.get("/shifts/my-theater", authenticateToken, authorize("staff"), shiftController.getMyTheaterShifts);
-
 // Admin/Manager - view any theater shifts
 router.get(
   "/shifts/theater/:theaterId",
@@ -354,7 +351,6 @@ router.get(
   authorize("admin", "manager"),
   shiftController.getShiftsByTheater
 );
-
 // View shifts by staff member
 router.get(
   "/shifts/staff/:staffId",
@@ -424,6 +420,12 @@ router.get(
   authorize("admin", "manager", "staff"),
   workScheduleController.dailyRoster
 );
+router.delete(
+  "/work-schedules/:workScheduleId",
+  authenticateToken,
+  authorize("admin", "manager"),
+  workScheduleController.remove
+);
 
 // === New: Shift Assignments (Execution) ===
 router.post(
@@ -432,12 +434,7 @@ router.post(
   authorize("admin", "manager"),
   shiftAssignmentController.bulkAssign
 );
-router.delete(
-  "/assignments/:id",
-  authenticateToken,
-  authorize("admin", "manager"),
-  shiftAssignmentController.remove
-);
+router.delete("/assignments/:id", authenticateToken, authorize("admin", "manager"), shiftAssignmentController.remove);
 router.get(
   "/schedules/:scheduleId/assignments",
   authenticateToken,
@@ -450,7 +447,6 @@ router.get(
   authorize("admin", "manager", "staff"),
   shiftAssignmentController.listByUser
 );
-
 router.post("/assignments/check-in", authenticateToken, authorize("staff"), shiftAssignmentController.checkIn);
 router.post("/assignments/check-out", authenticateToken, authorize("staff"), shiftAssignmentController.checkOut);
 
@@ -710,7 +706,12 @@ router.delete(
 // User management (Admin)
 router.get("/admin/users", authenticateToken, authorize("admin", "super-admin"), userController.getAllUsers);
 router.get("/admin/users/:id", authenticateToken, authorize("admin", "super-admin"), userController.getUserById);
-router.put("/admin/users/:id/role", authenticateToken, authorize("admin", "super-admin"), userController.updateUserRole);
+router.put(
+  "/admin/users/:id/role",
+  authenticateToken,
+  authorize("admin", "super-admin"),
+  userController.updateUserRole
+);
 router.delete("/admin/users/:id", authenticateToken, authorize("admin", "super-admin"), userController.deleteUser);
 
 // Booking management (Admin)
