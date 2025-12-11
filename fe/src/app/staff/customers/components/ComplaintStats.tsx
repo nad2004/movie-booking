@@ -24,15 +24,11 @@ export default function ComplaintStats({ stats }: ComplaintStatsProps) {
       <div className="space-y-3">
         <div className="flex justify-between items-center p-3 bg-accent/10 rounded-[10px]">
           <span className="text-sm text-muted-foreground">Khiếu nại đã xử lý</span>
-          <span className="text-accent font-semibold">
-            {stats.resolvedComplaints} vấn đề
-          </span>
+          <span className="text-accent font-semibold">{stats.resolvedComplaints} vấn đề</span>
         </div>
         <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-[10px]">
           <span className="text-sm text-muted-foreground">Chờ xử lý</span>
-          <span className="text-destructive font-semibold">
-            {stats.pendingComplaints} vấn đề
-          </span>
+          <span className="text-destructive font-semibold">{stats.pendingComplaints} vấn đề</span>
         </div>
       </div>
     </Card>

@@ -46,8 +46,10 @@ api.interceptors.response.use(
   async error => {
     const originalRequest = error.config
     const isLoginRequest = originalRequest.url && originalRequest.url.includes('/auth/login')
-    const isRefreshRequest = originalRequest.url && originalRequest.url.includes('/auth/refresh-token')
-    const isStaffProfileRequest = originalRequest.url && originalRequest.url.includes('/staff/profile')
+    const isRefreshRequest =
+      originalRequest.url && originalRequest.url.includes('/auth/refresh-token')
+    const isStaffProfileRequest =
+      originalRequest.url && originalRequest.url.includes('/staff/profile')
 
     // Không xử lý 401 cho login, refresh, và staff profile request
     if (
@@ -77,7 +79,7 @@ api.interceptors.response.use(
         const { data } = await api.post('/auth/refresh-token')
 
         const newAccessToken = data.data.accessToken
-        
+
         // Lưu token mới
         Cookies.set('authToken', newAccessToken, {
           expires: 1 / 24, // 1 giờ
@@ -100,7 +102,7 @@ api.interceptors.response.use(
 
         // Logout & Redirect
         Cookies.remove('authToken')
-        
+
         if (typeof window !== 'undefined') {
           const currentPath = window.location.pathname
 
@@ -112,7 +114,7 @@ api.interceptors.response.use(
             window.location.reload()
           }
         }
-        
+
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

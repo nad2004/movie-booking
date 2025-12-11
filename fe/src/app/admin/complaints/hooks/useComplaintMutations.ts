@@ -8,11 +8,7 @@ import {
   assignComplaint,
   escalateComplaint,
 } from '@/lib/api/complaints'
-import {
-  ComplaintCreateDTO,
-  ComplaintUpdateStatusDTO,
-  ComplaintUpdateDTO,
-} from '@/types/complaint'
+import { ComplaintCreateDTO, ComplaintUpdateStatusDTO, ComplaintUpdateDTO } from '@/types/complaint'
 import { useNotification } from '@/providers/NotificationProvider'
 
 export function useComplaintMutations() {

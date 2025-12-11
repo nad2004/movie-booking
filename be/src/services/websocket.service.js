@@ -132,7 +132,7 @@ class WebSocketService {
 
       if (!scheduleId) return;
 
-      socket.leave(`schedule:${scheduleId}`);
+      socket.leave(`schedule:${scheduleId}`, {success: true});
 
       // Remove from tracking
       if (this.scheduleRooms.has(scheduleId)) {

@@ -26,7 +26,7 @@ export function MovieHeaderSkeleton() {
 
           {/* Info Boxes Skeleton */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2].map((i) => (
+            {[1, 2].map(i => (
               <div
                 key={i}
                 className="border border-border rounded-xl py-5 px-6 text-center bg-surface"
@@ -62,7 +62,7 @@ export function MovieHeaderSkeleton() {
 
           {/* Genres Skeleton */}
           <div className="flex flex-wrap gap-2 pt-2">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4].map(i => (
               <Skeleton key={i} className="h-6 w-20 rounded-full" />
             ))}
           </div>

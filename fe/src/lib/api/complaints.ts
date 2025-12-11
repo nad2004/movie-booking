@@ -13,10 +13,7 @@ import { api } from '@/lib/api/axios'
 import axios from 'axios'
 
 // Get all complaints with filters
-export async function getComplaints(
-  params: GetComplaintsParams = {},
-  signal?: AbortSignal
-) {
+export async function getComplaints(params: GetComplaintsParams = {}, signal?: AbortSignal) {
   try {
     const res = await api.get<ComplaintListResponse>('/staff/complaints', {
       headers: { 'Cache-Control': 'no-store' },
@@ -37,10 +34,7 @@ export async function getComplaints(
 }
 
 // Get complaint detail by ID (GET /staff/complaints/{id})
-export async function getComplaintDetail(
-  id: string,
-  signal?: AbortSignal
-): Promise<Complaint> {
+export async function getComplaintDetail(id: string, signal?: AbortSignal): Promise<Complaint> {
   if (!id) throw new Error('Complaint ID is required')
 
   try {
@@ -90,10 +84,7 @@ export async function createComplaint(data: ComplaintCreateDTO) {
 
 // Update complaint status (PUT /staff/complaints/{id}/status)
 // Body: { status: string, note?: string }
-export async function updateComplaintStatus(
-  id: string,
-  data: ComplaintUpdateStatusDTO
-) {
+export async function updateComplaintStatus(id: string, data: ComplaintUpdateStatusDTO) {
   const res = await api.put(`/staff/complaints/${id}/status`, data)
   return res.data
 }

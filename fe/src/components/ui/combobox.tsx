@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Check, ChevronsUpDown} from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,11 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Theater } from '@/types/theater'
 
 interface TheaterComboboxProps {
@@ -41,7 +37,7 @@ export function TheaterCombobox({
   const [open, setOpen] = React.useState(false)
 
   // Tìm theater được chọn
-  const selectedTheater = theaters.find((theater) => theater._id === value)
+  const selectedTheater = theaters.find(theater => theater._id === value)
   const displayLabel = value === 'all' ? 'Tất cả các rạp' : selectedTheater?.name || placeholder
 
   return (
@@ -77,21 +73,18 @@ export function TheaterCombobox({
                 }}
               >
                 <Check
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    value === 'all' ? 'opacity-100' : 'opacity-0'
-                  )}
+                  className={cn('mr-2 h-4 w-4', value === 'all' ? 'opacity-100' : 'opacity-0')}
                 />
                 Tất cả các rạp
               </CommandItem>
 
               {/* Danh sách theaters */}
-              {theaters.map((theater) => (
+              {theaters.map(theater => (
                 <CommandItem
                   key={theater._id}
                   value={theater._id}
                   keywords={[theater.name, theater.address || '']}
-                  onSelect={(currentValue) => {
+                  onSelect={currentValue => {
                     onValueChange(currentValue)
                     setOpen(false)
                   }}

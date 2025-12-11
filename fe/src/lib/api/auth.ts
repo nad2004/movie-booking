@@ -49,10 +49,10 @@ export const googleLoginApi = async (data: GoogleLoginRequest): Promise<LoginRes
 
 // API Refresh Token mới
 export const refreshTokenApi = async (): Promise<{ accessToken: string }> => {
-  const response = await api.post<{ 
+  const response = await api.post<{
     success: boolean
     message: string
-    data: { accessToken: string } 
+    data: { accessToken: string }
   }>('/auth/refresh-token')
   return response.data.data
 }

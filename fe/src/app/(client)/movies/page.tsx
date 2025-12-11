@@ -47,11 +47,7 @@ export default function PhimLoc() {
   })
 
   // --- 3. FETCH DATA ---
-  const {
-    data: listMovies = DEFAULT_MOVIE_LIST,
-    isLoading,
-    isFetching,
-  } = useMovies(queryParams)
+  const { data: listMovies = DEFAULT_MOVIE_LIST, isLoading, isFetching } = useMovies(queryParams)
 
   const totalPages = listMovies?.pagination?.totalPages || 1
   const totalItems = listMovies?.pagination?.totalItems || 0

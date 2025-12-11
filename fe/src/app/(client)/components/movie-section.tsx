@@ -18,7 +18,7 @@ function MovieCardSkeleton() {
       <div className="relative overflow-hidden rounded-2xl aspect-2/3 mb-3 bg-muted/30 animate-pulse">
         {/* Poster skeleton */}
         <div className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted/30" />
-        
+
         {/* Rating badge skeleton */}
         <div className="absolute top-2 right-2 px-2 py-1 bg-muted/50 backdrop-blur-sm rounded-lg w-12 h-6" />
       </div>
@@ -27,7 +27,7 @@ function MovieCardSkeleton() {
         {/* Title skeleton - 2 lines */}
         <div className="h-4 bg-muted/30 rounded w-full animate-pulse" />
         <div className="h-4 bg-muted/30 rounded w-3/4 animate-pulse" />
-        
+
         {/* Duration skeleton */}
         <div className="h-3 bg-muted/30 rounded w-24 animate-pulse" />
       </div>
@@ -36,10 +36,14 @@ function MovieCardSkeleton() {
 }
 
 // Skeleton for entire section
-function MovieSectionSkeleton({ title, viewAllHref, isTopMovies }: { 
+function MovieSectionSkeleton({
+  title,
+  viewAllHref,
+  isTopMovies,
+}: {
   title: string
   viewAllHref: string
-  isTopMovies: boolean 
+  isTopMovies: boolean
 }) {
   // Calculate number of skeleton items based on layout
   const skeletonCount = isTopMovies ? 6 : 4
@@ -83,7 +87,9 @@ export function MovieSection({ title, movies, viewAllHref, isLoading = false }: 
 
   // Show skeleton while loading
   if (isLoading) {
-    return <MovieSectionSkeleton title={title} viewAllHref={viewAllHref} isTopMovies={isTopMovies} />
+    return (
+      <MovieSectionSkeleton title={title} viewAllHref={viewAllHref} isTopMovies={isTopMovies} />
+    )
   }
 
   // Empty state

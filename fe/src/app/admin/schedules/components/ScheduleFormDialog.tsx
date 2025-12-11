@@ -38,7 +38,7 @@ export function ScheduleFormDialog({
   movies,
   theaters,
   isReferenceLoading,
-  isReferenceError
+  isReferenceError,
 }: ScheduleFormDialogProps) {
   const { createMutation, updateMutation } = useScheduleMutations()
 
@@ -70,7 +70,7 @@ export function ScheduleFormDialog({
       setValue('movieId', scheduleToEdit.movie._id)
       setValue('theaterId', scheduleToEdit.theater._id)
       // Logic set các giá trị khác giữ nguyên
-      setValue('roomId', scheduleToEdit.room.roomName) 
+      setValue('roomId', scheduleToEdit.room.roomName)
       setValue('showDate', new Date(scheduleToEdit.showDate).toISOString().split('T')[0])
       setValue('startTime', scheduleToEdit.startTime)
       setValue('endTime', scheduleToEdit.endTime)
@@ -116,10 +116,8 @@ export function ScheduleFormDialog({
       createMutation.mutate(payload, { onSuccess: () => onOpenChange(false) })
     }
   }
-  if (isReferenceError){
-    return <>
-    Lỗi!
-    </>
+  if (isReferenceError) {
+    return <>Lỗi!</>
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,7 +139,10 @@ export function ScheduleFormDialog({
             {/* Chọn Phim */}
             <div className="space-y-2">
               <Label>Phim</Label>
-              <Select onValueChange={val => setValue('movieId', val)} defaultValue={watch('movieId')}>
+              <Select
+                onValueChange={val => setValue('movieId', val)}
+                defaultValue={watch('movieId')}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn phim..." />
                 </SelectTrigger>
@@ -160,7 +161,7 @@ export function ScheduleFormDialog({
               <Label>Rạp</Label>
               <TheaterComboboxForm
                 theaters={theaters}
-                value={watch('theaterId')} 
+                value={watch('theaterId')}
                 onValueChange={val => setValue('theaterId', val)}
                 placeholder="Chọn rạp chiếu..."
                 searchPlaceholder="Tìm kiếm rạp..."

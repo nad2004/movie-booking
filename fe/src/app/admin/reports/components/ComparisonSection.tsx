@@ -99,7 +99,7 @@ export const ComparisonSection = ({
 
   if (comparisonData?.comparison) {
     const metrics = ['Sales', 'Service', 'Operations', 'Attendance', 'Quality']
-    
+
     metrics.forEach(metric => {
       const row: ComparisonDataRow = { metric }
       comparisonData.comparison.forEach(emp => {
@@ -150,7 +150,7 @@ export const ComparisonSection = ({
           <label className="text-sm font-medium text-muted-foreground mb-2 block">
             Chọn nhân viên để so sánh (tối đa 5)
           </label>
-          
+
           <div
             className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground cursor-pointer flex items-center justify-between"
             onClick={() => setShowEmployeeSelect(!showEmployeeSelect)}
@@ -182,9 +182,7 @@ export const ComparisonSection = ({
               {/* Employee List */}
               <div className="overflow-y-auto max-h-60">
                 {isLoadingStaff ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    Đang tải...
-                  </div>
+                  <div className="p-4 text-center text-sm text-muted-foreground">Đang tải...</div>
                 ) : filteredEmployees.length === 0 ? (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     Không tìm thấy nhân viên
@@ -199,8 +197,7 @@ export const ComparisonSection = ({
                       <Checkbox
                         checked={selectedEmployeeIds.includes(emp._id)}
                         disabled={
-                          !selectedEmployeeIds.includes(emp._id) &&
-                          selectedEmployeeIds.length >= 5
+                          !selectedEmployeeIds.includes(emp._id) && selectedEmployeeIds.length >= 5
                         }
                       />
                       <span className="text-sm text-foreground">{emp.fullName}</span>
@@ -240,9 +237,7 @@ export const ComparisonSection = ({
               {name}
               <button
                 onClick={() =>
-                  handleEmployeeToggle(
-                    employees.find(e => e.fullName === name)?._id || ''
-                  )
+                  handleEmployeeToggle(employees.find(e => e.fullName === name)?._id || '')
                 }
                 className="hover:bg-primary/20 rounded-full p-0.5"
               >

@@ -28,8 +28,8 @@ function MovieCardSkeleton() {
     <div className="group">
       <div className="relative overflow-hidden rounded-2xl aspect-2/3 mb-3 bg-muted/30 animate-pulse">
         {/* Poster skeleton */}
-        <div className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted/30" />
-        
+        <div className="absolute inset-0 bg-linear-to-br from-muted/50 to-muted/30" />
+
         {/* Rating badge skeleton */}
         <div className="absolute top-2 right-2 px-2 py-1 bg-muted/50 backdrop-blur-sm rounded-lg w-12 h-6" />
       </div>
@@ -38,7 +38,7 @@ function MovieCardSkeleton() {
         {/* Title skeleton */}
         <div className="h-4 bg-muted/30 rounded w-3/4 animate-pulse" />
         <div className="h-4 bg-muted/30 rounded w-1/2 animate-pulse" />
-        
+
         {/* Duration skeleton */}
         <div className="h-3 bg-muted/30 rounded w-20 animate-pulse" />
       </div>
@@ -64,12 +64,12 @@ function CarouselSkeleton({ title }: { title: string }) {
             <div
               key={index}
               className="
-                flex-shrink-0
-                w-[calc(50%-6px)]         /* mobile: 2 items */
-                sm:w-[calc(33.333%-8px)]  /* ≥640px: 3 items */
-                md:w-[calc(25%-9px)]      /* ≥768px: 4 items */
-                lg:w-[calc(20%-9.6px)]    /* ≥1024px: 5 items */
-                xl:w-[calc(16.666%-10px)] /* ≥1280px: 6 items */
+                shrink-0
+                w-[calc(50%-6px)]        
+                sm:w-[calc(33.333%-8px)] 
+                md:w-[calc(25%-9px)]      
+                lg:w-[calc(20%-9.6px)]   
+                xl:w-[calc(16.666%-10px)]
               "
             >
               <MovieCardSkeleton />

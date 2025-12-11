@@ -90,7 +90,7 @@ export function MovieHeader() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { icon: Clock, label: 'Thời lượng', value: movie.duration },
-              
+
               {
                 icon: Calendar,
                 label: 'Ra Mắt',

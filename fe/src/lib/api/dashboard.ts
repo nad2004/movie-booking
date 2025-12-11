@@ -180,11 +180,11 @@ export async function getEmployeeKPI(params: EmployeeKPIParams, signal?: AbortSi
     const queryParams: Record<string, string | number> = {
       employeeId: params.employeeId,
     }
-    
+
     if (params.month) {
       queryParams.month = params.month
     }
-    
+
     if (params.year) {
       queryParams.year = params.year
     }

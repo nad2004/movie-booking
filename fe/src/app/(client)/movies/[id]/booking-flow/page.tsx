@@ -1,26 +1,27 @@
-'use client'
+'use client';
 
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useBooking } from '@/hooks/useBooking'
-import { BookingHeader } from './components/BookingHeader'
-import { BookingProgress } from './components/BookingProgress'
-import { BookingSummary } from './components/BookingSummary'
-import { StepShowtime } from './components/steps/StepShowtime'
-import { StepSeatSelection } from './components/steps/StepSeatSelection'
-import { StepCombo } from './components/steps/StepCombo'
-import { StepPaymentMethod } from './components/steps/StepPaymentMethod'
-import { StepPayment } from './components/steps/StepPayment'
-import { useParams, useSearchParams } from 'next/navigation'
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useBooking } from '@/hooks/useBooking';
+import { BookingHeader } from './components/BookingHeader';
+import { BookingProgress } from './components/BookingProgress';
+import { BookingSummary } from './components/BookingSummary';
+import { StepShowtime } from './components/steps/StepShowtime';
+import { StepSeatSelection } from './components/steps/StepSeatSelection';
+import { StepCombo } from './components/steps/StepCombo';
+import { StepPaymentMethod } from './components/steps/StepPaymentMethod';
+import { StepPayment } from './components/steps/StepPayment';
+import { WebSocketDebug } from './WebSocketDebug'; // Import debug component
+import { useParams, useSearchParams } from 'next/navigation';
 
 export default function BookingPage() {
-  const params = useParams()
-  const movieId = params.id as string
+  const params = useParams();
+  const movieId = params.id as string;
 
-  const searchParams = useSearchParams()
-  const preSelectedScheduleId = searchParams.get('scheduleId') || undefined
+  const searchParams = useSearchParams();
+  const preSelectedScheduleId = searchParams.get('scheduleId') || undefined;
 
-  const movieTitle = 'Đặt vé xem phim'
+  const movieTitle = 'Đặt vé xem phim';
 
   const {
     currentStep,
@@ -40,7 +41,13 @@ export default function BookingPage() {
     isProcessing,
     createdBookingData,
     paymentUrl,
-  } = useBooking({ movieId, preSelectedScheduleId })
+    // WebSocket data
+    realTimeSeats,
+    viewerCount,
+    isInRoom,
+    isConnected,
+    isSeatAvailable,
+  } = useBooking({ movieId, preSelectedScheduleId });
 
   // Render step content
   const renderStepContent = () => {
@@ -54,19 +61,24 @@ export default function BookingPage() {
             selectedSchedule={selectedSchedule}
             onSelect={setSelectedSchedule}
           />
-        )
+        );
       case 2:
         return (
           <StepSeatSelection
             selectedSeats={selectedSeats}
             schedule={selectedSchedule}
             onSeatClick={handleSeatClick}
+            realTimeSeats={realTimeSeats}
+            viewerCount={viewerCount}
+            isConnected={isConnected}
+            isInRoom={isInRoom}
+            isSeatAvailable={isSeatAvailable}
           />
-        )
+        );
       case 3:
-        return <StepCombo cartItems={cartItems} updateCartItem={updateCartItem} />
+        return <StepCombo cartItems={cartItems} updateCartItem={updateCartItem} />;
       case 4:
-        return <StepPaymentMethod selectedMethod={paymentMethod} onSelect={setPaymentMethod} />
+        return <StepPaymentMethod selectedMethod={paymentMethod} onSelect={setPaymentMethod} />;
       case 5:
         return (
           <StepPayment
@@ -74,31 +86,31 @@ export default function BookingPage() {
             bookingCode={createdBookingData?.bookingCode}
             totalAmount={totalAmount}
           />
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   // Điều kiện disable nút tiếp tục
   const isNextDisabled = () => {
-    if (isProcessing) return true
+    if (isProcessing) return true;
 
     switch (currentStep) {
       case 1:
-        return !selectedSchedule
+        return !selectedSchedule;
       case 2:
-        return selectedSeats.length === 0
+        return selectedSeats.length === 0 || !isInRoom; // Phải ở trong room mới cho tiếp tục
       case 3:
-        return false // Có thể bỏ qua combo
+        return false; // Có thể bỏ qua combo
       case 4:
-        return !paymentMethod // Phải chọn phương thức thanh toán
+        return !paymentMethod; // Phải chọn phương thức thanh toán
       case 5:
-        return true // Ở bước cuối không có nút tiếp tục
+        return true; // Ở bước cuối không có nút tiếp tục
       default:
-        return false
+        return false;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col">
@@ -157,6 +169,9 @@ export default function BookingPage() {
           )}
         </div>
       </main>
+
+      {/* Debug component - chỉ hiện trong development */}
+      {/* {process.env.NODE_ENV === 'development' && <WebSocketDebug />} */}
     </div>
-  )
+  );
 }

@@ -14,6 +14,7 @@ import {
   Settings,
   Clock,
   Hamburger,
+  MessageSquareWarning,
 } from 'lucide-react'
 import { LogoutButton } from '@/app/components/shared/LogoutButton'
 import Link from 'next/link'
@@ -35,6 +36,7 @@ export function Sidebar() {
     { icon: Ticket, label: 'Quản Lý Vé', path: '/admin/tickets' },
     { icon: Tag, label: 'Quản Lý Thể Loại', path: '/admin/genres' },
     { icon: Star, label: 'Danh Sách Đánh Giá', path: '/admin/reviews' },
+    { icon: MessageSquareWarning, label: 'Báo Cáo Phản Hồi', path: '/admin/complaints' },
     { icon: Settings, label: 'Cấu Hình Hệ Thống', path: '/admin/settings' },
   ]
 

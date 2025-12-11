@@ -1,4 +1,3 @@
-
 import { WorkSchedule } from '@/types/work-schedule'
 import { Loader2, X } from 'lucide-react'
 import { format, isSameMonth, isToday } from 'date-fns'

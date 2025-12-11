@@ -90,9 +90,7 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
         </div>
         <div>
           <h3 className="text-foreground">Form hỗ trợ khiếu nại</h3>
-          <p className="text-sm text-muted-foreground">
-            Ghi nhận thông tin phản ánh từ khách hàng
-          </p>
+          <p className="text-sm text-muted-foreground">Ghi nhận thông tin phản ánh từ khách hàng</p>
         </div>
       </div>
 
@@ -118,9 +116,7 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
             </div>
 
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
-                ID khách hàng
-              </label>
+              <label className="text-sm text-muted-foreground mb-2 block">ID khách hàng</label>
               <Input
                 value={formData.customerId}
                 onChange={e => setFormData({ ...formData, customerId: e.target.value })}
@@ -133,9 +129,7 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
             </div>
 
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
-                Tên khách hàng
-              </label>
+              <label className="text-sm text-muted-foreground mb-2 block">Tên khách hàng</label>
               <Input
                 value={formData.customerName}
                 onChange={e => setFormData({ ...formData, customerName: e.target.value })}
@@ -146,16 +140,12 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Số điện thoại
-                </label>
+                <label className="text-sm text-muted-foreground mb-2 block">Số điện thoại</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     value={formData.customerPhone}
-                    onChange={e =>
-                      setFormData({ ...formData, customerPhone: e.target.value })
-                    }
+                    onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
                     placeholder="0123456789"
                     className="pl-10 rounded-[10px]"
                   />
@@ -169,9 +159,7 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
                   <Input
                     type="email"
                     value={formData.customerEmail}
-                    onChange={e =>
-                      setFormData({ ...formData, customerEmail: e.target.value })
-                    }
+                    onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
                     placeholder="email@example.com"
                     className="pl-10 rounded-[10px]"
                   />
@@ -186,9 +174,7 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Loại vấn đề *
-                </label>
+                <label className="text-sm text-muted-foreground mb-2 block">Loại vấn đề *</label>
                 <Select
                   value={formData.category}
                   onValueChange={value => setFormData({ ...formData, category: value })}
@@ -208,9 +194,7 @@ export default function ComplaintForm({ staffId }: ComplaintFormProps) {
               </div>
 
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Mức độ ưu tiên *
-                </label>
+                <label className="text-sm text-muted-foreground mb-2 block">Mức độ ưu tiên *</label>
                 <Select
                   value={formData.priority}
                   onValueChange={value => setFormData({ ...formData, priority: value })}

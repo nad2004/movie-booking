@@ -59,13 +59,13 @@ export default function AssignmentFilters({
       <div className="flex flex-col md:flex-row gap-4 items-center">
         {/* Theater Select */}
         <TheaterCombobox
-            theaters={theaters}
-            value={selectedTheaterId}
-            onValueChange={onTheaterChange}
-            placeholder="Lọc theo rạp"
-            searchPlaceholder="Tìm kiếm rạp..."
-            className='w-full md:w-[220px] rounded-xl bg-gray-50 border-gray-200'
-          />
+          theaters={theaters}
+          value={selectedTheaterId}
+          onValueChange={onTheaterChange}
+          placeholder="Lọc theo rạp"
+          searchPlaceholder="Tìm kiếm rạp..."
+          className="w-full md:w-[220px] rounded-xl bg-gray-50 border-gray-200"
+        />
 
         {/* Date Picker */}
         <div className="relative w-full md:w-[180px]">

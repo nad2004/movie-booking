@@ -146,14 +146,12 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
                 <TheaterComboboxForm
                   theaters={theaters}
                   value={theaterId}
-                  onValueChange={(val) => setValue('theaterId', val)}
+                  onValueChange={val => setValue('theaterId', val)}
                   placeholder="Chọn rạp chiếu..."
                   searchPlaceholder="Tìm kiếm rạp..."
                   showAllOption={false}
                 />
-                {!theaterId && (
-                  <p className="text-xs text-red-500">Vui lòng chọn rạp chiếu</p>
-                )}
+                {!theaterId && <p className="text-xs text-red-500">Vui lòng chọn rạp chiếu</p>}
               </>
             )}
           </div>
@@ -162,10 +160,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Loại Phòng</Label>
-              <Select
-                onValueChange={val => setValue('roomType', val)}
-                value={watch('roomType')}
-              >
+              <Select onValueChange={val => setValue('roomType', val)} value={watch('roomType')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -214,10 +209,7 @@ export function RoomFormDialog({ open, onOpenChange, roomToEdit, theaters }: Roo
           {/* Trạng Thái */}
           <div className="space-y-2">
             <Label>Trạng Thái</Label>
-            <Select
-              onValueChange={val => setValue('isActive', val)}
-              value={watch('isActive')}
-            >
+            <Select onValueChange={val => setValue('isActive', val)} value={watch('isActive')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

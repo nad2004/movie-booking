@@ -4,12 +4,18 @@ import type { Pagination } from './apiTemplate'
 // SEAT INTERFACE
 // ======================
 export interface Seat {
+  _id?: string
   seatNumber: string // VD: "A1"
   seatType: 'Thường' | 'VIP' | 'Ghế đôi'
-  isAvailable: boolean
-  row: string
-  column: number
+  isAvailable?: boolean
+  row?: string
+  column?: number
   price?: number
+  isBooked?: boolean
+  holderType?: string
+  holdUntil?: string
+  bookedBy?: string
+  action?: string
 }
 
 // ======================

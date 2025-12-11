@@ -20,7 +20,7 @@ function HeroSkeleton() {
       <div className="absolute inset-0">
         {/* Background skeleton */}
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse" />
-        
+
         {/* Overlay gradients */}
         <div className="absolute inset-0 bg-linear-to-r from-background via-background/85 to-transparent" />
         <div className="absolute inset-0 bg-linear-to-t from-background/60 via-transparent to-transparent" />
@@ -68,10 +68,7 @@ function HeroSkeleton() {
       {/* Indicators skeleton */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
         {[...Array(3)].map((_, index) => (
-          <div
-            key={index}
-            className="h-1 w-4 bg-muted/30 rounded-full animate-pulse"
-          />
+          <div key={index} className="h-1 w-4 bg-muted/30 rounded-full animate-pulse" />
         ))}
       </div>
     </section>
@@ -83,7 +80,7 @@ export function HeroSection({ movies, isLoading = false }: MovieSectionProps) {
 
   useEffect(() => {
     if (movies.length === 0) return
-    
+
     const timer = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % movies.length)
     }, 5000)

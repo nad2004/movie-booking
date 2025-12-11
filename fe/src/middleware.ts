@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   if (token && PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
     try {
       const payload = decodeJwt(token)
-      
+
       // Kiểm tra token hết hạn
       if (payload.exp && Date.now() >= payload.exp * 1000) {
         // Thử refresh token
@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
         if (newToken) {
           const newPayload = decodeJwt(newToken)
           const role = (newPayload.role as string)?.toLowerCase() || 'user'
-          
+
           const response = getRedirectByRole(role, request)
           response.cookies.set('authToken', newToken, {
             httpOnly: true,
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
           return response
         }
       }
-      
+
       const role = (payload.role as string)?.toLowerCase() || 'user'
       return getRedirectByRole(role, request)
     } catch {
@@ -87,17 +87,17 @@ export async function middleware(request: NextRequest) {
   if (token) {
     try {
       const payload = decodeJwt(token)
-      
+
       // Kiểm tra token hết hạn
       if (payload.exp && Date.now() >= payload.exp * 1000) {
         // Thử refresh token
         const newToken = await refreshAccessToken(request)
-        
+
         if (newToken) {
           // Refresh thành công
           const newPayload = decodeJwt(newToken)
           const role = (newPayload.role as string)?.toLowerCase() || 'user'
-          
+
           // Kiểm tra quyền truy cập với role mới
           const accessResponse = checkRoleAccess(role, pathname, request)
           if (accessResponse) {
@@ -109,7 +109,7 @@ export async function middleware(request: NextRequest) {
             })
             return accessResponse
           }
-          
+
           // Cho phép truy cập, set token mới
           const response = NextResponse.next()
           response.cookies.set('authToken', newToken, {
@@ -126,7 +126,7 @@ export async function middleware(request: NextRequest) {
           return response
         }
       }
-      
+
       // Token còn hạn, kiểm tra role access
       const role = (payload.role as string)?.toLowerCase() || 'user'
       const accessResponse = checkRoleAccess(role, pathname, request)
@@ -155,7 +155,11 @@ function getRedirectByRole(role: string, request: NextRequest): NextResponse {
 }
 
 // Helper function để kiểm tra quyền truy cập theo role
-function checkRoleAccess(role: string, pathname: string, request: NextRequest): NextResponse | null {
+function checkRoleAccess(
+  role: string,
+  pathname: string,
+  request: NextRequest
+): NextResponse | null {
   if (role === 'admin') {
     if (STAFF_PATHS.some(path => pathname.startsWith(path))) {
       return NextResponse.redirect(new URL('/admin', request.url))
@@ -164,7 +168,7 @@ function checkRoleAccess(role: string, pathname: string, request: NextRequest): 
       return NextResponse.redirect(new URL('/admin', request.url))
     }
   }
-  
+
   if (role === 'staff') {
     if (ADMIN_PATHS.some(path => pathname.startsWith(path))) {
       return NextResponse.rewrite(new URL('/404', request.url))
@@ -173,7 +177,7 @@ function checkRoleAccess(role: string, pathname: string, request: NextRequest): 
       return NextResponse.redirect(new URL('/staff', request.url))
     }
   }
-  
+
   if (role === 'customer' || role === 'user') {
     if (ADMIN_PATHS.some(path => pathname.startsWith(path))) {
       return NextResponse.rewrite(new URL('/404', request.url))
@@ -182,7 +186,7 @@ function checkRoleAccess(role: string, pathname: string, request: NextRequest): 
       return NextResponse.rewrite(new URL('/404', request.url))
     }
   }
-  
+
   return null
 }
 

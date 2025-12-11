@@ -180,7 +180,7 @@ export default function GenerateScheduleModal({
               </Label>
               <TheaterComboboxForm
                 theaters={theaters}
-                value={watch('theaterId')} 
+                value={watch('theaterId')}
                 onValueChange={val => setValue('theaterId', val)}
                 placeholder="Chọn rạp chiếu..."
                 searchPlaceholder="Tìm kiếm rạp..."

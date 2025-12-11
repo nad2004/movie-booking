@@ -10,6 +10,7 @@ export interface SeatAvailability {
   bookedBy?: string | null // userId hoặc bookingId
   holderType?: 'user' | 'booking' // loại holder
   holdUntil?: string | null // ISO string
+  action?: string
 }
 
 // Giá vé
@@ -18,7 +19,6 @@ export interface TicketPrices {
   vip?: number
   couple?: number
 }
-
 
 // Dữ liệu 1 schedule
 export interface Schedule {
