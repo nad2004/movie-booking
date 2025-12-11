@@ -78,8 +78,8 @@ const customerSupportController = {
   getComplaints: async (req, res) => {
     try {
       const staff = await User.findById(req.userId);
-      if (!staff || staff.role !== "staff") {
-        throw new AuthorizationError("Chỉ nhân viên mới có thể xem khiếu nại");
+      if (!staff || staff.role !== "staff" || staff.role !== "admin") {
+        throw new AuthorizationError("Chỉ nhân viên và admin mới có thể xem khiếu nại");
       }
 
       const { status, category, priority } = req.query;
