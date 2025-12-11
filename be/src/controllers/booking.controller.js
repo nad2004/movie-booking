@@ -112,7 +112,8 @@ const bookingController = {
                 $elemMatch: {
                   seatNumber: seatNum,
                   isBooked: false,
-                  $or: [{ holdUntil: { $exists: false } }, { holdUntil: null }, { holdUntil: { $lt: new Date() } }],
+                  // Soft hold: Không chặn nếu đang có người giữ (holdUntil)
+                  // Chỉ chặn nếu đã BÁN (isBooked: true)
                 },
               },
             })),
@@ -576,22 +577,65 @@ const bookingController = {
           }
 
           // Confirm ghế trong schedule (use session-aware method)
-          const schedule = await Schedule.findById(booking.schedule).session(session);
-          if (schedule) {
-            await schedule.confirmSeats(
-              booking.seats.map((s) => s.seatNumber),
-              booking._id,
-              session
-            );
+          // Confirm ghế trong schedule (Atomic check & set)
+          // CHỐT ĐƠN: Kiểm tra lần cuối xem ghế có còn trống không (isBooked: false)
+          const seatNumbers = booking.seats.map((s) => s.seatNumber);
+          
+          const confirmArrayFilters = seatNumbers.map((seatNum) => ({
+            [`seat${seatNum.replace(/[^a-zA-Z0-9]/g, "")}.seatNumber`]: seatNum,
+          }));
 
-            // Broadcast qua WebSocket
-            websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
-              scheduleId: booking.schedule,
-              seatAvailability: schedule.seatAvailability,
-              action: "booked",
-              seatNumbers: booking.seats.map((s) => s.seatNumber),
-            });
+          const confirmSetUpdate = {};
+          seatNumbers.forEach((seatNum) => {
+            const placeholder = `seat${seatNum.replace(/[^a-zA-Z0-9]/g, "")}`;
+            confirmSetUpdate[`seatAvailability.$[${placeholder}].isBooked`] = true;
+            confirmSetUpdate[`seatAvailability.$[${placeholder}].bookedBy`] = booking._id;
+            confirmSetUpdate[`seatAvailability.$[${placeholder}].holdUntil`] = null;
+          });
+
+          const finalizedSchedule = await Schedule.findOneAndUpdate(
+            {
+              _id: booking.schedule,
+              $and: seatNumbers.map((seatNum) => ({
+                seatAvailability: {
+                  $elemMatch: {
+                    seatNumber: seatNum,
+                    isBooked: false, //  CRITICAL: Phải chưa ai mua
+                  },
+                },
+              })),
+            },
+            {
+              $set: confirmSetUpdate,
+              // Tự động tính lại bookedSeatsCount bằng logic này hơi khó
+              // Nên ta sẽ dùng hook pre-save hoặc update riêng?
+              // Nhưng findOneAndUpdate không chạy hook (trừ khi set option)
+              // Tốt nhất là update thêm $inc bookedSeatsCount nếu muốn, 
+              // nhưng struct db đang có bookedSeatsCount. 
+              // Ta sẽ chạy thêm 1 lệnh để sync hoặc chấp nhận lệch tạm thời?
+              // Schedule model có pre-save hook fix count. 
+              // Ở đây ta update trực tiếp. Ta nên increment bookedSeatsCount luôn.
+              $inc: { bookedSeatsCount: seatNumbers.length } 
+            },
+            {
+              arrayFilters: confirmArrayFilters,
+              new: true,
+              session,
+            }
+          );
+
+          if (!finalizedSchedule) {
+             throw new Error("Giao dịch thất bại. Một số ghế đã bị người khác mua ngay trước khi bạn thanh toán.");
           }
+
+          // Broadcast qua WebSocket
+          websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
+              scheduleId: booking.schedule,
+              seatAvailability: finalizedSchedule.seatAvailability,
+              action: "booked",
+              seatNumbers: seatNumbers,
+          });
+
 
           // Cộng loyalty points cho customer
           const customer = await User.findById(booking.customer).session(session);

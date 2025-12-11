@@ -1,3 +1,4 @@
+import moment from "moment";
 import mongoose from "mongoose";
 import QRCode from "qrcode";
 import { BOOKING_STATUS } from "../constants/booking.js";
@@ -77,22 +78,57 @@ async function confirmPaymentSuccess(booking, paymentMethod, transactionId, paym
       await booking.save({ session });
 
       //  #1: Confirm seats trong schedule (session-aware)
-      const schedule = await Schedule.findById(booking.schedule).session(session);
-      if (schedule) {
-        await schedule.confirmSeats(
-          booking.seats.map((s) => s.seatNumber),
-          booking._id,
-          session
-        );
+      //  #1: Confirm seats trong schedule (Atomic check & set)
+      // CHỐT ĐƠN: Kiểm tra lần cuối xem ghế có còn trống không (isBooked: false)
+      const seatNumbers = booking.seats.map((s) => s.seatNumber);
+      
+      const confirmArrayFilters = seatNumbers.map((seatNum) => ({
+        [`seat${seatNum.replace(/[^a-zA-Z0-9]/g, "")}.seatNumber`]: seatNum,
+      }));
 
-        // Broadcast qua WebSocket
-        websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
-          scheduleId: booking.schedule,
-          seatAvailability: schedule.seatAvailability,
-          action: "booked",
-          seatNumbers: booking.seats.map((s) => s.seatNumber),
-        });
+      const confirmSetUpdate = {};
+      seatNumbers.forEach((seatNum) => {
+        const placeholder = `seat${seatNum.replace(/[^a-zA-Z0-9]/g, "")}`;
+        confirmSetUpdate[`seatAvailability.$[${placeholder}].isBooked`] = true;
+        confirmSetUpdate[`seatAvailability.$[${placeholder}].bookedBy`] = booking._id;
+        confirmSetUpdate[`seatAvailability.$[${placeholder}].holdUntil`] = null;
+      });
+
+      const finalizedSchedule = await Schedule.findOneAndUpdate(
+        {
+          _id: booking.schedule,
+          $and: seatNumbers.map((seatNum) => ({
+            seatAvailability: {
+              $elemMatch: {
+                seatNumber: seatNum,
+                isBooked: false, //  CRITICAL: Phải chưa ai mua
+              },
+            },
+          })),
+        },
+        {
+          $set: confirmSetUpdate,
+          $inc: { bookedSeatsCount: seatNumbers.length }
+        },
+        {
+          arrayFilters: confirmArrayFilters,
+          new: true,
+          session,
+        }
+      );
+
+      if (!finalizedSchedule) {
+         // Race condition loser!
+         throw new Error("RACE_CONDITION_LOST");
       }
+
+      // Broadcast qua WebSocket
+      websocketService.emitToSchedule(booking.schedule.toString(), "seats-status-changed", {
+          scheduleId: booking.schedule,
+          seatAvailability: finalizedSchedule.seatAvailability,
+          action: "booked",
+          seatNumbers: seatNumbers,
+      });
 
       //  #10: Cộng loyalty points cho customer
       const customer = await User.findById(booking.customer).session(session);
@@ -137,6 +173,71 @@ async function confirmPaymentSuccess(booking, paymentMethod, transactionId, paym
       redisService.del(`booking:temp:${booking._id}`).catch(() => {});
       redisService.invalidateScheduleCache(booking.schedule.toString()).catch(() => {});
     });
+  } catch (error) {
+    if (error.message === "RACE_CONDITION_LOST") {
+      console.error(`Race condition detected for booking ${booking._id}. Initiating refund marking.`);
+      
+      // Update booking status to indicate refund needed
+      // Use a new session or no session since previous one aborted
+      booking.status = "Đã hủy"; 
+      booking.paymentDetails = {
+        paymentMethod,
+        transactionId,
+        status: "Giao dịch treo (Ghế hết)", // Custom status to alert Admin
+        amount: booking.totalAmount,
+        paymentDate: new Date(),
+        paymentInfo: typeof paymentInfo === "string" ? paymentInfo : JSON.stringify(paymentInfo),
+      };
+      // Mark as cancelled by system
+      booking.cancellationReason = "Lỗi hệ thống: Ghế đã bị người khác mua ngay lúc thanh toán";
+      
+      // AUTO-REFUND LOGIC
+      try {
+        let refundResult;
+        console.log(`Auto-refunding for booking ${booking._id} (${paymentMethod})...`);
+        
+        if (paymentMethod === "VNPAY") {
+           // VNPay requires transactionNo (passed in paymentInfo or separately?)
+           // In confirmPaymentSuccess args: transactionId is usually the OrderId or TransId depending on gateway
+           // For VNPay, transactionId param passed here is vnp_TransactionNo
+           // paymentInfo has payDate which is needed
+           refundResult = await vnpayService.refundTransaction(
+             transactionId, 
+             booking.totalAmount, 
+             paymentInfo.payDate || moment().format("YYYYMMDDHHmmss"), 
+             "SYSTEM_AUTO_REFUND"
+           );
+        } else if (paymentMethod === "MoMo") {
+           // MoMo requires orderId, transId, amount
+           // transactionId passed here is transId
+           refundResult = await momoService.refundTransaction(
+             booking.paymentDetails.transactionId, 
+             transactionId, 
+             booking.totalAmount,
+             "Hoàn tiền do hết ghế (Auto Refund)"
+           );
+        }
+
+        if (refundResult && refundResult.success) {
+           booking.paymentDetails.status = "Đã hoàn tiền (Auto)";
+           console.log("Auto-refund successful");
+        } else {
+           console.error("Auto-refund failed", refundResult);
+           booking.paymentDetails.status = "Hoàn tiền lỗi (Cần thủ công)";
+        }
+      } catch (refundError) {
+        console.error("Auto-refund exception:", refundError);
+        booking.paymentDetails.status = "Hoàn tiền lỗi (Cần thủ công)";
+      }
+      
+      await booking.save();
+      
+      throw new Error("PAYMENT_SUCCESS_BUT_SEAT_TAKEN_REFUNDED");
+      
+    } else {
+      throw error;
+    }
+
   } finally {
     await session.endSession();
   }
@@ -313,6 +414,21 @@ const paymentController = {
         return errorResponse(res, "Vui lòng đợi 5 phút trước khi tạo link thanh toán mới", 429);
       }
 
+      //  RACE CONDITION CHECK: Kiểm tra lại ghế trước khi tạo link
+      const schedule = await Schedule.findById(booking.schedule);
+      if (!schedule) {
+         return errorResponse(res, "Suất chiếu không tồn tại", 400);
+      }
+
+      const unavailableSeats = booking.seats.filter(bookingSeat => {
+         const scheduleSeat = schedule.seatAvailability.find(s => s.seatNumber === bookingSeat.seatNumber);
+         return !scheduleSeat || scheduleSeat.isBooked; // Ghế không tìm thấy hoặc đã BỊ MUA
+      });
+
+      if (unavailableSeats.length > 0) {
+         return errorResponse(res, `Ghế ${unavailableSeats.map(s => s.seatNumber).join(", ")} đã bị người khác mua. Vui lòng hủy đơn và chọn ghế khác.`, 409);
+      }
+
       // Create payment URL
       const ipAddr = req.headers["x-forwarded-for"] || req.connection.remoteAddress || req.socket.remoteAddress;
 
@@ -380,6 +496,9 @@ const paymentController = {
       }
     } catch (error) {
       console.error("VNPay return handler error:", error);
+      if (error.message === "PAYMENT_SUCCESS_BUT_SEAT_TAKEN_REFUNDED") {
+         return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=${encodeURIComponent("Ghế đã hết. Hệ thống đang hoàn tiền tự động.")}`);
+      }
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=System error`);
     }
   },
@@ -441,6 +560,21 @@ const paymentController = {
 
       if (booking.status !== "Chờ thanh toán") {
         return errorResponse(res, "Đơn đặt vé không ở trạng thái chờ thanh toán", 400);
+      }
+
+      //  RACE CONDITION CHECK: Kiểm tra lại ghế trước khi tạo link
+      const schedule = await Schedule.findById(booking.schedule);
+      if (!schedule) {
+         return errorResponse(res, "Suất chiếu không tồn tại", 400);
+      }
+
+      const unavailableSeats = booking.seats.filter(bookingSeat => {
+         const scheduleSeat = schedule.seatAvailability.find(s => s.seatNumber === bookingSeat.seatNumber);
+         return !scheduleSeat || scheduleSeat.isBooked; // Ghế không tìm thấy hoặc đã BỊ MUA
+      });
+
+      if (unavailableSeats.length > 0) {
+         return errorResponse(res, `Ghế ${unavailableSeats.map(s => s.seatNumber).join(", ")} đã bị người khác mua. Vui lòng hủy đơn và chọn ghế khác.`, 409);
       }
 
       // Create payment
@@ -505,6 +639,9 @@ const paymentController = {
       }
     } catch (error) {
       console.error("MoMo return handler error:", error);
+      if (error.message === "PAYMENT_SUCCESS_BUT_SEAT_TAKEN_REFUNDED") {
+         return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=${encodeURIComponent("Ghế đã hết. Hệ thống đang hoàn tiền tự động.")}`);
+      }
       return res.redirect(`${process.env.FRONTEND_URL}/payment/failed?message=System error`);
     }
   },

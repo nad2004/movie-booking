@@ -11,7 +11,15 @@ const paymentDetailSchema = new Schema({
   transactionId: { type: String }, // Mã giao dịch từ bên thứ 3
   status: {
     type: String,
-    enum: ["Chờ thanh toán", "Thành công", "Thất bại", "Đã hoàn tiền"],
+    enum: [
+      "Chờ thanh toán",
+      "Thành công",
+      "Thất bại",
+      "Đã hoàn tiền",
+      "Giao dịch treo (Ghế hết)",
+      "Hoàn tiền lỗi (Cần thủ công)",
+      "Đã hoàn tiền (Auto)",
+    ],
     required: true,
   },
   amount: { type: Number, required: true },
