@@ -100,38 +100,34 @@ const workScheduleController = {
     try {
       const { theaterId, from, to } = req.query;
       const q = {};
+
       if (theaterId) q.theaterId = new mongoose.Types.ObjectId(theaterId);
+
       if (from && to) {
-        q.startDateTime = { $gte: new Date(from) };
-        q.endDateTime = { $lte: new Date(to) };
+        q.date = { $gte: from, $lte: to };
       }
-      // const schedules = await WorkSchedule.find(q).sort({ startDateTime: 1 }).lean();
+
       const schedules = await WorkSchedule.find(q)
         .populate("theaterId", "name")
-        // Vẫn populate name, startTime, endTime để làm fallback cho dữ liệu cũ
         .populate("shiftTemplateId", "name startTime endTime color")
-        .sort({ startDateTime: 1 })
+        .sort({ startDateTime: 1 }) // Vẫn sort theo thời gian thực để ca sáng lên trước
         .lean();
 
-      // Xử lý logic ưu tiên Snapshot
       schedules.forEach((s) => {
-        // Nếu không có snapshot (lịch cũ), lấy từ template
         if (!s.shiftName && s.shiftTemplateId) {
           s.shiftName = s.shiftTemplateId.name;
-          s.shiftCode = s.shiftTemplateId.code; // Lưu ý: template cũ có thể không có code nếu model chưa update
+          s.shiftCode = s.shiftTemplateId.code;
           s.startTime = s.shiftTemplateId.startTime;
           s.endTime = s.shiftTemplateId.endTime;
         }
       });
 
-      // Group schedules by date
       const grouped = schedules.reduce((acc, item) => {
         if (!acc[item.date]) acc[item.date] = [];
         acc[item.date].push(item);
         return acc;
       }, {});
 
-      // Convert to array format
       const result = Object.keys(grouped).map((date) => ({
         date,
         shifts: grouped[date],
