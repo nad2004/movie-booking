@@ -220,6 +220,7 @@ async function confirmPaymentSuccess(booking, paymentMethod, transactionId, paym
 
         if (refundResult && refundResult.success) {
            booking.paymentDetails.status = "Đã hoàn tiền (Auto)";
+           booking.refundAmount = booking.totalAmount; // Update refund amount field
            console.log("Auto-refund successful");
         } else {
            console.error("Auto-refund failed", refundResult);

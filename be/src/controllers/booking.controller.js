@@ -892,6 +892,7 @@ const bookingController = {
         discountAmount: b.discountAmount,
         totalAmount: b.totalAmount,
         status: b.status,
+        paymentDetails: b.paymentDetails, // Add this
         qrCode: b.qrCode, // ✔ LẤY QR CODE
         createdAt: b.createdAt,
         updatedAt: b.updatedAt,
