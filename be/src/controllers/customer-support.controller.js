@@ -69,17 +69,17 @@ const customerSupportController = {
   getComplaints: async (req, res) => {
     try {
       const staff = await User.findById(req.userId);
-      if (!staff || !["staff", "admin"].includes(staff.role)) {
+      if (!staff || !["staff", "admin", "super-admin"].includes(staff.role)) {
         throw new AuthorizationError("Chỉ nhân viên và admin mới có thể xem khiếu nại");
       }
       const { status, category, priority } = req.query;
       const query = {};
 
-      // Supervisor/Manager can see all theater complaints
-      if (["supervisor", "manager"].includes(staff.staffInfo?.position)) {
+      if (["admin", "super-admin"].includes(staff.role)) {
+        // Admin xem tất cả
+      } else if (["supervisor", "manager"].includes(staff.staffInfo?.position)) {
         query.theater = staff.staffInfo.assignedTheater;
       } else {
-        // Regular staff only see their own
         query.$or = [{ receivedBy: staff._id }, { assignedTo: staff._id }];
       }
 
