@@ -15,7 +15,6 @@ import {
 // Imports Components con
 import PlanningToolbar from './planning-toolbar'
 import PlanningCalendar from './planning-calendar'
-
 // Imports Modals & API
 import GenerateScheduleModal from '../components/modals/generate-schedule-modal'
 import ConfirmDeleteAlert from '../components/modals/confirm-delete-alert'
@@ -29,7 +28,6 @@ export default function WorkPlanningTab() {
   const [isGenerateOpen, setGenerateOpen] = useState(false)
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false)
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null)
-
   // State Filter - khởi tạo với empty string
   const [selectedTheaterId, setSelectedTheaterId] = useState<string>('')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -126,6 +124,7 @@ export default function WorkPlanningTab() {
         open={deleteAlertOpen}
         onOpenChange={setDeleteAlertOpen}
         onConfirm={handleConfirmDelete}
+        isLoading={remove.isPending}
       />
     </div>
   )

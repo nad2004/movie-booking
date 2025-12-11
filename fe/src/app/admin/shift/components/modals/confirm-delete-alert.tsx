@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Loader2 } from 'lucide-react'
 
 interface ConfirmDeleteAlertProps {
   open: boolean
@@ -17,6 +18,7 @@ interface ConfirmDeleteAlertProps {
   onConfirm: () => void
   title?: string
   description?: string
+  isLoading: boolean
 }
 
 export default function ConfirmDeleteAlert({
@@ -25,6 +27,7 @@ export default function ConfirmDeleteAlert({
   onConfirm,
   title = 'Bạn có chắc chắn muốn xóa?',
   description = 'Hành động này không thể hoàn tác. Dữ liệu sẽ bị xóa vĩnh viễn khỏi hệ thống.',
+  isLoading,
 }: ConfirmDeleteAlertProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -38,10 +41,23 @@ export default function ConfirmDeleteAlert({
             Hủy bỏ
           </AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
+            onClick={e => {
+              e.preventDefault()
+              if (!isLoading) {
+                onConfirm()
+              }
+            }}
+            disabled={isLoading}
             className="rounded-xl bg-red-600 hover:bg-red-700 text-white border-none shadow-sm"
           >
-            Xác nhận xóa
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Đang xoá...</span>
+              </>
+            ) : (
+              <>Xác nhận xoá</>
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
