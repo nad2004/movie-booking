@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import { AuthorizationError, NotFoundError } from "../utils/errors.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
-// Hàm hỗ trợ tạo ID 
+// Hàm hỗ trợ tạo ID
 const generateComplaintId = () => {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -19,16 +19,8 @@ const customerSupportController = {
       if (!staff || staff.role !== "staff") {
         throw new AuthorizationError("Chỉ nhân viên mới có thể tạo khiếu nại");
       }
-      const { 
-        customerName, 
-        customerPhone, 
-        customerEmail, 
-        bookingCode, 
-        category, 
-        title, 
-        description, 
-        priority 
-      } = req.body;
+      const { customerName, customerPhone, customerEmail, bookingCode, category, title, description, priority } =
+        req.body;
 
       const finalCustomerName = customerName || "Nội bộ (Nhân viên báo cáo)";
       const finalCustomerPhone = customerPhone || "N/A";
@@ -38,7 +30,7 @@ const customerSupportController = {
 
       const complaint = new Complaint({
         complaintId: newComplaintId,
-        customerName: finalCustomerName,   // Dùng biến đã xử lý
+        customerName: finalCustomerName, // Dùng biến đã xử lý
         customerPhone: finalCustomerPhone, // Dùng biến đã xử lý
         customerEmail: customerEmail || "",
         bookingCode,
@@ -46,10 +38,10 @@ const customerSupportController = {
         title: finalTitle,
         description,
         priority: priority || "medium",
-        
+
         theater: staff.staffInfo?.assignedTheater?._id,
         theaterName: staff.staffInfo?.assignedTheater?.name || "Unknown",
-        
+
         receivedBy: staff._id,
         receivedByName: staff.fullName,
         status: "pending",
@@ -66,11 +58,10 @@ const customerSupportController = {
 
       await complaint.save();
       return successResponse(res, { complaint }, "Tạo báo cáo thành công", 201);
-
     } catch (error) {
-       // ... (xử lý lỗi giữ nguyên)
-       console.error(error);
-       return errorResponse(res, error.message, 500);
+      // ... (xử lý lỗi giữ nguyên)
+      console.error(error);
+      return errorResponse(res, error.message, 500);
     }
   },
 
@@ -78,10 +69,9 @@ const customerSupportController = {
   getComplaints: async (req, res) => {
     try {
       const staff = await User.findById(req.userId);
-      if (!staff || staff.role !== "staff" || staff.role !== "admin") {
+      if (!staff || !["staff", "admin"].includes(staff.role)) {
         throw new AuthorizationError("Chỉ nhân viên và admin mới có thể xem khiếu nại");
       }
-
       const { status, category, priority } = req.query;
       const query = {};
 
