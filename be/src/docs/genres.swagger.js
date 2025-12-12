@@ -99,4 +99,40 @@
  *         description: Chi tiết thể loại
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Genre:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: ID của thể loại
+ *         name:
+ *           type: string
+ *           description: Tên thể loại
+ *         slug:
+ *           type: string
+ *           description: Slug (URL friendly)
+ *         description:
+ *           type: string
+ *           description: Mô tả
+ *         isActive:
+ *           type: boolean
+ *           description: Trạng thái hoạt động
+ *         isDeleted:
+ *           type: boolean
+ *           description: Trạng thái xóa mềm
+ *         displayOrder:
+ *           type: integer
+ *           description: Thứ tự hiển thị
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
 export default {};
