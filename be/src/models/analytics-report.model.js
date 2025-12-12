@@ -129,6 +129,7 @@ const analyticsReportSchema = new mongoose.Schema(
       dataPoints: Number,
       version: String,
     },
+    isDeleted: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,

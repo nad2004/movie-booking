@@ -21,6 +21,7 @@ const WorkScheduleSchema = new Schema(
     status: { type: String, enum: ["open", "closed", "cancelled"], default: "open", index: true },
     notes: { type: String },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
+    isDeleted: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

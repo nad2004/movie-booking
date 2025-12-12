@@ -6,11 +6,14 @@ const shiftTemplateController = {
     try {
       const { active } = req.query;
       const q = {};
-      if (active !== undefined) {
-        q.isActive = active === "true";
-      } else {
+      
+      if (active === "true" || active === undefined) {
         q.isActive = true;
+      } else if (active === "false") {
+        q.isActive = false;
       }
+      // if active === 'all', do not filter by isActive
+
       const templates = await ShiftTemplate.find(q).sort({ code: 1 }).lean();
       return successResponse(res, templates);
     } catch (err) {

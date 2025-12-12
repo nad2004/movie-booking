@@ -10,7 +10,17 @@ const createShift = catchAsync(async (req, res) => {
 
 const getShiftsByTheater = catchAsync(async (req, res) => {
   const { theaterId } = req.params;
-  let { startDate, endDate } = req.query;
+  let { startDate, endDate, active } = req.query;
+
+  // Build Filter
+  const filter = {};
+  if (active === "true" || active === undefined) {
+    filter.status = { $ne: "cancelled" };
+  } else if (active === "false") {
+    filter.status = "cancelled";
+  }
+  // active === 'all', no filter
+
 
   // Validate and set default dates if not provided
   if (!startDate) {
@@ -50,7 +60,7 @@ const getShiftsByTheater = catchAsync(async (req, res) => {
     });
   }
 
-  const shifts = await shiftService.getShiftsByTheater(theaterId, startDate, endDate);
+  const shifts = await shiftService.getShiftsByTheater(theaterId, startDate, endDate, filter);
   successResponse(res, shifts, "Shifts retrieved successfully");
 });
 
@@ -68,7 +78,15 @@ const getMyTheaterShifts = catchAsync(async (req, res) => {
     });
   }
 
-  let { startDate, endDate } = req.query;
+  let { startDate, endDate, active } = req.query;
+
+  // Build Filter
+  const filter = {};
+  if (active === "true" || active === undefined) {
+    filter.status = { $ne: "cancelled" };
+  } else if (active === "false") {
+    filter.status = "cancelled";
+  }
 
   // Validate and set default dates if not provided
   if (!startDate) {
@@ -108,13 +126,21 @@ const getMyTheaterShifts = catchAsync(async (req, res) => {
     });
   }
 
-  const shifts = await shiftService.getShiftsByTheater(staff.theater._id, startDate, endDate);
+  const shifts = await shiftService.getShiftsByTheater(staff.theater._id, startDate, endDate, filter);
   successResponse(res, shifts, "Shifts retrieved successfully");
 });
 
 const getShiftsByStaff = catchAsync(async (req, res) => {
   const { staffId } = req.params;
-  let { startDate, endDate } = req.query;
+  let { startDate, endDate, active } = req.query;
+
+  // Build Filter
+  const filter = {};
+  if (active === "true" || active === undefined) {
+    filter.status = { $ne: "cancelled" };
+  } else if (active === "false") {
+    filter.status = "cancelled";
+  }
 
   // Validate and set default dates if not provided
   if (!startDate) {
@@ -154,7 +180,7 @@ const getShiftsByStaff = catchAsync(async (req, res) => {
     });
   }
 
-  const shifts = await shiftService.getShiftsByStaff(staffId, startDate, endDate);
+  const shifts = await shiftService.getShiftsByStaff(staffId, startDate, endDate, filter);
   successResponse(res, shifts, "Shifts retrieved successfully");
 });
 
@@ -292,7 +318,15 @@ const deleteShift = catchAsync(async (req, res) => {
 
 const getShiftsFlexible = catchAsync(async (req, res) => {
   const { theaterId, staffId } = req.query;
-  let { startDate, endDate } = req.query;
+  let { startDate, endDate, active } = req.query;
+
+  // Build Filter
+  const filter = {};
+  if (active === "true" || active === undefined) {
+    filter.status = { $ne: "cancelled" };
+  } else if (active === "false") {
+    filter.status = "cancelled";
+  }
 
   // Validate and set default dates
   if (!startDate) {
@@ -336,11 +370,11 @@ const getShiftsFlexible = catchAsync(async (req, res) => {
 
   // Case 1: Only theaterId - get all shifts of that theater
   if (theaterId && !staffId) {
-    shifts = await shiftService.getShiftsByTheater(theaterId, startDate, endDate);
+    shifts = await shiftService.getShiftsByTheater(theaterId, startDate, endDate, filter);
   }
   // Case 2: Only staffId - get all shifts of that staff
   else if (staffId && !theaterId) {
-    shifts = await shiftService.getShiftsByStaff(staffId, startDate, endDate);
+    shifts = await shiftService.getShiftsByStaff(staffId, startDate, endDate, filter);
   }
   // Case 3: Both theaterId and staffId - get shifts of specific staff in specific theater
   else if (theaterId && staffId) {
@@ -348,6 +382,7 @@ const getShiftsFlexible = catchAsync(async (req, res) => {
       theater: theaterId,
       staff: staffId,
       date: { $gte: startDate, $lte: endDate },
+      ...filter,
     })
       .populate("staff", "fullName email phone")
       .populate("theater", "name location")
@@ -355,7 +390,7 @@ const getShiftsFlexible = catchAsync(async (req, res) => {
   }
   // Case 4: No params - get all shifts
   else {
-    shifts = await Shift.find({ date: { $gte: startDate, $lte: endDate } })
+    shifts = await Shift.find({ date: { $gte: startDate, $lte: endDate }, ...filter })
       .populate("staff", "fullName email phone")
       .populate("theater", "name location")
       .sort({ date: 1, startTime: 1 });

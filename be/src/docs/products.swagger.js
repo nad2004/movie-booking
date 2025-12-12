@@ -4,6 +4,26 @@
  *   get:
  *     tags: [Products]
  *     summary: Lấy tất cả sản phẩm
+ *     parameters:
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *         description: Filter by Business Status
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *       - in: query
+ *         name: inStock
+ *         schema: { type: boolean }
  *     responses:
  *       200:
  *         description: Danh sách sản phẩm (bắp rang, nước, combo...)

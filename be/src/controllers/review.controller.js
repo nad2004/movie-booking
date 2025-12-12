@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Movie from "../models/movie.model.js";
 import Review from "../models/review.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const reviewController = {
@@ -26,7 +27,7 @@ const reviewController = {
       const skip = (page - 1) * limit;
 
       // Build query for list/count
-      const query = { movie: movieId };
+      const query = { movie: movieId, ...getDeleteFilter(req.query) };
       if (statusParam) query.status = statusParam;
       if (ratingFilter) query.rating = ratingFilter;
 
@@ -179,7 +180,9 @@ const reviewController = {
         return errorResponse(res, "Bạn không có quyền xóa đánh giá này", 403);
       }
 
-      await Review.findByIdAndDelete(id);
+      // await Review.findByIdAndDelete(id);
+      review.isDeleted = true;
+      await review.save();
 
       return successResponse(res, {}, "Xóa đánh giá thành công");
     } catch (error) {
@@ -192,8 +195,10 @@ const reviewController = {
   getAllReviews: async (req, res) => {
     try {
       const { status, rating, page = 1, limit = 20 } = req.query;
-
-      const query = {};
+      
+      const query = {
+        ...getDeleteFilter(req.query)
+      };
       if (status) {
         query.status = status;
       }
@@ -279,11 +284,14 @@ const reviewController = {
     try {
       const { id } = req.params;
 
-      const review = await Review.findByIdAndDelete(id);
+      const review = await Review.findById(id);
       if (!review) {
         return errorResponse(res, "Không tìm thấy đánh giá", 404);
       }
-
+      
+      review.isDeleted = true;
+      await review.save();
+      
       return successResponse(res, {}, "Xóa đánh giá thành công");
     } catch (error) {
       console.error("Delete review by admin error:", error);

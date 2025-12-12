@@ -110,4 +110,31 @@
  */
 
 
+/**
+ * @swagger
+ * /admin/vouchers:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Lấy danh sách voucher (Admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *         description: Filter by Business Status
+ *     responses:
+ *       200:
+ *         description: Danh sách voucher
+ */
+
 export default {};

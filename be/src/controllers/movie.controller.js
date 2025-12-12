@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { normalizeYoutubeTrailerUrl } from "../helpers/normalizeYoutubeTrailerUrl.js";
 import Genre from "../models/genre.model.js";
 import Movie from "../models/movie.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const movieController = {
@@ -38,7 +39,7 @@ const movieController = {
       const pageNumber = parseInt(page, 10) || 1;
       const limitNumber = parseInt(limit, 10) || 12;
       const query = {
-        isDeleted: { $ne: true },
+        ...getDeleteFilter(req.query),
       };
 
       if (status) {
@@ -430,13 +431,13 @@ const movieController = {
       const skip = (page - 1) * limit;
 
       const [movies, total] = await Promise.all([
-        Movie.find({ status: "Đang chiếu", isDeleted: { $ne: true } })
+        Movie.find({ status: "Đang chiếu", ...getDeleteFilter(req.query) })
           .populate("genres", "name")
           .sort({ releaseDate: -1 })
           .skip(skip)
           .limit(parseInt(limit))
           .lean(),
-        Movie.countDocuments({ status: "Đang chiếu", isDeleted: { $ne: true } }),
+        Movie.countDocuments({ status: "Đang chiếu", ...getDeleteFilter(req.query) }),
       ]);
 
       return successResponse(res, {
@@ -460,13 +461,13 @@ const movieController = {
       const skip = (page - 1) * limit;
 
       const [movies, total] = await Promise.all([
-        Movie.find({ status: "Sắp chiếu", isDeleted: { $ne: true } })
+        Movie.find({ status: "Sắp chiếu", ...getDeleteFilter(req.query) })
           .populate("genres", "name")
           .sort({ releaseDate: 1 })
           .skip(skip)
           .limit(parseInt(limit))
           .lean(),
-        Movie.countDocuments({ status: "Sắp chiếu", isDeleted: { $ne: true } }),
+        Movie.countDocuments({ status: "Sắp chiếu", ...getDeleteFilter(req.query) }),
       ]);
 
       return successResponse(res, {
@@ -497,13 +498,13 @@ const movieController = {
       }
 
       const [movies, total] = await Promise.all([
-        Movie.find({ genres: genreId, isDeleted: { $ne: true } })
+        Movie.find({ genres: genreId, ...getDeleteFilter(req.query) })
           .populate("genres", "name")
           .sort({ releaseDate: -1 })
           .skip(skip)
           .limit(parseInt(limit))
           .lean(),
-        Movie.countDocuments({ genres: genreId, isDeleted: { $ne: true } }),
+        Movie.countDocuments({ genres: genreId, ...getDeleteFilter(req.query) }),
       ]);
 
       return successResponse(res, {

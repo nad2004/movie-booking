@@ -78,6 +78,11 @@ const reviewSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Booking",
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,

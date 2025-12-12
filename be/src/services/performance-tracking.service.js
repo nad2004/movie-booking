@@ -1,8 +1,8 @@
-import PerformanceMetric from "../models/performance-metric.model.js";
 import Booking from "../models/booking.model.js";
+import PerformanceMetric from "../models/performance-metric.model.js";
+import Review from "../models/review.model.js";
 import Schedule from "../models/schedule.model.js";
 import Shift from "../models/shift.model.js";
-import Review from "../models/review.model.js";
 
 class PerformanceTrackingService {
   async trackTheaterPerformance(theaterId, date, period = "daily") {
@@ -12,7 +12,7 @@ class PerformanceTrackingService {
       createdAt: { $gte: startDate, $lte: endDate },
       status: "completed",
     });
-    const schedules = await Schedule.find({ theater: theaterId, showTime: { $gte: startDate, $lte: endDate } });
+    const schedules = await Schedule.find({ theater: theaterId, showTime: { $gte: startDate, $lte: endDate }, isDeleted: { $ne: true } });
     const revenue = {
       total: bookings.reduce((sum, b) => sum + b.totalPrice, 0),
       target: this.calculateRevenueTarget(period),
@@ -25,7 +25,7 @@ class PerformanceTrackingService {
       achievement: 0,
     };
     attendance.achievement = (attendance.count / attendance.target) * 100;
-    const reviews = await Review.find({ theater: theaterId, createdAt: { $gte: startDate, $lte: endDate } });
+    const reviews = await Review.find({ theater: theaterId, createdAt: { $gte: startDate, $lte: endDate }, isDeleted: { $ne: true } });
     const customerSatisfaction = {
       rating: reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0,
       reviews: reviews.length,
@@ -84,7 +84,7 @@ class PerformanceTrackingService {
 
   async trackMoviePerformance(movieId, date, period = "daily") {
     const { startDate, endDate } = this.getDateRange(date, period);
-    const schedules = await Schedule.find({ movie: movieId, showTime: { $gte: startDate, $lte: endDate } });
+    const schedules = await Schedule.find({ movie: movieId, showTime: { $gte: startDate, $lte: endDate }, isDeleted: { $ne: true } });
     const bookings = await Booking.find({ schedule: { $in: schedules.map((s) => s._id) }, status: "completed" });
     const revenue = {
       total: bookings.reduce((sum, b) => sum + b.totalPrice, 0),
@@ -98,7 +98,7 @@ class PerformanceTrackingService {
       achievement: 0,
     };
     attendance.achievement = (attendance.count / attendance.target) * 100;
-    const reviews = await Review.find({ movie: movieId, createdAt: { $gte: startDate, $lte: endDate } });
+    const reviews = await Review.find({ movie: movieId, createdAt: { $gte: startDate, $lte: endDate }, isDeleted: { $ne: true } });
     const customerSatisfaction = {
       rating: reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0,
       reviews: reviews.length,

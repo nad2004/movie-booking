@@ -113,7 +113,7 @@ const authController = {
       }
 
       // Tìm user
-      const user = await User.findOne({ email: email.toLowerCase() });
+      const user = await User.findOne({ email: email.toLowerCase(), isDeleted: { $ne: true } });
       if (!user) {
         return errorResponse(res, "Email hoặc mật khẩu không đúng", 401);
       }
@@ -192,11 +192,11 @@ const authController = {
       }
 
       // Tìm user theo googleId
-      let user = await User.findOne({ googleId });
+      let user = await User.findOne({ googleId, isDeleted: { $ne: true } });
 
       if (!user) {
         // Tìm theo email
-        user = await User.findOne({ email: email.toLowerCase() });
+        user = await User.findOne({ email: email.toLowerCase(), isDeleted: { $ne: true } });
 
         if (user) {
           // GỘP TÀI KHOẢN: Thêm Google vào authProviders
@@ -330,7 +330,7 @@ const authController = {
     try {
       const { email } = req.body;
 
-      const user = await User.findOne({ email: email.toLowerCase() });
+      const user = await User.findOne({ email: email.toLowerCase(), isDeleted: { $ne: true } });
       if (!user) {
         return errorResponse(res, "Email không tồn tại trong hệ thống", 404);
       }
@@ -451,7 +451,7 @@ const authController = {
         return errorResponse(res, "Token không hợp lệ", 401);
       }
 
-      const user = await User.findById(decoded.userId);
+      const user = await User.findOne({ _id: decoded.userId, isDeleted: { $ne: true } });
       if (!user || user.refreshToken !== refreshToken) {
         return errorResponse(res, "Refresh token không hợp lệ", 401);
       }

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const userController = {
@@ -95,8 +96,16 @@ const userController = {
   getAllUsers: async (req, res) => {
     try {
       const { role, page = 1, limit = 20, search } = req.query;
+      
+      const query = {
+        ...getDeleteFilter(req.query)
+      };
 
-      const query = {};
+      // Support filtering by business status isActive (if provided in query)
+      // Note: User model has isActive field
+      if (req.query.isActive !== undefined) {
+          query.isActive = req.query.isActive === 'true';
+      }
       if (role) query.role = role;
       if (search) {
         query.$or = [{ fullName: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }];
@@ -221,7 +230,15 @@ const userController = {
         return errorResponse(res, "Không thể xóa chính mình", 400);
       }
 
-      const user = await User.findByIdAndDelete(id);
+      const user = await User.findById(id);
+      if (!user) {
+        return errorResponse(res, "Không tìm thấy người dùng", 404);
+      }
+      
+      user.isDeleted = true;
+      user.isActive = false; // Disable login
+      await user.save();
+      // const user = await User.findByIdAndDelete(id);
       if (!user) {
         return errorResponse(res, "Không tìm thấy người dùng", 404);
       }

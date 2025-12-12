@@ -188,6 +188,11 @@ const userSchema = new Schema(
     refreshTokenExpires: {
       type: Date,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -197,6 +202,7 @@ const userSchema = new Schema(
 );
 
 // === INDEXES ===
+userSchema.index({ isDeleted: 1 });
 userSchema.index({ email: 1, authProviders: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 userSchema.index({ loyaltyPoints: -1 });
