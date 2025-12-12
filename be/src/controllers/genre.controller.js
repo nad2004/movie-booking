@@ -1,4 +1,5 @@
 import Genre from "../models/genre.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const genreController = {
@@ -16,6 +17,8 @@ const genreController = {
       const query = {};
 
       // 1. Xử lý Filter
+      Object.assign(query, getDeleteFilter(req.query));
+      
       if (typeof isActive !== "undefined") {
         query.isActive = isActive === "true";
       }
@@ -112,7 +115,14 @@ const genreController = {
     try {
       const { id } = req.params;
 
-      const genre = await Genre.findByIdAndDelete(id);
+      const genre = await Genre.findById(id);
+      if (!genre) {
+        return errorResponse(res, "Không tìm thấy thể loại", 404);
+      }
+      // Soft Delete
+      genre.isDeleted = true;
+      await genre.save();
+      // const genre = await Genre.findByIdAndDelete(id);
       if (!genre) {
         return errorResponse(res, "Không tìm thấy thể loại", 404);
       }

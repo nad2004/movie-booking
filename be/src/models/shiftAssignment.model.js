@@ -15,6 +15,7 @@ const ShiftAssignmentSchema = new Schema(
     checkOutTime: { type: Date },
     status: { type: String, enum: ["pending", "active", "completed", "no_show"], default: "pending" },
     notes: { type: String },
+    isDeleted: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

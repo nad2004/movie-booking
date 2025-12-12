@@ -197,6 +197,13 @@
  *           type: string
  *           enum: [scheduled, checked-in, completed, cancelled, no-show]
  *         description: Filter by status
+       - in: query
+         name: active
+         schema:
+           type: string
+           enum: [true, false, all]
+           default: true
+         description: Filter active (non-cancelled) shifts
  *     responses:
  *       200:
  *         description: Danh sách ca làm việc
@@ -237,6 +244,13 @@
  *         schema:
  *           type: string
  *           enum: [scheduled, checked-in, completed, cancelled, no-show]
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter active (non-cancelled) shifts
  *     responses:
  *       200:
  *         description: Danh sách ca làm việc
@@ -477,6 +491,13 @@
  *         schema:
  *           type: string
  *           format: date
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter active (non-cancelled) shifts
  *     responses:
  *       200:
  *         description: Danh sách ca làm việc
@@ -514,6 +535,13 @@
  *         schema:
  *           type: string
  *           format: date
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter active (non-cancelled) shifts
  *     responses:
  *       200:
  *         description: Danh sách ca làm việc

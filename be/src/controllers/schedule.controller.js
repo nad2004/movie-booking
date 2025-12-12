@@ -12,6 +12,7 @@ import vnpayService from "../services/payment/vnpay.service.js";
 import redisService from "../services/redis.service.js";
 import smsService from "../services/sms.service.js";
 import websocketService from "../services/websocket.service.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const scheduleController = {
@@ -43,8 +44,11 @@ const scheduleController = {
       const pageNumber = parseInt(page, 10) || 1;
       const limitNumber = parseInt(limit, 10) || 20;
       const skip = (pageNumber - 1) * limitNumber;
-
-      const scheduleMatch = {};
+      
+      //  FIX: Add soft delete filter
+      const scheduleMatch = {
+        ...getDeleteFilter(req.query),
+      };
 
       if (movieId && mongoose.Types.ObjectId.isValid(movieId)) {
         scheduleMatch.movie = new mongoose.Types.ObjectId(movieId);
@@ -813,7 +817,15 @@ const scheduleController = {
         return errorResponse(res, "Không thể xóa lịch chiếu đã có người đặt vé", 400);
       }
 
-      await Schedule.findByIdAndDelete(id);
+      //  FIX: Soft delete
+      schedule.isDeleted = true;
+      schedule.updatedBy = req.userId;
+      await schedule.save();
+
+      // Xóa cache
+      redisService.invalidateScheduleCache(id.toString()).catch(() => {});
+      
+      // await Schedule.findByIdAndDelete(id);
 
       return successResponse(res, {}, "Xóa lịch chiếu thành công");
     } catch (error) {

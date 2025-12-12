@@ -3,6 +3,7 @@ import Schedule from "../models/schedule.model.js";
 import Theater from "../models/theater.model.js";
 import User from "../models/user.model.js";
 import { AuthorizationError, NotFoundError } from "../utils/errors.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const staffController = {
@@ -239,7 +240,7 @@ const staffController = {
     try {
       const { theaterId } = req.query;
 
-      let query = { role: "staff" };
+      let query = { role: "staff", ...getDeleteFilter(req.query) };
       if (theaterId) {
         query["staffInfo.assignedTheater"] = theaterId;
       }
@@ -293,6 +294,7 @@ const staffController = {
       const staffList = await User.find({
         role: "staff",
         "staffInfo.assignedTheater": theaterId,
+        ...getDeleteFilter(req.query),
       })
         .select("-password")
         .populate("staffInfo.assignedTheater", "name address city")

@@ -1,14 +1,22 @@
 import Product from '../models/product.model.js';
-import { successResponse, errorResponse } from "../utils/response.js";
+import { getDeleteFilter } from "../utils/query.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const productController = {
     getAllProducts: async (req, res) => {
         try {
-            const { category, inStock } = req.query;
+            const { category, inStock, isActive } = req.query;
             
-            const query = {};
+            const query = {
+                ...getDeleteFilter(req.query)
+            };
             if (category) query.category = category;
             if (inStock !== undefined) query.inStock = inStock === 'true';
+            
+            // Business status filter
+            if (isActive !== undefined) {
+                query.isActive = isActive === 'true';
+            }
 
             const products = await Product.find(query).sort({ category: 1, name: 1 }).lean();
 
@@ -77,10 +85,13 @@ const productController = {
         try {
             const { id } = req.params;
 
-            const product = await Product.findByIdAndDelete(id);
+            const product = await Product.findById(id);
             if (!product) {
                 return errorResponse(res, 'Không tìm thấy sản phẩm', 404);
             }
+            // Soft delete
+            product.isDeleted = true;
+            await product.save();
 
             return successResponse(res, {}, 'Xóa sản phẩm thành công');
         } catch (error) {

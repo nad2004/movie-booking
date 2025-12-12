@@ -1,4 +1,5 @@
 import Theater from "../models/theater.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 const theaterController = {
@@ -39,7 +40,10 @@ const theaterController = {
         query.district = { $regex: district, $options: "i" };
       }
 
-      // Trạng thái hoạt động
+      //  FIX: Soft delete filter
+      Object.assign(query, getDeleteFilter(req.query));
+
+      // Support filtering by business status isActive field (distinct from isDeleted)
       if (typeof isActive !== "undefined") {
         query.isActive = isActive === "true";
       }
@@ -113,6 +117,16 @@ const theaterController = {
         Theater.countDocuments(query),
       ]);
 
+      // Filter rooms in returned theaters
+      const activeParam = req.query.active;
+      if (activeParam !== 'all' && activeParam !== 'false') {
+        theaters.forEach(t => {
+          if (t.rooms) {
+            t.rooms = t.rooms.filter(r => !r.isDeleted);
+          }
+        });
+      }
+
       return successResponse(res, {
         theaters,
         pagination: {
@@ -136,6 +150,19 @@ const theaterController = {
 
       if (!theater) {
         return errorResponse(res, "Không tìm thấy rạp", 404);
+      }
+
+      if (!theater) {
+        return errorResponse(res, "Không tìm thấy rạp", 404);
+      }
+      
+      // Filter out deleted rooms if active=true (default) or active=false (deleted only?)
+      // Assumption: active param applies to Rooms too? 
+      // User said "Mặc định chỉ trả về bản ghi đang hoạt động" for GET API.
+      // So if req.query.active !== 'all' and !== 'false', we filter rooms.
+      const activeParam = req.query.active;
+      if (activeParam !== 'all' && activeParam !== 'false' && theater.rooms) {
+        theater.rooms = theater.rooms.filter(r => !r.isDeleted);
       }
 
       return successResponse(res, theater);
@@ -281,7 +308,8 @@ const theaterController = {
       }
 
       //  FIX: Soft delete thay vì hard delete
-      theater.isActive = false;
+      theater.isActive = false; // Mark as inactive too?
+      theater.isDeleted = true;
       theater.updatedBy = req.userId;
       await theater.save();
 
@@ -377,7 +405,15 @@ const theaterController = {
 
       // TODO: Kiểm tra phòng có lịch chiếu trong tương lai không
 
-      theater.rooms.pull(roomId);
+      //  FIX: Soft delete room
+      // theater.rooms.pull(roomId);
+      const room = theater.rooms.id(roomId);
+      if (room) {
+        room.isDeleted = true;
+      } else {
+        return errorResponse(res, "Không tìm thấy phòng chiếu", 404);
+      }
+      
       theater.updatedBy = req.userId;
       await theater.save();
 

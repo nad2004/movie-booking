@@ -1,7 +1,8 @@
-import analyticsService from "../services/analytics.service.js";
 import catchAsync from "../middlewares/catchAsync.middleware.js";
-import { successResponse } from "../utils/response.js";
 import AnalyticsReport from "../models/analytics-report.model.js";
+import analyticsService from "../services/analytics.service.js";
+import { getDeleteFilter } from "../utils/query.js";
+import { successResponse } from "../utils/response.js";
 
 const generateReport = catchAsync(async (req, res) => {
   const reportConfig = {
@@ -25,7 +26,7 @@ const getReport = catchAsync(async (req, res) => {
 
 const getReports = catchAsync(async (req, res) => {
   const { reportType, category, theater, startDate, endDate } = req.query;
-  const query = { status: "completed" };
+  const query = { status: "completed", ...getDeleteFilter(req.query) };
   if (reportType) query.reportType = reportType;
   if (category) query.category = category;
   if (theater) query.theater = theater;
@@ -93,8 +94,13 @@ const getCustomerSatisfaction = catchAsync(async (req, res) => {
 
 const deleteReport = catchAsync(async (req, res) => {
   const { reportId } = req.params;
-  const report = await AnalyticsReport.findByIdAndDelete(reportId);
+  const report = await AnalyticsReport.findById(reportId);
   if (!report) return res.status(404).json({ message: "Report not found" });
+  
+  // Soft Delete
+  report.isDeleted = true;
+  await report.save();
+  
   successResponse(res, null, "Report deleted successfully");
 });
 

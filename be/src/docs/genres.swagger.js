@@ -12,6 +12,13 @@
  *           type: string
  *         description: Tìm kiếm theo tên, slug hoặc mô tả thể loại
  *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status (true=live, false=deleted, all=both)
+ *       - in: query
  *         name: isActive
  *         schema:
  *           type: string

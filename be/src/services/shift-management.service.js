@@ -156,14 +156,14 @@ class ShiftManagementService {
     return shift;
   }
 
-  async getShiftsByTheater(theaterId, startDate, endDate) {
-    return await Shift.find({ theater: theaterId, date: { $gte: startDate, $lte: endDate } })
+  async getShiftsByTheater(theaterId, startDate, endDate, filter = {}) {
+    return await Shift.find({ theater: theaterId, date: { $gte: startDate, $lte: endDate }, ...filter })
       .populate("staff", "fullName email phone")
       .sort({ date: 1, startTime: 1 });
   }
 
-  async getShiftsByStaff(staffId, startDate, endDate) {
-    return await Shift.find({ staff: staffId, date: { $gte: startDate, $lte: endDate } })
+  async getShiftsByStaff(staffId, startDate, endDate, filter = {}) {
+    return await Shift.find({ staff: staffId, date: { $gte: startDate, $lte: endDate }, ...filter })
       .populate("theater", "name location")
       .sort({ date: 1, startTime: 1 });
   }

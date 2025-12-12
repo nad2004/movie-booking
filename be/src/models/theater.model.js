@@ -86,6 +86,10 @@ const roomSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const theaterSchema = new Schema(
@@ -183,6 +187,11 @@ const theaterSchema = new Schema(
     },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     updatedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import ShiftAssignment from "../models/shiftAssignment.model.js";
 import ShiftTemplate from "../models/shiftTemplate.model.js";
 import WorkSchedule from "../models/workSchedule.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 // helpers
@@ -99,7 +100,9 @@ const workScheduleController = {
   list: async (req, res) => {
     try {
       const { theaterId, from, to } = req.query;
-      const q = {};
+      const q = {
+        ...getDeleteFilter(req.query),
+      };
 
       if (theaterId) q.theaterId = new mongoose.Types.ObjectId(theaterId);
 
@@ -149,6 +152,7 @@ const workScheduleController = {
       const schedules = await WorkSchedule.find({
         theaterId,
         date: { $gte: from, $lte: to },
+        ...getDeleteFilter(req.query),
       })
         .populate("theaterId", "name")
         .populate("shiftTemplateId", "color") // Chỉ lấy color
@@ -196,7 +200,7 @@ const workScheduleController = {
       }
 
       // 1. Lấy tất cả schedules của ngày đó
-      const query = { theaterId, date };
+      const query = { theaterId, date, ...getDeleteFilter(req.query) };
 
       const schedules = await WorkSchedule.find(query)
         .populate("shiftTemplateId", "color")
@@ -336,8 +340,11 @@ const workScheduleController = {
       // Vì lịch bị xóa thì phân công chờ cũng vô nghĩa
       await ShiftAssignment.deleteMany({ workScheduleId: id }).session(session);
 
-      // 4. Xóa lịch làm việc
-      await WorkSchedule.findByIdAndDelete(id).session(session);
+      // 4. Xóa lịch làm việc (Soft delete)
+      schedule.isDeleted = true;
+      schedule.updatedBy = req.userId;
+      await schedule.save({ session });
+      // await WorkSchedule.findByIdAndDelete(id).session(session);
 
       await session.commitTransaction();
       session.endSession();

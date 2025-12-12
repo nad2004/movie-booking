@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import ShiftAssignment from "../models/shiftAssignment.model.js";
 import WorkSchedule from "../models/workSchedule.model.js";
+import { getDeleteFilter } from "../utils/query.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
 function intervalsOverlap(aStart, aEnd, bStart, bEnd) {
@@ -36,8 +37,8 @@ const shiftAssignmentController = {
         if (String(schedule.theaterId) !== String(theaterId)) throw new Error("Lịch làm việc không thuộc rạp này");
         if (schedule.status !== "open") throw new Error("Lịch làm việc chưa mở hoặc đã đóng");
 
-        // 2. Kiểm tra trùng lịch (Overlap)
-        const existingAssignments = await ShiftAssignment.find({ userId: item.userId })
+        // 2. Kiểm tra trùng lịch (Overlap) - Chỉ check các assignments chưa bị xóa
+        const existingAssignments = await ShiftAssignment.find({ userId: item.userId, isDeleted: false })
           .populate({ path: "workScheduleId", select: "startDateTime endDateTime theaterId" })
           .session(session);
 
@@ -87,7 +88,9 @@ const shiftAssignmentController = {
   listBySchedule: async (req, res) => {
     try {
       const { scheduleId } = req.params;
-      const items = await ShiftAssignment.find({ workScheduleId: scheduleId }).populate("userId", "name email").lean();
+      // Filter out deleted assignments
+      const query = { workScheduleId: scheduleId, ...getDeleteFilter(req.query) };
+      const items = await ShiftAssignment.find(query).populate("userId", "name email").lean();
       return successResponse(res, items);
     } catch (err) {
       console.error("List assignments error:", err);
@@ -104,7 +107,7 @@ const shiftAssignmentController = {
 
       if (workScheduleId) {
         // assignment = await ShiftAssignment.findOne({ userId, workScheduleId });
-        assignment = await ShiftAssignment.findOne({ userId, workScheduleId }).populate("workScheduleId");
+        assignment = await ShiftAssignment.findOne({ userId, workScheduleId, isDeleted: false }).populate("workScheduleId");
         // Debug
         if (!assignment) {
           const allAssignments = await ShiftAssignment.find({ workScheduleId }).populate("userId", "email fullName");
@@ -125,7 +128,7 @@ const shiftAssignmentController = {
         const windowStart = new Date(now.getTime() - 30 * 60 * 1000);
         const windowEnd = new Date(now.getTime() + 30 * 60 * 1000);
 
-        const candidates = await ShiftAssignment.find({ userId, status: "pending" })
+        const candidates = await ShiftAssignment.find({ userId, status: "pending", isDeleted: false })
           .populate({ path: "workScheduleId", match: { startDateTime: { $gte: windowStart, $lte: windowEnd } } })
           .sort({ assignedAt: 1 });
 
@@ -191,7 +194,7 @@ const shiftAssignmentController = {
       let assignment = null;
       if (workScheduleId) {
         // assignment = await ShiftAssignment.findOne({ userId, workScheduleId, status: "active" });
-        assignment = await ShiftAssignment.findOne({ userId, workScheduleId, status: "active" }).populate(
+        assignment = await ShiftAssignment.findOne({ userId, workScheduleId, status: "active", isDeleted: false }).populate(
           "workScheduleId"
         );
         // Debug: check if assignment exists with different status
@@ -266,6 +269,7 @@ const shiftAssignmentController = {
       // 1. Điều kiện lọc cơ bản: Phải đúng User
       const matchStage = {
         userId: new mongoose.Types.ObjectId(userId),
+        ...getDeleteFilter(req.query),
       };
 
       // 2. Pipeline Aggregation
@@ -405,8 +409,11 @@ const shiftAssignmentController = {
       if (assignment.checkInTime || assignment.status === "active" || assignment.status === "completed") {
         return errorResponse(res, "Không thể hủy phân công này vì nhân viên đã check-in hoặc hoàn thành ca.", 400);
       }
-      // 3. Xóa
-      await ShiftAssignment.findByIdAndDelete(id);
+      // 3. Soft Delete
+      assignment.isDeleted = true;
+      assignment.updatedBy = req.userId;
+      await assignment.save();
+      // await ShiftAssignment.findByIdAndDelete(id);
       return successResponse(res, null, "Đã hủy phân công thành công");
     } catch (err) {
       console.error("Remove assignment error:", err);

@@ -24,6 +24,13 @@
  *           type: string
  *         description: Lọc theo thành phố (regex, không phân biệt hoa thường)
  *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status (true=live, false=deleted, all=both)
+ *       - in: query
  *         name: district
  *         schema:
  *           type: string

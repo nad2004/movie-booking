@@ -44,10 +44,10 @@ const statisticsController = {
           }),
 
           // Tổng số khách hàng
-          User.countDocuments({ role: "customer" }),
+          User.countDocuments({ role: "customer", isDeleted: { $ne: true } }),
 
           // Tổng số phim
-          Movie.countDocuments(),
+          Movie.countDocuments({ isDeleted: { $ne: true } }),
 
           // Số booking hoàn tất
           Booking.countDocuments({
@@ -687,18 +687,18 @@ const statisticsController = {
 
       // 1. Tổng số tài khoản & 2. Số lượng phim & 3. Số rạp (GIỮ NGUYÊN)
       const [totalAccounts, newAccountsThisMonth] = await Promise.all([
-        User.countDocuments({}),
-        User.countDocuments({ createdAt: { $gte: startOfMonth } }),
+        User.countDocuments({ isDeleted: { $ne: true } }),
+        User.countDocuments({ isDeleted: { $ne: true }, createdAt: { $gte: startOfMonth } }),
       ]);
 
       const [totalMovies, newMoviesThisMonth] = await Promise.all([
-        Movie.countDocuments({ isDeleted: false }),
-        Movie.countDocuments({ isDeleted: false, createdAt: { $gte: startOfMonth } }),
+        Movie.countDocuments({ isDeleted: { $ne: true } }),
+        Movie.countDocuments({ isDeleted: { $ne: true }, createdAt: { $gte: startOfMonth } }),
       ]);
 
       const [totalTheaters, newTheatersThisMonth] = await Promise.all([
-        Theater.countDocuments({ isActive: true }),
-        Theater.countDocuments({ isActive: true, createdAt: { $gte: startOfMonth } }),
+        Theater.countDocuments({ isDeleted: { $ne: true } }),
+        Theater.countDocuments({ isDeleted: { $ne: true }, createdAt: { $gte: startOfMonth } }),
       ]);
 
       const calcStats = async (startDate, endDate) => {

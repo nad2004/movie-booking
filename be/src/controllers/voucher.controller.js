@@ -1,5 +1,6 @@
 import Voucher from "../models/voucher.model.js";
-import { successResponse, errorResponse } from "../utils/response.js";
+import { getDeleteFilter } from "../utils/query.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const voucherController = {
   verifyVoucher: async (req, res) => {
@@ -57,9 +58,15 @@ const voucherController = {
     try {
       const { isActive } = req.query;
 
-      const query = {};
-      if (isActive !== undefined) query.isActive = isActive === "true";
-
+      const query = {
+        ...getDeleteFilter(req.query)
+      };
+      
+      // Support filtering by business status isActive
+      if (isActive !== undefined) {
+        query.isActive = isActive === "true";
+      }
+      
       const vouchers = await Voucher.find(query).sort({ createdAt: -1 }).lean();
 
       return successResponse(res, vouchers);
@@ -105,11 +112,14 @@ const voucherController = {
     try {
       const { id } = req.params;
 
-      const voucher = await Voucher.findByIdAndDelete(id);
+      const voucher = await Voucher.findById(id);
       if (!voucher) {
         return errorResponse(res, "Không tìm thấy voucher", 404);
       }
-
+      
+      voucher.isDeleted = true;
+      await voucher.save();
+      
       return successResponse(res, {}, "Xóa voucher thành công");
     } catch (error) {
       console.error("Delete voucher error:", error);

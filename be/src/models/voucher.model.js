@@ -130,6 +130,11 @@ const voucherSchema = new Schema(
       index: true,
     },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
