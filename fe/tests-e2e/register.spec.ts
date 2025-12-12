@@ -1,0 +1,23 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+  await page.getByRole('link', { name: 'Đăng nhập' }).click();
+  await page.getByRole('link', { name: 'Register' }).click();
+  await page.getByRole('textbox', { name: 'Full Name' }).click();
+  await page.getByRole('textbox', { name: 'Full Name' }).fill('a');
+  await page.getByRole('textbox', { name: 'Email Address' }).click();
+  await page.getByRole('textbox', { name: 'Phone Number' }).click();
+  await page.getByRole('textbox', { name: 'Phone Number' }).fill('a');
+  await page.getByRole('textbox', { name: 'Password' }).click();
+  await page.getByRole('textbox', { name: 'Phone Number' }).fill('aa');
+  await page.getByRole('textbox', { name: 'Email Address' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).fill('a');
+  await page.getByRole('textbox', { name: 'Password' }).click();
+  await page.getByRole('textbox', { name: 'Password' }).fill('a');
+  await page.getByRole('button', { name: 'Register' }).click();
+  await page.getByRole('textbox', { name: 'Full Name' }).dblclick();
+  await page.getByRole('textbox', { name: 'Full Name' }).fill('2132131');
+  await page.getByRole('textbox', { name: 'Email Address' }).dblclick();
+  await page.getByRole('textbox', { name: 'Email Address' }).fill('123123');
+});

@@ -1,8 +1,6 @@
 import type { ApiResponse } from './apiTemplate'
 import type { Pagination } from './apiTemplate'
-// ======================
-// SEAT INTERFACE
-// ======================
+
 export interface Seat {
   _id?: string
   seatNumber: string // VD: "A1"
@@ -18,9 +16,6 @@ export interface Seat {
   action?: string
 }
 
-// ======================
-// ROOM INTERFACE
-// ======================
 export interface Room {
   roomName: string
   roomType: '2D' | '3D' | 'IMAX' | '4DX'
