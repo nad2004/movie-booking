@@ -204,6 +204,13 @@
  *         name: to
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status
  *     responses:
  *       200:
  *         description: Danh sách lịch làm việc
@@ -243,6 +250,13 @@
  *           type: string
  *         description: Mã ca để lọc (S1, S2, ...)
  *         example: "S1"
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter active (non-cancelled) work schedules
  *     responses:
  *       200:
  *         description: Thành công
@@ -508,6 +522,13 @@
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status
  *     responses:
  *       200:
  *         description: Danh sách phân công của lịch
@@ -563,6 +584,13 @@
  *           type: string
  *           example: "2025-01-31"
  *         description: Ngày kết thúc (dùng khi lọc khoảng)
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter active assignments
  *     responses:
  *       200:
  *         description: Lấy danh sách ca làm thành công

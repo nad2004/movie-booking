@@ -37,6 +37,13 @@
  *           maximum: 5
  *         example: 5
  *         description: Lọc đánh giá theo số sao (1–5)
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status
  *     responses:
  *       200:
  *         description: Danh sách đánh giá + phân trang + thống kê rating

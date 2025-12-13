@@ -14,13 +14,13 @@
  *         schema:
  *           type: string
  *         description: ID phim
-      - in: query
-        name: active
-        schema:
-          type: string
-          enum: [true, false, all]
-          default: true
-        description: Filter by Soft Delete status
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: [true, false, all]
+ *           default: true
+ *         description: Filter by Soft Delete status
  *       - in: query
  *         name: theaterId
  *         schema:
