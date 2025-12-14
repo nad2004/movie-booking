@@ -62,6 +62,23 @@ const scheduleController = {
         scheduleMatch.status = status;
       }
 
+      // Fix: Filter past schedules for public listing
+      // Chỉ admin mới cần xem lịch cũ, user thường thì không
+      // API này dùng chung, nên ta check role hoặc giả định default là public query?
+      // Nhưng an toàn nhất là thêm filter thời gian nếu không phải admin
+      // Tuy nhiên context req.userRole có thể không có nếu public route không auth
+      // Public route /schedules thường chỉ nên trả về valid schedules
+      
+      const now = new Date();
+      // Logic: showDate >= today
+      // AND with specific time check via aggregation or simplified check
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Nếu không có filter date specific, mặc định chỉ lấy từ hôm nay trở đi
+      if (!date && !startDate && !endDate && !req.query.includePast) {
+         scheduleMatch.showDate = { $gte: startOfToday };
+      }
+
       // Lọc theo ngày chiếu / khoảng ngày
       if (date) {
         const d = new Date(date);
@@ -242,6 +259,14 @@ const scheduleController = {
         status: { $in: ["Đang mở bán vé", "Sắp đầy"] },
       };
 
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      // Mặc định ẩn lịch đã qua (ngày hôm qua) nếu không có yêu cầu cụ thể
+      if (!date && !req.query.includePast) {
+        query.showDate = { $gte: startOfToday };
+      }
+
       if (date) {
         const searchDate = new Date(date);
         query.showDate = {
@@ -298,6 +323,14 @@ const scheduleController = {
         theater: theaterId,
         status: { $in: ["Đang mở bán vé", "Sắp đầy"] },
       };
+
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Mặc định ẩn lịch đã qua nếu không có yêu cầu cụ thể
+      if (!date && !req.query.includePast) {
+        query.showDate = { $gte: startOfToday };
+      }
 
       if (date) {
         const searchDate = new Date(date);

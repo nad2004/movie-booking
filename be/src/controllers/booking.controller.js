@@ -82,6 +82,21 @@ const bookingController = {
           throw new Error("Suất chiếu không còn mở bán vé");
         }
 
+        // Fix: Check real-time validity
+        const now = new Date();
+        const showDate = new Date(schedule.showDate);
+        const [hours, minutes] = schedule.startTime.split(":").map(Number);
+        const showDateTime = new Date(showDate.getFullYear(), showDate.getMonth(), showDate.getDate(), hours, minutes);
+
+        // Cho phép đặt vé trước khi chiếu và tối đa 30 phút sau khi bắt đầu (late check-in window)
+        // Nhưng logic an toàn nhất là: Nếu đã qua giờ chiếu N phút -> Chặn
+        const allowLateBookingMinutes = 30; // Configurable
+        const lateBookingCutoff = new Date(showDateTime.getTime() + allowLateBookingMinutes * 60 * 1000);
+
+        if (now > lateBookingCutoff) {
+           throw new Error("Suất chiếu đã bắt đầu hoặc đã kết thúc. Không thể đặt vé nữa.");
+        }
+
         // 2. Hold ghế với atomic operation
         const seatNumbers = seats.map((s) => s.seatNumber);
 
