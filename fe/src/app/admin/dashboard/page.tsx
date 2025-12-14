@@ -51,7 +51,7 @@ export default function AdminDashboard() {
 
   const cinemaChartData =
     topCinemasData && topCinemasData.items.length > 0
-      ? transformToChartData(topCinemasData.items, 'tỷ VND')
+      ? transformToChartData(topCinemasData.items, 'Triệu VND')
       : fallbackTheaters
 
   // Loading state cho toàn trang (optional)

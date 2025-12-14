@@ -20,7 +20,9 @@ export const STEPS = [
   { number: 5, label: 'Xác nhận' },
 ]
 
-export const RESERVED_SEATS = ['A5', 'B3', 'C6', 'D1', 'E8']
+export const MAX_SEATS = 10
+export const MAX_PRODUCTS = 20
+
 
 interface UseBookingProps {
   movieId: string
@@ -36,13 +38,23 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   const schedules = scheduleData?.schedules || []
 
   // --- STATE ---
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(preSelectedScheduleId ? 2 : 1)
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [selectedSeats, setSelectedSeats] = useState<BookedSeat[]>([])
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'momo' | null>(null)
   const [createdBookingData, setCreatedBookingData] = useState<BookingResponseData | null>(null)
   const [paymentUrl, setPaymentUrl] = useState<string>('')
+
+  // --- AUTO-SELECT SCHEDULE FROM preSelectedScheduleId ---
+  useEffect(() => {
+    if (preSelectedScheduleId && schedules.length > 0 && !selectedSchedule) {
+      const preSelected = schedules.find(s => s._id === preSelectedScheduleId)
+      if (preSelected) {
+        setSelectedSchedule(preSelected)
+      }
+    }
+  }, [preSelectedScheduleId, schedules, selectedSchedule])
 
   // --- WEBSOCKET SEAT MANAGEMENT ---
   const { realTimeSeats, viewerCount, isInRoom, holdSeats, releaseSeats } = useSeatSocket({
@@ -62,6 +74,11 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     const products = cartItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
     return tickets + products
   }, [selectedSeats, cartItems])
+
+  // Tính tổng số lượng sản phẩm
+  const totalProductQuantity = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0)
+  }, [cartItems])
 
   // Helper: Tính giá vé dựa trên Schedule đang chọn
   const getSeatPrice = useCallback(
@@ -83,19 +100,16 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   // Helper: Kiểm tra ghế có thể chọn không
   const isSeatAvailable = useCallback(
     (seat: Seat): boolean => {
-      // Ghế đã được đặt (reserved)
-      if (RESERVED_SEATS.includes(seat.seatNumber)) return false
 
-      // Lấy trạng thái real-time từ WebSocket
       const realTimeSeat = realTimeSeats.get(seat.seatNumber)
 
       if (realTimeSeat) {
-        // Ghế đã được book
+        // Ghế đã được bookS
         if (realTimeSeat.isBooked) return false
 
         // Ghế đang được giữ bởi người khác
         if (realTimeSeat.holdUntil) {
-           return true
+           return false
         }
       }
 
@@ -128,6 +142,12 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
         // Release seat
         releaseSeats([seat.seatNumber])
       } else {
+        // Kiểm tra số lượng ghế tối đa
+        if (selectedSeats.length >= MAX_SEATS) {
+          toast.warning(`Bạn chỉ được chọn tối đa ${MAX_SEATS} ghế`)
+          return
+        }
+
         // Chọn ghế mới -> Hold qua WebSocket
         try {
           await holdSeats([seat.seatNumber])
@@ -148,6 +168,18 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
       setCartItems(prev => prev.filter(item => item.product._id !== product._id))
       return
     }
+
+    // Tính tổng số lượng sản phẩm hiện tại (không bao gồm sản phẩm đang cập nhật)
+    const currentTotal = cartItems
+      .filter(item => item.product._id !== product._id)
+      .reduce((sum, item) => sum + item.quantity, 0)
+
+    // Kiểm tra tổng số lượng có vượt quá giới hạn không
+    if (currentTotal + quantity > MAX_PRODUCTS) {
+      toast.warning(`Tổng số lượng sản phẩm không được vượt quá ${MAX_PRODUCTS}`)
+      return
+    }
+
     setCartItems(prev => {
       const exists = prev.find(item => item.product._id === product._id)
       if (exists)
@@ -158,7 +190,9 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
 
   // --- CORE LOGIC: TẠO ĐƠN (BƯỚC 3 -> 4) ---
   const handleCreateBooking = async () => {
-    if (!selectedSchedule) {
+    const scheduleId = preSelectedScheduleId || selectedSchedule?._id
+    
+    if (!scheduleId) {
       toast.error('Vui lòng chọn suất chiếu')
       return null
     }
@@ -168,7 +202,7 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     }
 
     const bookingPayload = {
-      scheduleId: selectedSchedule._id,
+      scheduleId: scheduleId,
       seats: selectedSeats.map(seat => ({
         seatNumber: seat.seatNumber,
         seatType: seat.seatType,
@@ -219,6 +253,26 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
 
   // --- NAVIGATION ---
   const nextStep = async () => {
+    // Validate step 2 -> 3: Kiểm tra số ghế
+    if (currentStep === 2) {
+      if (selectedSeats.length === 0) {
+        toast.error('Vui lòng chọn ít nhất 1 ghế')
+        return
+      }
+      if (selectedSeats.length > MAX_SEATS) {
+        toast.error(`Bạn chỉ được chọn tối đa ${MAX_SEATS} ghế`)
+        return
+      }
+    }
+
+    // Validate step 3 -> 4: Kiểm tra số lượng sản phẩm
+    if (currentStep === 3) {
+      if (totalProductQuantity > MAX_PRODUCTS) {
+        toast.error(`Tổng số lượng sản phẩm không được vượt quá ${MAX_PRODUCTS}`)
+        return
+      }
+    }
+
     // Bước 4 -> 5: Tạo link thanh toán
     if (currentStep === 4) {
       if (!paymentMethod) {
@@ -246,6 +300,8 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   const prevStep = () => {
     // Không cho quay lại từ bước 5 (đã thanh toán)
     if (currentStep === 5) return
+    // Không cho quay lại step 1 nếu có preSelectedScheduleId
+    if (currentStep === 2 && preSelectedScheduleId) return
     if (currentStep > 1) setCurrentStep(prev => prev - 1)
   }
 
@@ -285,6 +341,7 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     schedules,
     isLoadingSchedules,
     totalAmount,
+    totalProductQuantity,
     paymentUrl,
     createdBookingData,
     isProcessing: isCreatingBooking || isCreatingVNPay || isCreatingMoMo,
@@ -296,6 +353,9 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     isInRoom,
     isConnected,
     isSeatAvailable,
+    // Validation limits
+    MAX_SEATS,
+    MAX_PRODUCTS,
   }
 }
 

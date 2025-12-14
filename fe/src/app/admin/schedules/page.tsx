@@ -57,6 +57,7 @@ export default function ScheduleManagementPage() {
     showDate: formattedDate,
     page: currentPage,
     limit: itemsPerPage,
+    includePast: true,
   })
 
   // 2. [Mới] Fetch Resource Data (Phim & Rạp) để truyền vào Dialog

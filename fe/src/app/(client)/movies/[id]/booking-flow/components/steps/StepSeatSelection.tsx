@@ -29,39 +29,6 @@ export function StepSeatSelection({
 }: StepSeatSelectionProps) {
   return (
     <div className="relative">
-      {/* Header with connection status */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-text-primary text-xl font-bold">Chọn ghế</h2>
-        
-        <div className="flex items-center gap-4">
-          {/* Viewer count */}
-          {isInRoom && (
-            <Badge variant="outline" className="gap-2 px-3 py-1">
-              <Users className="w-4 h-4" />
-              <span>{viewerCount} người đang xem</span>
-            </Badge>
-          )}
-          
-          {/* Connection status */}
-          <Badge 
-            variant={isConnected ? "default" : "destructive"} 
-            className="gap-2 px-3 py-1"
-          >
-            {isConnected ? (
-              <>
-                <Wifi className="w-4 h-4" />
-                <span className="text-xs">Kết nối</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-4 h-4" />
-                <span className="text-xs">Mất kết nối</span>
-              </>
-            )}
-          </Badge>
-        </div>
-      </div>
-
       {/* Thông báo nếu mất kết nối */}
       {!isConnected && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
