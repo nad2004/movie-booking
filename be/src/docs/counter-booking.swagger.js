@@ -64,6 +64,58 @@
 
 /**
  * @swagger
+ * /staff/concession:
+ *   post:
+ *     tags: [Counter Booking]
+ *     summary: Tạo đơn hàng bắp nước (Concession)
+ *     description: Nhân viên tạo đơn hàng bắp nước cho khách tại quầy (không kèm vé)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [products]
+ *             properties:
+ *               products:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [productId, quantity]
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                     quantity:
+ *                       type: number
+ *                     size:
+ *                       type: string
+ *               customerInfo:
+ *                 type: object
+ *                 properties:
+ *                   fullName:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *               voucherCode:
+ *                 type: string
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [cash, card, qr, mixed]
+ *     responses:
+ *       201:
+ *         description: Transaction created
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+
+/**
+ * @swagger
  * /staff/bookings/my-transactions:
  *   get:
  *     tags: [Counter Booking]

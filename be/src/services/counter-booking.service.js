@@ -384,6 +384,191 @@ class CounterBookingService {
   }
 
   /**
+   * Create concession transaction at counter
+   */
+  async createConcessionTransaction(staffId, transactionData) {
+      const session = await mongoose.startSession();
+      try {
+          return await session.withTransaction(async () => {
+              const { products, customerInfo, paymentMethod, cashReceived } = transactionData;
+
+              // 1. Get staff info with assigned theater
+              const staff = await User.findById(staffId).populate({
+                  path: "staffInfo.assignedTheater",
+                  select: "_id name address city",
+              });
+              if (!staff || staff.role !== "staff") {
+                  throw new BookingError("Chỉ nhân viên mới có thể tạo giao dịch tại quầy");
+              }
+
+              // Validate staff has assigned theater
+              if (!staff.staffInfo?.assignedTheater) {
+                  throw new BookingError(
+                      `Nhân viên ${staff.fullName} chưa được gán rạp. Vui lòng liên hệ quản lý để được gán rạp.`
+                  );
+              }
+
+              // Ensure theater data is available
+              if (!staff.staffInfo.assignedTheater._id || !staff.staffInfo.assignedTheater.name) {
+                  throw new BookingError("Dữ liệu rạp không đầy đủ. Vui lòng liên hệ quản lý.");
+              }
+
+              // 2. Handle products
+              let productsAmount = 0;
+              let orderedProducts = [];
+
+              if (products && products.length > 0) {
+                  for (const item of products) {
+                      const product = await Product.findOneAndUpdate(
+                          {
+                              _id: item.productId,
+                              inStock: true,
+                              stockQuantity: { $gte: item.quantity },
+                          },
+                          {
+                              $inc: { stockQuantity: -item.quantity },
+                          },
+                          {
+                              new: true,
+                              session,
+                          }
+                      );
+
+                      if (!product) {
+                          throw new BookingError("Sản phẩm không đủ số lượng hoặc không tồn tại");
+                      }
+
+                      if (product.stockQuantity === 0) {
+                          await Product.updateOne({ _id: product._id }, { inStock: false }, { session });
+                      }
+
+                      const itemTotal = product.price * item.quantity;
+                      productsAmount += itemTotal;
+
+                      orderedProducts.push({
+                          product: product._id,
+                          productName: product.name,
+                          quantity: item.quantity,
+                          priceAtBooking: product.price,
+                          size: item.size || "N/A",
+                          price: product.price // Legacy support
+                      });
+                  }
+              } else {
+                  throw new BookingError("Vui lòng chọn sản phẩm");
+              }
+
+               // 3. Handle voucher
+               let discountAmount = 0;
+               let appliedVoucher = null;
+               
+               if (transactionData.voucherCode) {
+                   const Voucher = (await import("../models/voucher.model.js")).default;
+                   
+                    // Validate voucher
+                    const voucher = await Voucher.findOne({
+                     code: transactionData.voucherCode.toUpperCase(),
+                     isActive: true,
+                     startDate: { $lte: new Date() },
+                     endDate: { $gte: new Date() },
+                     minOrderValue: { $lte: productsAmount },
+                     $expr: { $lt: ["$usageCount", "$usageLimit"] },
+                   }).session(session);
+
+                   if (!voucher) {
+                       throw new BookingError("Mã voucher không hợp lệ, đã hết hạn, không đủ điều kiện hoặc đã hết lượt sử dụng");
+                   }
+
+                   // Check if customer can use this voucher
+                   if (customerInfo && customerInfo.customerId) {
+                       const realCustomer = await User.findById(customerInfo.customerId);
+                       const canUse = voucher.canBeUsedBy(realCustomer._id, realCustomer.membershipLevel);
+                       if (!canUse.valid) {
+                           throw new BookingError(canUse.message || "Không thể sử dụng voucher này");
+                       }
+                   }
+
+                   // Apply voucher
+                   await Voucher.findByIdAndUpdate(
+                       voucher._id,
+                       {
+                           $inc: { usageCount: 1 },
+                           $push: {
+                               usedBy: {
+                                   user: customerInfo?.customerId || null,
+                                   bookingId: null, // No booking ID for concession
+                                   usedAt: new Date(),
+                               },
+                           },
+                       },
+                       { session }
+                   );
+
+                   // Calculate discount
+                   if (voucher.discountType === "fixed") {
+                       discountAmount = voucher.discountValue;
+                   } else {
+                       discountAmount = Math.floor((productsAmount * voucher.discountValue) / 100);
+                   }
+
+                   // Apply max discount limit if exists
+                   if (voucher.maxDiscountAmount && discountAmount > voucher.maxDiscountAmount) {
+                       discountAmount = voucher.maxDiscountAmount;
+                   }
+
+                   appliedVoucher = voucher._id;
+               }
+
+              // 4. Calculate total
+              const totalAmount = productsAmount - discountAmount;
+
+              // 5. Generate transaction ID
+              const date = new Date();
+              const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
+              const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+              const transactionId = `CT${dateStr}${randomStr}`;
+
+              // 6. Create counter transaction record
+              const counterTransaction = new CounterTransaction({
+                  transactionId,
+                  transactionType: 'concession',
+                  staff: staffId,
+                  staffName: staff.fullName,
+                  theater: staff.staffInfo.assignedTheater._id,
+                  theaterName: staff.staffInfo.assignedTheater.name,
+                  customer: customerInfo?.customerId || null,
+                  customerName: customerInfo?.fullName || "Guest",
+                  customerPhone: customerInfo?.phoneNumber || "",
+                  customerEmail: customerInfo?.email || "",
+                  isGuestCustomer: !customerInfo?.customerId,
+                  products: orderedProducts,
+                  paymentMethod: paymentMethod,
+                  totalAmount,
+                  cashReceived: cashReceived || totalAmount,
+                  changeGiven: cashReceived ? cashReceived - totalAmount : 0,
+                  shift: staff.staffInfo?.shift,
+                  status: "completed",
+              });
+
+              await counterTransaction.save({ session });
+
+              return {
+                  transaction: counterTransaction,
+                  customer: {
+                      id: customerInfo?.customerId || null,
+                      name: customerInfo?.fullName || "Guest",
+                      phone: customerInfo?.phoneNumber,
+                  },
+              };
+          });
+      } catch (error) {
+          throw error;
+      } finally {
+          await session.endSession();
+      }
+  }
+
+  /**
    * Get counter transactions for staff
    */
   async getStaffTransactions(staffId, startDate, endDate) {

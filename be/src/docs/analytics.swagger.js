@@ -312,5 +312,34 @@
  *         description: Dữ liệu customer satisfaction
  *       401:
  *         description: Unauthorized
-*/
+ */
+
+
+/**
+ * @swagger
+ * /dashboard/product-sales:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: Thống kê sản phẩm bán được
+ *     description: Thống kê số lượng sản phẩm đã bán từ vé và quầy (Admin/Manager)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *           default: 2025
+ *         description: Năm thống kê (default 2025)
+ *       - in: query
+ *         name: theater
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Thống kê sản phẩm theo tháng
+ *       401:
+ *         description: Unauthorized
+ */
+
 export default {};

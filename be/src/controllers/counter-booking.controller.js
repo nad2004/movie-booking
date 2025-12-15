@@ -1,7 +1,7 @@
-import counterBookingService from "../services/counter-booking.service.js";
-import { successResponse, errorResponse } from "../utils/response.js";
-import { AuthorizationError } from "../utils/errors.js";
 import User from "../models/user.model.js";
+import counterBookingService from "../services/counter-booking.service.js";
+import { AuthorizationError } from "../utils/errors.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 const counterBookingController = {
   // Create booking at counter
@@ -18,6 +18,30 @@ const counterBookingController = {
       return successResponse(res, result, "Tạo booking tại quầy thành công", 201);
     } catch (error) {
       console.error("Create counter booking error:", error);
+      return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
+    }
+  },
+
+  // Create concession transaction at counter
+  createConcessionBooking: async (req, res) => {
+    try {
+      // Verify staff role
+      const staff = await User.findById(req.userId);
+      if (!staff || staff.role !== "staff") {
+        throw new AuthorizationError("Chỉ nhân viên mới có thể tạo giao dịch tại quầy");
+      }
+
+      // Normalize products if it came as an object (e.g. "0": {...})
+      if (req.body.products && typeof req.body.products === "object" && !Array.isArray(req.body.products)) {
+        req.body.products = Object.values(req.body.products);
+      }
+
+      const result = await counterBookingService.createConcessionTransaction(req.userId, req.body);
+
+
+      return successResponse(res, result, "Tạo giao dịch bán hàng thành công", 201);
+    } catch (error) {
+      console.error("Create concession transaction error:", error);
       return errorResponse(res, error.message || "Lỗi server", error.statusCode || 500);
     }
   },

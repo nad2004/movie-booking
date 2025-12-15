@@ -147,6 +147,13 @@ router.post(
   requireActiveShift,
   counterBookingController.createBooking
 );
+router.post(
+  "/staff/concession",
+  authenticateToken,
+  authorize("staff"),
+  // requireActiveShift,
+  counterBookingController.createConcessionBooking
+);
 router.get(
   "/staff/bookings/my-transactions",
   authenticateToken,
@@ -480,6 +487,12 @@ router.get(
   authenticateToken,
   authorize("admin", "manager"),
   analyticsController.getRevenueAnalytics
+);
+router.get(
+  "/dashboard/product-sales",
+  authenticateToken,
+  authorize("admin", "manager"),
+  analyticsController.getProductSalesStats
 );
 router.get(
   "/analytics/attendance",

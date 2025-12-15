@@ -1,10 +1,10 @@
 import AnalyticsReport from "../models/analytics-report.model.js";
 import Booking from "../models/booking.model.js";
-import Schedule from "../models/schedule.model.js";
+import CounterTransaction from "../models/counter-transaction.model.js";
 import Review from "../models/review.model.js";
+import Schedule from "../models/schedule.model.js";
 import Shift from "../models/shift.model.js";
 import StaffKPI from "../models/staff-kpi.model.js";
-import { AppError } from "../utils/errors.js";
 
 class AnalyticsService {
   async generateReport(reportConfig) {
@@ -294,6 +294,82 @@ class AnalyticsService {
         startDate = new Date(now.setHours(0, 0, 0, 0));
     }
     return { startDate, endDate };
+  }
+
+  async getProductSalesStats({ year = 2025, theater }) {
+    const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+    const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+    // 1. Query Data
+    const baseQuery = {
+      createdAt: { $gte: startDate, $lte: endDate },
+    };
+    if (theater) baseQuery.theater = theater;
+
+    // Separate queries because of different models
+    const bookingQuery = { ...baseQuery, status: "Hoàn tất" };
+    const transactionQuery = { ...baseQuery, status: "completed", transactionType: "concession" };
+
+    const [bookings, transactions] = await Promise.all([
+      Booking.find(bookingQuery).select("createdAt products totalPrice"), 
+      CounterTransaction.find(transactionQuery).select("createdAt products totalAmount")
+    ]);
+
+    // 2. Initialize 12 months
+    const monthlyStats = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      quantity: 0,
+      revenue: 0
+    }));
+
+    // 3. Helper to aggregate
+    const aggregate = (items) => {
+      items.forEach(item => {
+        const month = new Date(item.createdAt).getMonth(); // 0-11
+        
+        // Sum from products array
+        let itemQuantity = 0;
+        let itemRevenue = 0;
+
+        if (item.products && item.products.length > 0) {
+            item.products.forEach(p => {
+                const qty = p.quantity || 0;
+                // Price priority: priceAtBooking -> price (legacy) -> 0
+                const price = p.priceAtBooking || p.price || 0; 
+                itemQuantity += qty;
+                itemRevenue += price * qty;
+            });
+        }
+        
+        monthlyStats[month].quantity += itemQuantity;
+        monthlyStats[month].revenue += itemRevenue;
+      });
+    };
+
+    aggregate(bookings);
+    aggregate(transactions);
+
+    // 4. Format Response
+    const monthsData = monthlyStats.map(stat => ({
+      tenThang: `Tháng ${stat.month}`,
+      values: [
+        {
+          name: "Doanh thu (Triệu VNĐ)",
+          value: parseFloat((stat.revenue / 1000000).toFixed(2)) // Convert to Million
+        },
+        {
+          name: "Số lượng bán",
+          value: stat.quantity
+        }
+      ]
+    }));
+
+    return {
+      title: "Thống kê sản phẩm",
+      subTitle: "Thống kê theo từng tháng (Tổng hợp)",
+      year: parseInt(year),
+      months: monthsData
+    };
   }
 }
 

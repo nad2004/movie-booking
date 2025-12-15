@@ -104,6 +104,13 @@ const deleteReport = catchAsync(async (req, res) => {
   successResponse(res, null, "Report deleted successfully");
 });
 
+const getProductSalesStats = catchAsync(async (req, res) => {
+  const { year = 2025, theater } = req.query;
+  const stats = await analyticsService.getProductSalesStats({ year, theater });
+  // The service now returns the formatted data structure requested by the user
+  successResponse(res, stats, "Product sales statistics retrieved successfully");
+});
+
 export default {
   generateReport,
   getReport,
@@ -116,4 +123,5 @@ export default {
   getTheaterPerformance,
   getCustomerSatisfaction,
   deleteReport,
+  getProductSalesStats,
 };

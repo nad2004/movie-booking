@@ -1,3 +1,4 @@
+import moment from "moment-timezone";
 import mongoose from "mongoose";
 import ShiftAssignment from "../models/shiftAssignment.model.js";
 import WorkSchedule from "../models/workSchedule.model.js";
@@ -323,12 +324,15 @@ const shiftAssignmentController = {
           $match: { "schedule.date": date },
         });
       } else if (from && to) {
-        // Tìm theo khoảng thời gian
+        // Tìm theo khoảng thời gian - Convert inputs to start/end of day in Vietnam Time
+        const fromDate = moment.tz(from, "Asia/Ho_Chi_Minh").startOf("day").toDate();
+        const toDate = moment.tz(to, "Asia/Ho_Chi_Minh").endOf("day").toDate();
+
         pipeline.push({
           $match: {
             "schedule.startDateTime": {
-              $gte: new Date(from),
-              $lte: new Date(to),
+              $gte: fromDate,
+              $lte: toDate,
             },
           },
         });

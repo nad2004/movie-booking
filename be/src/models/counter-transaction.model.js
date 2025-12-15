@@ -39,7 +39,7 @@ const counterTransactionSchema = new Schema(
     booking: {
       type: Schema.Types.ObjectId,
       ref: "Booking",
-      required: true,
+      required: function() { return this.transactionType === 'booking'; },
       index: true,
     },
 
@@ -67,11 +67,11 @@ const counterTransactionSchema = new Schema(
     // Transaction details
     movieTitle: {
       type: String,
-      required: true,
+      required: function() { return this.transactionType === 'booking'; }
     },
     showTime: {
       type: String,
-      required: true,
+      required: function() { return this.transactionType === 'booking'; }
     },
     seats: [
       {
@@ -82,9 +82,15 @@ const counterTransactionSchema = new Schema(
     ],
     products: [
       {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+        },
         productName: String,
         quantity: Number,
-        price: Number,
+        priceAtBooking: Number,
+        size: String,
+        price: Number, // Legacy support
       },
     ],
 
@@ -114,6 +120,13 @@ const counterTransactionSchema = new Schema(
       enum: ["completed", "cancelled", "refunded"],
       default: "completed",
       index: true,
+    },
+    
+    transactionType: {
+        type: String,
+        enum: ["booking", "concession"],
+        default: "booking",
+        index: true
     },
 
     // Printing info
