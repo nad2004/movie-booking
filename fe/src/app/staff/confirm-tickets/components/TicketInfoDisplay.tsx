@@ -1,16 +1,31 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Film, QrCode, Clock, MapPin, Armchair, CheckCircle2, XCircle } from 'lucide-react'
+import { Film, QrCode, Clock, MapPin, Armchair, CheckCircle2, XCircle, ShoppingCart } from 'lucide-react'
 import type { TicketVerify } from '@/types/booking'
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
 
 interface TicketInfoDisplayProps {
   ticket: TicketVerify | null
   onConfirm: () => void
   isConfirming?: boolean
+  onOpenFoodSales?: () => void
+  hasCartItems?: boolean
 }
 
-export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInfoDisplayProps) {
+export function TicketInfoDisplay({ 
+  ticket, 
+  onConfirm, 
+  isConfirming,
+  onOpenFoodSales,
+  hasCartItems = false
+}: TicketInfoDisplayProps) {
   return (
     <Card className="p-6 border border-border rounded-[10px] shadow-sm hover:shadow-md transition-shadow">
       {/* Header */}
@@ -44,16 +59,34 @@ export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInf
           {/* Customer Info */}
           <CustomerInfo ticket={ticket} />
 
-          {/* Confirm Button */}
+          {/* Action Buttons */}
           {ticket.booking.status === 'Hoàn tất' && (
-            <Button
-              onClick={onConfirm}
-              disabled={isConfirming}
-              className="w-full bg-chart-3 hover:bg-chart-3/90 text-white rounded-[10px] shadow-md"
-            >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              {isConfirming ? 'Đang xác nhận...' : 'Xác nhận vào rạp'}
-            </Button>
+            <div className="space-y-3">
+              {/* Food Sales Button */}
+              <Button
+                onClick={onOpenFoodSales}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-[10px] shadow-md flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Bán sản phẩm kèm
+              </Button>
+
+              {/* Confirm Entry Button - Disabled when cart has items */}
+              <Button
+                onClick={onConfirm}
+                disabled={isConfirming || hasCartItems}
+                className="w-full bg-chart-3 hover:bg-chart-3/90 text-white rounded-[10px] shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                {isConfirming ? 'Đang xác nhận...' : hasCartItems ? 'Vui lòng xác nhận đơn hàng trước' : 'Xác nhận vào rạp'}
+              </Button>
+
+              {hasCartItems && (
+                <p className="text-xs text-amber-600 text-center">
+                  ⚠️ Có sản phẩm trong giỏ hàng. Vui lòng xác nhận hoặc hủy đơn hàng trước khi cho khách vào rạp.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -108,7 +141,7 @@ function TicketDetails({ ticket }: { ticket: TicketVerify }) {
       <DetailRow
         icon={<Clock className="w-5 h-5 text-muted-foreground mt-0.5" />}
         label="Thời gian chiếu"
-        value={`${new Date(ticket.booking.showDate).toLocaleDateString('vi-VN')} - ${new Date(ticket.booking.showTime).toLocaleDateString('vi-VN')}`}
+        value={`${new Date(ticket.booking.showDate).toLocaleDateString('vi-VN')} - ${new Date(ticket.booking.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`}
       />
 
       {/* Room */}

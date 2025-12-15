@@ -69,24 +69,20 @@ export default function TicketSales() {
 
   const schedules = schedulesData?.schedules || []
 
-  // Sử dụng Hook useBooking
   const { selectedSchedule, setSelectedSchedule, selectedSeats, handleSeatClick, totalAmount } =
     useBooking({ movieId: selectedMovieId === 'ALL' ? '' : selectedMovieId })
 
   const { mutate: staffCreateBooking, isPending } = useStaffCreateBooking()
 
-  // Reset selected schedule khi đổi params
   useEffect(() => {
     setSelectedSchedule(null)
   }, [selectedMovieId, selectedDate, showAllDates, setSelectedSchedule])
 
-  // Xử lý submit form khách hàng
   const onCustomerSubmit = (data: CustomerFormData) => {
     setCustomerInfo(data)
     toast.success(`Đã nhận khách: ${data.fullName}`)
   }
 
-  // Quay lại bước nhập thông tin khách
   const handleBackToCustomer = () => {
     if (confirm('Quay lại sẽ xóa các ghế đang chọn. Bạn chắc chắn chứ?')) {
       setCustomerInfo(null)

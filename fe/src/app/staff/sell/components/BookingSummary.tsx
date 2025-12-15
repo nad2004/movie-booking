@@ -51,7 +51,7 @@ export function BookingSummary({
           </div>
           <div>
             <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Phòng</p>
-            <p className="text-sm">{selectedSchedule?.roomName || '--'}</p>
+            <p className="text-sm">{selectedSchedule?.room.roomName || '--'}</p>
           </div>
         </div>
 

@@ -3,16 +3,30 @@
 import { useState } from 'react'
 import { TicketScanner } from './components/TicketScanner'
 import { TicketInfoDisplay } from './components/TicketInfoDisplay'
+import {FoodSalesModal} from './components/FoodSalesModal'
 import { type TicketStats } from './components/TicketStatsCards'
 import type { TicketVerify } from '@/types/booking'
 import { useNotification } from '@/providers/NotificationProvider'
 import { useConfirmTicket } from './hooks/useConfirmTicket'
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  quantity: number;
+}
+
 export default function ConfirmTicket() {
   const { showSuccess, showError } = useNotification()
 
   const [ticketInfo, setTicketInfo] = useState<TicketVerify | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
+  const [isFoodModalOpen, setIsFoodModalOpen] = useState(false)
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  
   const { confirmTicket } = useConfirmTicket()
+
   // Mock stats data - replace with real API
   const stats: TicketStats = {
     total: 245,
@@ -23,15 +37,48 @@ export default function ConfirmTicket() {
   // Handle ticket scan - now receives full Booking object from API
   const handleScanTicket = async (ticketData: TicketVerify) => {
     setTicketInfo(ticketData)
+    // Reset cart when new ticket is scanned
+    setCartItems([])
   }
 
-  // Handle confirm entry
+  // Handle open food sales modal
+  const handleOpenFoodSales = () => {
+    if (!ticketInfo) return
+    setIsFoodModalOpen(true)
+  }
+
+  // Handle close food sales modal
+  const handleCloseFoodSales = () => {
+    setIsFoodModalOpen(false)
+  }
+
+  // Handle confirm food order
+  const handleConfirmFoodOrder = (items: CartItem[]) => {
+    setCartItems(items)
+    setIsFoodModalOpen(false)
+    showSuccess(
+      'Đã thêm sản phẩm!', 
+      `Đã thêm ${items.length} sản phẩm vào đơn hàng. Vui lòng thu tiền từ khách hàng.`
+    )
+  }
+
+  // Handle confirm entry - now also processes cart if exists
   const handleConfirmEntry = async () => {
     if (!ticketInfo) return
+    
+    if (cartItems.length > 0) {
+      showError(
+        'Chưa xác nhận đơn hàng!',
+        'Vui lòng xác nhận đơn hàng đồ ăn trước khi cho khách vào rạp.'
+      )
+      return
+    }
+
     setIsConfirming(true)
     try {
       confirmTicket.mutate(ticketInfo.booking.bookingCode)
       setTicketInfo(null)
+      setCartItems([])
     } catch (error) {
       console.error('Error confirming entry:', error)
     } finally {
@@ -56,8 +103,20 @@ export default function ConfirmTicket() {
           ticket={ticketInfo}
           onConfirm={handleConfirmEntry}
           isConfirming={isConfirming}
+          onOpenFoodSales={handleOpenFoodSales}
+          hasCartItems={cartItems.length > 0}
         />
       </div>
+
+      {/* Food Sales Modal */}
+      {ticketInfo && (
+        <FoodSalesModal
+          isOpen={isFoodModalOpen}
+          onClose={handleCloseFoodSales}
+          onConfirm={handleConfirmFoodOrder}
+          bookingCode={ticketInfo.booking.bookingCode}
+        />
+      )}
 
       {/* Stats */}
       {/* <TicketStatsCards stats={stats} /> */}
