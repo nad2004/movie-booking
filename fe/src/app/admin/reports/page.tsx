@@ -5,9 +5,11 @@ import { KPIDetailSection } from './components/KPIDetailSection'
 import { TrendsSection } from './components/TrendsSection'
 import { ComparisonSection } from './components/ComparisonSection'
 import { AlertsSection } from './components/AlertsSection'
+import { ProductSalesSection } from './components/ProductSalesSection'
 import { useUsers } from '@/lib/api/user'
 import { useEmployeeKPI } from '@/lib/api/dashboard'
-
+import { Card } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 export interface TopPerformer {
   id: number
   name: string
@@ -69,6 +71,7 @@ export default function Performance() {
   const [topPerformersYear, setTopPerformersYear] = useState(currentYear)
   const [trendsYear, setTrendsYear] = useState(currentYear)
   const [comparisonYear, setComparisonYear] = useState(currentYear)
+  const [productSalesYear, setProductSalesYear] = useState(currentYear) // 🆕 Product sales year
 
   // 🟢 KPI filter states
   const [kpiMonth, setKpiMonth] = useState<number>(currentMonth)
@@ -102,7 +105,7 @@ export default function Performance() {
           month: kpiMonth,
           year: kpiYear,
         }
-      : null
+      : undefined
   )
 
   const calculateKPI = () => {
@@ -129,7 +132,14 @@ export default function Performance() {
           onYearChange={setTopPerformersYear}
         />
 
-        {kpiData && (
+        {kpiData ? 
+       ( <Card className="p-12">
+          <div className="flex flex-col items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+          </div>
+        </Card>):
+        (
           <KPIDetailSection
             employees={usersData?.users || []}
             selectedEmployeeId={selectedEmployeeId}
@@ -157,6 +167,12 @@ export default function Performance() {
           month={comparisonMonth}
           onMonthChange={setComparisonMonth}
           isLoadingStaff={isLoadingStaff}
+        />
+
+        {/* 🆕 Product Sales Section - Added after Comparison Section */}
+        <ProductSalesSection
+          selectedYear={productSalesYear}
+          onYearChange={setProductSalesYear}
         />
 
         <AlertsSection />

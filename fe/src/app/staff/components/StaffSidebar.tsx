@@ -1,5 +1,5 @@
 'use client'
-import { Ticket, ShieldCheck, Users, BarChart3, Film, TrendingUp, Clock } from 'lucide-react'
+import { Ticket, ShieldCheck, Users, Hamburger, Film, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -7,6 +7,7 @@ export function StaffSidebar() {
   const menuItems = [
     { id: 'ban-ve', label: 'Bán vé', icon: Ticket, path: '/staff/sell' },
     { id: 'xac-nhan-ve', label: 'Xác nhận vé', icon: ShieldCheck, path: '/staff/confirm-tickets' },
+    { id: 'ban-do-an', label: 'Bán đồ ăn', icon: Hamburger, path: '/staff/concession' },
     { id: 'check-in', label: 'Check-in Ca làm', icon: Clock, path: '/staff/checkin' },
     { id: 'khach-hang', label: 'Khách hàng', icon: Users, path: '/staff/customers' },
   ]

@@ -79,7 +79,7 @@ export default function ComplaintsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
+      {/* <div className="flex gap-4">
         <TheaterCombobox
           theaters={theaters}
           value={theaterFilter}
@@ -88,7 +88,7 @@ export default function ComplaintsPage() {
           searchPlaceholder="Tìm kiếm rạp..."
           className="w-[250px]"
         />
-      </div>
+      </div> */}
 
       {/* Complaints List */}
       <div className="bg-white rounded-lg border border-border p-6 space-y-6">
@@ -113,15 +113,15 @@ export default function ComplaintsPage() {
             {/* Pagination Info */}
             <PaginationInfo
               currentPage={currentPage}
-              totalPages={data.pagination.totalPages}
-              totalItems={data.pagination.totalItems}
-              itemsPerPage={data.pagination.itemsPerPage}
+              totalPages={data.complaints.length / 10}
+              totalItems={data.complaints.length}
+              itemsPerPage={10}
             />
 
             {/* Pagination */}
             <CustomPagination
               currentPage={currentPage}
-              totalPages={data.pagination.totalPages}
+              totalPages={data.complaints.length / 10}
               onPageChange={handlePageChange}
             />
           </>

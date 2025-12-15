@@ -2,7 +2,7 @@ import { api } from '@/lib/api/axios'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 
-// --- 1. Types ---
+// --- 1. Existing Types ---
 export interface DashboardCard {
   title: string
   value: number
@@ -59,7 +59,7 @@ export interface TopCinemasResponse {
   data: TopCinemasData
 }
 
-// 🟢 Employee KPI Response
+// Employee KPI Response
 export interface EmployeeKPIData {
   period: string
   month: number
@@ -80,14 +80,14 @@ export interface EmployeeKPIResponse {
   data: EmployeeKPIData
 }
 
-// 🟢 Employee KPI Params
+// Employee KPI Params
 export interface EmployeeKPIParams {
   employeeId: string
   month?: number
   year?: number
 }
 
-// 🟢 Employee Comparison Types
+// Employee Comparison Types
 export interface EmployeeStats {
   Sales: number
   Service: number
@@ -115,6 +115,35 @@ export interface EmployeeComparisonParams {
   employeeIds: string[]
   month?: number
   year?: number
+}
+
+// 🆕 Product Sales Types
+export interface ProductSalesValue {
+  name: string
+  value: number
+}
+
+export interface ProductSalesMonth {
+  tenThang: string
+  values: ProductSalesValue[]
+}
+
+export interface ProductSalesData {
+  title: string
+  subTitle: string
+  year: number
+  months: ProductSalesMonth[]
+}
+
+export interface ProductSalesResponse {
+  success: boolean
+  message: string
+  data: ProductSalesData
+}
+
+export interface ProductSalesParams {
+  year?: number
+  theater?: string
 }
 
 // Chart data type for component
@@ -174,7 +203,6 @@ export async function getTopCinemas(year?: number, signal?: AbortSignal) {
   }
 }
 
-// 🟢 Get Employee KPI with month/year params
 export async function getEmployeeKPI(params: EmployeeKPIParams, signal?: AbortSignal) {
   try {
     const queryParams: Record<string, string | number> = {
@@ -199,11 +227,10 @@ export async function getEmployeeKPI(params: EmployeeKPIParams, signal?: AbortSi
       throw error
     }
     console.error('Fetch employee KPI failed', error)
-    return null
+    return undefined
   }
 }
 
-// 🟢 Get Employee Comparison
 export async function getEmployeeComparison(
   params: EmployeeComparisonParams,
   signal?: AbortSignal
@@ -231,6 +258,34 @@ export async function getEmployeeComparison(
       throw error
     }
     console.error('Fetch employee comparison failed', error)
+    return null
+  }
+}
+
+// 🆕 Get Product Sales Statistics
+export async function getProductSales(params: ProductSalesParams = {}, signal?: AbortSignal) {
+  try {
+    const queryParams: Record<string, string | number> = {}
+    
+    if (params.year) {
+      queryParams.year = params.year
+    }
+    
+    if (params.theater) {
+      queryParams.theater = params.theater
+    }
+
+    const res = await api.get<ProductSalesResponse>('/dashboard/product-sales', {
+      params: queryParams,
+      signal,
+    })
+    
+    return res.data.data
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      throw error
+    }
+    console.error('Fetch product sales failed', error)
     return null
   }
 }
@@ -264,8 +319,7 @@ export function useTopCinemas(year?: number) {
   })
 }
 
-// 🟢 Employee KPI Hook with month/year params
-export function useEmployeeKPI(params: EmployeeKPIParams | null) {
+export function useEmployeeKPI(params: EmployeeKPIParams | undefined) {
   return useQuery({
     queryKey: ['employee-kpi', params?.employeeId, params?.month, params?.year],
     queryFn: ({ signal }) => getEmployeeKPI(params!, signal),
@@ -274,7 +328,6 @@ export function useEmployeeKPI(params: EmployeeKPIParams | null) {
   })
 }
 
-// 🟢 Employee Comparison Hook
 export function useEmployeeComparison(params: EmployeeComparisonParams | null) {
   return useQuery({
     queryKey: ['employee-comparison', params?.employeeIds, params?.month, params?.year],
@@ -284,7 +337,17 @@ export function useEmployeeComparison(params: EmployeeComparisonParams | null) {
   })
 }
 
-// --- 4. Helper function to transform API data to chart format ---
+// 🆕 Product Sales Hook
+export function useProductSales(params: ProductSalesParams = {}) {
+  return useQuery({
+    queryKey: ['product-sales', params.year, params.theater],
+    queryFn: ({ signal }) => getProductSales(params, signal),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!params.year, // Only fetch when year is provided
+  })
+}
+
+// --- 4. Helper functions ---
 
 const COLORS = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500']
 
@@ -298,4 +361,50 @@ export function transformToChartData(
     color: COLORS[index % COLORS.length],
     unit,
   }))
+}
+
+// 🆕 Transform product sales data for charts
+export function transformProductSalesForChart(data: ProductSalesData | null) {
+  if (!data || !data.months) return []
+
+  return data.months.map(month => {
+    const revenue = month.values.find(v => v.name.includes('Doanh thu'))?.value || 0
+    const quantity = month.values.find(v => v.name.includes('Số lượng'))?.value || 0
+
+    return {
+      month: month.tenThang,
+      revenue: revenue,
+      quantity: quantity,
+    }
+  })
+}
+
+// 🆕 Calculate totals from product sales data
+export function calculateProductSalesTotals(data: ProductSalesData | null) {
+  if (!data || !data.months) {
+    return {
+      totalRevenue: 0,
+      totalQuantity: 0,
+      avgRevenue: 0,
+      avgQuantity: 0,
+    }
+  }
+
+  let totalRevenue = 0
+  let totalQuantity = 0
+
+  data.months.forEach(month => {
+    const revenue = month.values.find(v => v.name.includes('Doanh thu'))?.value || 0
+    const quantity = month.values.find(v => v.name.includes('Số lượng'))?.value || 0
+    
+    totalRevenue += revenue
+    totalQuantity += quantity
+  })
+
+  return {
+    totalRevenue,
+    totalQuantity,
+    avgRevenue: totalRevenue / 12,
+    avgQuantity: totalQuantity / 12,
+  }
 }

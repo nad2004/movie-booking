@@ -1,5 +1,6 @@
 import { SectionHeader } from './SectionHeader'
-import { Target, Activity, BarChart3, CheckCircle2, Calendar } from 'lucide-react'
+import { Target, Activity, Loader2, CheckCircle2, Calendar } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 import { KPIMetricCard } from './KPIMetricCard'
 import { User } from '@/types/user'
 import { EmployeeKPIData } from '@/lib/api/dashboard'
@@ -8,7 +9,7 @@ interface KPIDetailSectionProps {
   employees: User[]
   selectedEmployeeId: string | null
   setSelectedEmployeeId: (id: string) => void
-  kpiData: EmployeeKPIData | null
+  kpiData: EmployeeKPIData | undefined
   isLoadingStaff: boolean
   isLoadingKPI: boolean
   isCalculating: boolean
@@ -68,7 +69,7 @@ export const KPIDetailSection = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <SectionHeader icon={Target} title="KPI Nhân Viên" />
       </div>
-
+      
       {/* Filters Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Employee Select */}
@@ -138,10 +139,14 @@ export const KPIDetailSection = ({
       {/* KPI Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoadingKPI ? (
-          <div className="col-span-full flex items-center justify-center py-12 text-muted-foreground">
-            <Activity className="w-5 h-5 animate-spin mr-2" />
-            Đang tải dữ liệu KPI...
+     
+        <Card className="p-12">
+          <div className="flex flex-col items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Đang tải dữ liệu...</p>
           </div>
+        </Card>
+      
         ) : kpiData?.message === 'Chưa có dữ liệu KPI cho tháng này' ? (
           <div className="col-span-full flex items-center justify-center py-12 text-muted-foreground text-center">
             <div>
