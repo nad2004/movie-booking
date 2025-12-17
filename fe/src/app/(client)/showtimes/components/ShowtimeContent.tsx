@@ -90,7 +90,7 @@ export default function ShowtimeContent({
 
       <Card className="bg-accent/10 border-accent/30 p-3 sm:p-4 rounded-2xl">
         <div className="flex items-center gap-2 text-text-primary">
-          <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-accent flex-shrink-0" />
+          <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-accent shrink-0" />
           <span className="text-sm sm:text-base font-medium">
             Lịch chiếu có thể thay đổi. Vui lòng kiểm tra kỹ trước khi đặt vé.
           </span>

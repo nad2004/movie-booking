@@ -51,9 +51,7 @@ const NAV_LINKS = [
   { href: '/movies', label: 'Phim' },
 ]
 
-// --- SUB-COMPONENTS ---
 
-// 1. Navigation Component
 const MainNav = memo(({ className }: { className?: string }) => {
   const pathname = usePathname()
 
@@ -161,7 +159,6 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
             )}
           </div>
 
-          {/* RESULTS DROPDOWN */}
           {query.trim() && (
             <div className="absolute top-full left-0 w-full mt-2 bg-popover border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
               {movies.length > 0 ? (

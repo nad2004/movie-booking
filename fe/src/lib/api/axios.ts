@@ -1,6 +1,6 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
-
+import {useUserStore} from '@/store/userStore'
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
@@ -102,7 +102,7 @@ api.interceptors.response.use(
 
         // Logout & Redirect
         Cookies.remove('authToken')
-
+        useUserStore.getState().logout() // Gọi hàm logout của store để clear state UI
         if (typeof window !== 'undefined') {
           const currentPath = window.location.pathname
 

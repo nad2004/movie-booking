@@ -44,7 +44,7 @@ export function ShowtimeSection() {
               size="sm"
               className="bg-primary hover:bg-primary/90 text-white rounded-lg text-sm px-5 py-2"
             >
-              <Link href={`/movies/${movieId}/booking-flow`} className="">
+              <Link href={`/movies/${movieId}/booking-flow?scheduleId=${show._id}`} className="">
                 Đặt vé
               </Link>
             </Button>

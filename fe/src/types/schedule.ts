@@ -30,7 +30,7 @@ export interface Schedule {
   // Thông tin rạp & phòng
   theater: Theater
   room: Room
-
+  roomName: string
   // Thời gian
   showDate: string
   startTime: string
