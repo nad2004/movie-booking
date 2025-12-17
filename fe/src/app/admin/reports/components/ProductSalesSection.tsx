@@ -58,7 +58,10 @@ export function ProductSalesSection({ selectedYear, onYearChange }: ProductSales
         </div>
 
         {/* Year Filter */}
-        <Select value={selectedYear.toString()} onValueChange={value => onYearChange(parseInt(value))}>
+        <Select
+          value={selectedYear.toString()}
+          onValueChange={value => onYearChange(parseInt(value))}
+        >
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
@@ -165,11 +168,7 @@ export function ProductSalesSection({ selectedYear, onYearChange }: ProductSales
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12 }}
-                    stroke="#9ca3af"
-                  />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9ca3af" />
                   <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
                   <Tooltip
                     formatter={(value: number) => [`${value.toFixed(2)} Triệu VNĐ`, 'Doanh thu']}
@@ -194,11 +193,7 @@ export function ProductSalesSection({ selectedYear, onYearChange }: ProductSales
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12 }}
-                    stroke="#9ca3af"
-                  />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9ca3af" />
                   <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
                   <Tooltip
                     formatter={(value: number) => [`${value} sản phẩm`, 'Số lượng']}

@@ -1,107 +1,114 @@
-import React, { useState } from 'react';
-import { X, Plus, Minus, ShoppingCart, Loader2 } from 'lucide-react';
-import { useProducts } from '@/lib/api/products';
-import type { Product } from '@/types/product';
+import React, { useState } from 'react'
+import { X, Plus, Minus, ShoppingCart, Loader2 } from 'lucide-react'
+import { useProducts } from '@/lib/api/products'
+import type { Product } from '@/types/product'
 
 // Types
 interface CartItem extends Product {
-  quantity: number;
+  quantity: number
 }
 
 interface FoodSalesModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (items: CartItem[]) => void;
-  bookingCode: string;
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: (items: CartItem[]) => void
+  bookingCode: string
 }
 
 export function FoodSalesModal({ isOpen, onClose, onConfirm, bookingCode }: FoodSalesModalProps) {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([])
 
   // Fetch products from API
-  const { data: products, isLoading, error } = useProducts({
+  const {
+    data: products,
+    isLoading,
+    error,
+  } = useProducts({
     isActive: true,
     inStock: true,
-  });
+  })
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const addToCart = (item: Product) => {
     setCart(prev => {
-      const existing = prev.find(i => i._id === item._id);
+      const existing = prev.find(i => i._id === item._id)
       if (existing) {
-        return prev.map(i => 
-          i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
-        );
+        return prev.map(i => (i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i))
       }
-      return [...prev, { ...item, quantity: 1 }];
-    });
-  };
+      return [...prev, { ...item, quantity: 1 }]
+    })
+  }
 
   const removeFromCart = (itemId: string) => {
     setCart(prev => {
-      const existing = prev.find(i => i._id === itemId);
+      const existing = prev.find(i => i._id === itemId)
       if (existing && existing.quantity > 1) {
-        return prev.map(i => 
-          i._id === itemId ? { ...i, quantity: i.quantity - 1 } : i
-        );
+        return prev.map(i => (i._id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
       }
-      return prev.filter(i => i._id !== itemId);
-    });
-  };
+      return prev.filter(i => i._id !== itemId)
+    })
+  }
 
   const getTotalAmount = () => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  };
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  }
 
   const handleConfirm = () => {
-    console.log('=== XÁC NHẬN THÊM SẢN PHẨM ===');
-    console.log('Mã vé:', bookingCode);
-    console.log('Danh sách sản phẩm:', cart.map(item => ({
-      id: item._id,
-      tên: item.name,
-      loại: item.category,
-      kích_thước: item.size,
-      số_lượng: item.quantity,
-      đơn_giá: item.price,
-      thành_tiền: item.price * item.quantity
-    })));
-    console.log('Tổng tiền:', getTotalAmount().toLocaleString('vi-VN'), 'VNĐ');
-    console.log('============================');
-    
-    onConfirm(cart);
-    setCart([]);
-  };
+    console.log('=== XÁC NHẬN THÊM SẢN PHẨM ===')
+    console.log('Mã vé:', bookingCode)
+    console.log(
+      'Danh sách sản phẩm:',
+      cart.map(item => ({
+        id: item._id,
+        tên: item.name,
+        loại: item.category,
+        kích_thước: item.size,
+        số_lượng: item.quantity,
+        đơn_giá: item.price,
+        thành_tiền: item.price * item.quantity,
+      }))
+    )
+    console.log('Tổng tiền:', getTotalAmount().toLocaleString('vi-VN'), 'VNĐ')
+    console.log('============================')
+
+    onConfirm(cart)
+    setCart([])
+  }
 
   const handleClose = () => {
-    setCart([]);
-    onClose();
-  };
+    setCart([])
+    onClose()
+  }
 
   // Group products by category
-  const groupedProducts = products?.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
-    }
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, Product[]>) || {};
+  const groupedProducts =
+    products?.reduce(
+      (acc, item) => {
+        if (!acc[item.category]) {
+          acc[item.category] = []
+        }
+        acc[item.category].push(item)
+        return acc
+      },
+      {} as Record<string, Product[]>
+    ) || {}
 
   // Category display names
   const categoryNames: Record<string, string> = {
-    'Popcorn': 'Bắp rang',
-    'Drink': 'Nước uống',
-    'Combo': 'Combo',
-    'Snack': 'Snack'
-  };
+    Popcorn: 'Bắp rang',
+    Drink: 'Nước uống',
+    Combo: 'Combo',
+    Snack: 'Snack',
+  }
 
   // Category icons
   const categoryIcons: Record<string, string> = {
-    'Popcorn': '🍿',
-    'Drink': '🥤',
-    'Combo': '🎁',
-    'Snack': '🍫'
-  };
+    Popcorn: '🍿',
+    Drink: '🥤',
+    Combo: '🎁',
+    Snack: '🍫',
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -167,11 +174,11 @@ export function FoodSalesModal({ isOpen, onClose, onConfirm, bookingCode }: Food
                     </h3>
                     <span className="text-sm text-gray-500">({items.length})</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {items.map(item => {
-                      const cartItem = cart.find(i => i._id === item._id);
-                      const quantity = cartItem?.quantity || 0;
+                      const cartItem = cart.find(i => i._id === item._id)
+                      const quantity = cartItem?.quantity || 0
 
                       return (
                         <div
@@ -238,7 +245,7 @@ export function FoodSalesModal({ isOpen, onClose, onConfirm, bookingCode }: Food
                             )}
                           </div>
                         </div>
-                      );
+                      )
                     })}
                   </div>
                 </div>
@@ -252,7 +259,8 @@ export function FoodSalesModal({ isOpen, onClose, onConfirm, bookingCode }: Food
                     {cart.map(item => (
                       <div key={item._id} className="flex items-center justify-between text-sm">
                         <span className="text-gray-700">
-                          {item.name} {item.size && item.size !== 'N/A' && `(${item.size})`} × {item.quantity}
+                          {item.name} {item.size && item.size !== 'N/A' && `(${item.size})`} ×{' '}
+                          {item.quantity}
                         </span>
                         <span className="font-medium text-gray-900">
                           {(item.price * item.quantity).toLocaleString('vi-VN')}đ
@@ -295,5 +303,5 @@ export function FoodSalesModal({ isOpen, onClose, onConfirm, bookingCode }: Food
         </div>
       </div>
     </div>
-  );
+  )
 }

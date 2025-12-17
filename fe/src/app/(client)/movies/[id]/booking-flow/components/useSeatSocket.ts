@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import type { Seat } from '@/types/theater'
 
 interface SeatStatusUpdate {
-  
   seatAvailability: Array<{
     seatNumber: string
     seatType: string
@@ -76,8 +75,7 @@ export function useSeatSocket({ socket, scheduleId, isConnected }: UseSeatSocket
     }
     socket.on('viewer-left', handleLeaveSchedule)
     return () => {
-        socket.off('viewer-left', handleLeaveSchedule)
-      
+      socket.off('viewer-left', handleLeaveSchedule)
     }
   }, [socket])
   const holdSeats = useCallback(
@@ -88,7 +86,9 @@ export function useSeatSocket({ socket, scheduleId, isConnected }: UseSeatSocket
       }
       socket.emit('hold-seats', {
         scheduleId,
-        seatNumbers: seatNumbers.map((s) => {return s.toLowerCase()}),
+        seatNumbers: seatNumbers.map(s => {
+          return s.toLowerCase()
+        }),
       })
     },
     [socket, scheduleId, isInRoom]
@@ -118,7 +118,7 @@ export function useSeatSocket({ socket, scheduleId, isConnected }: UseSeatSocket
               isBooked: seatUpdate.isBooked,
               holdUntil: seatUpdate.holdUntil,
               bookedBy: seatUpdate.bookedBy,
-              action: seatUpdate.action
+              action: seatUpdate.action,
             })
           }
         })

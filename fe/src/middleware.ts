@@ -15,7 +15,7 @@ function isCustomerPath(pathname: string) {
   if (CUSTOMER_PATHS.some(path => pathname.startsWith(path))) {
     return true
   }
-  
+
   // Check 2: Trang movies public (để phân quyền role)
   if (MOVIE_PATH_REGEX.test(pathname)) {
     return true
@@ -57,7 +57,7 @@ function logoutAndRedirect(request: NextRequest, callbackUrl?: string): NextResp
   if (callbackUrl) {
     loginUrl.searchParams.set('callbackUrl', callbackUrl)
   }
-  
+
   const response = NextResponse.redirect(loginUrl)
   response.cookies.delete('authToken') // Xóa cookie -> Client sẽ hiểu là user = null
   return response
@@ -71,11 +71,18 @@ function getRedirectByRole(role: string, request: NextRequest): NextResponse {
 }
 
 // 4. Kiểm tra quyền truy cập
-function checkRoleAccess(role: string, pathname: string, request: NextRequest): NextResponse | null {
+function checkRoleAccess(
+  role: string,
+  pathname: string,
+  request: NextRequest
+): NextResponse | null {
   // Admin không được vào trang Staff hoặc trang Customer
   if (role === 'admin') {
-    if (STAFF_PATHS.some(path => pathname.startsWith(path)) || 
-        isCustomerPath(pathname) || pathname === '/') {
+    if (
+      STAFF_PATHS.some(path => pathname.startsWith(path)) ||
+      isCustomerPath(pathname) ||
+      pathname === '/'
+    ) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
   }
@@ -92,8 +99,10 @@ function checkRoleAccess(role: string, pathname: string, request: NextRequest): 
 
   // User/Customer không được vào Admin hoặc Staff
   if (role === 'customer' || role === 'user') {
-    if (ADMIN_PATHS.some(path => pathname.startsWith(path)) || 
-        STAFF_PATHS.some(path => pathname.startsWith(path))) {
+    if (
+      ADMIN_PATHS.some(path => pathname.startsWith(path)) ||
+      STAFF_PATHS.some(path => pathname.startsWith(path))
+    ) {
       return NextResponse.rewrite(new URL('/404', request.url))
     }
   }
@@ -111,7 +120,7 @@ export async function middleware(request: NextRequest) {
   const isProtectedPath =
     ADMIN_PATHS.some(path => pathname.startsWith(path)) ||
     STAFF_PATHS.some(path => pathname.startsWith(path)) ||
-    CUSTOMER_PATHS.some(path => pathname.startsWith(path))||
+    CUSTOMER_PATHS.some(path => pathname.startsWith(path)) ||
     MOVIE_BOOKING_REGEX.test(pathname)
 
   // CASE 1: Không có token
@@ -178,7 +187,7 @@ export async function middleware(request: NextRequest) {
 
     // CASE 5: Hợp lệ tất cả -> Cho đi tiếp (Next)
     const response = NextResponse.next()
-    
+
     // Nếu có token mới (do refresh), set lại cookie vào response cuối cùng
     if (isTokenRefreshed) {
       response.cookies.set('authToken', token, {
@@ -190,7 +199,6 @@ export async function middleware(request: NextRequest) {
     }
 
     return response
-
   } catch (error) {
     // Token lỗi format hoặc bị can thiệp -> Xóa và Logout
     return logoutAndRedirect(request)

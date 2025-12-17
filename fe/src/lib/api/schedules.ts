@@ -38,7 +38,7 @@ export interface GetScheduleParams {
   date?: string // (Giữ lại field này nếu BE dùng cả 2 tên, nếu không nên thống nhất 1 cái)
   page?: number
   limit?: number
-  includePast? : boolean
+  includePast?: boolean
 }
 
 // --- API Functions ---

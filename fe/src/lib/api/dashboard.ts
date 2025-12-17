@@ -266,11 +266,11 @@ export async function getEmployeeComparison(
 export async function getProductSales(params: ProductSalesParams = {}, signal?: AbortSignal) {
   try {
     const queryParams: Record<string, string | number> = {}
-    
+
     if (params.year) {
       queryParams.year = params.year
     }
-    
+
     if (params.theater) {
       queryParams.theater = params.theater
     }
@@ -279,7 +279,7 @@ export async function getProductSales(params: ProductSalesParams = {}, signal?: 
       params: queryParams,
       signal,
     })
-    
+
     return res.data.data
   } catch (error) {
     if (axios.isCancel(error)) {
@@ -396,7 +396,7 @@ export function calculateProductSalesTotals(data: ProductSalesData | null) {
   data.months.forEach(month => {
     const revenue = month.values.find(v => v.name.includes('Doanh thu'))?.value || 0
     const quantity = month.values.find(v => v.name.includes('Số lượng'))?.value || 0
-    
+
     totalRevenue += revenue
     totalQuantity += quantity
   })

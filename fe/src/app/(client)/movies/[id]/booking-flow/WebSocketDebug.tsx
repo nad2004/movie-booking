@@ -1,49 +1,49 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import useSocket from '@/hooks/useSocket';
-import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react'
+import useSocket from '@/hooks/useSocket'
+import { Wifi, WifiOff, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export function WebSocketDebug() {
-  const { socket, isConnected } = useSocket();
-  const [logs, setLogs] = useState<string[]>([]);
-  const [socketId, setSocketId] = useState<string>('');
+  const { socket, isConnected } = useSocket()
+  const [logs, setLogs] = useState<string[]>([])
+  const [socketId, setSocketId] = useState<string>('')
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) return
 
     const addLog = (message: string) => {
-      setLogs(prev => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${message}`]);
-    };
+      setLogs(prev => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${message}`])
+    }
 
     socket.on('connect', () => {
-      setSocketId(socket.id || '');
-      addLog(`✅ Connected with ID: ${socket.id}`);
-    });
+      setSocketId(socket.id || '')
+      addLog(`✅ Connected with ID: ${socket.id}`)
+    })
 
-    socket.on('disconnect', (reason) => {
-      addLog(`❌ Disconnected: ${reason}`);
-      setSocketId('');
-    });
+    socket.on('disconnect', reason => {
+      addLog(`❌ Disconnected: ${reason}`)
+      setSocketId('')
+    })
 
-    socket.on('connect_error', (error) => {
-      addLog(`🔴 Error: ${error.message}`);
-    });
+    socket.on('connect_error', error => {
+      addLog(`🔴 Error: ${error.message}`)
+    })
 
     return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('connect_error');
-    };
-  }, [socket]);
+      socket.off('connect')
+      socket.off('disconnect')
+      socket.off('connect_error')
+    }
+  }, [socket])
 
   const handleReconnect = () => {
     if (socket) {
-      socket.disconnect();
-      setTimeout(() => socket.connect(), 500);
+      socket.disconnect()
+      setTimeout(() => socket.connect(), 500)
     }
-  };
+  }
 
   return (
     <div className="fixed bottom-4 right-4 bg-surface border border-border rounded-lg p-4 shadow-lg max-w-sm z-50">
@@ -61,12 +61,7 @@ export function WebSocketDebug() {
             </>
           )}
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleReconnect}
-          className="h-8 w-8 p-0"
-        >
+        <Button size="sm" variant="ghost" onClick={handleReconnect} className="h-8 w-8 p-0">
           <RefreshCw className="w-4 h-4" />
         </Button>
       </div>
@@ -93,5 +88,5 @@ export function WebSocketDebug() {
         <div>API: {process.env.NEXT_PUBLIC_API_URL || 'localhost:5000'}</div>
       </div>
     </div>
-  );
+  )
 }

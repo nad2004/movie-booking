@@ -1,20 +1,20 @@
-import { BookedSeat } from '@/types/booking';
-import { Schedule } from '@/types/schedule';
-import { SeatMaps } from '../ClientSeatsMap';
-import type { Seat } from '@/types/theater';
-import { Users, Wifi, WifiOff, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { BookedSeat } from '@/types/booking'
+import { Schedule } from '@/types/schedule'
+import { SeatMaps } from '../ClientSeatsMap'
+import type { Seat } from '@/types/theater'
+import { Users, Wifi, WifiOff, Loader2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 interface StepSeatSelectionProps {
-  selectedSeats: BookedSeat[];
-  schedule: Schedule | null;
-  onSeatClick: (seat: Seat) => void;
+  selectedSeats: BookedSeat[]
+  schedule: Schedule | null
+  onSeatClick: (seat: Seat) => void
   // WebSocket props
-  realTimeSeats?: Map<string, Seat>;
-  viewerCount?: number;
-  isConnected?: boolean;
-  isInRoom?: boolean;
-  isSeatAvailable?: (seat: Seat) => boolean;
+  realTimeSeats?: Map<string, Seat>
+  viewerCount?: number
+  isConnected?: boolean
+  isInRoom?: boolean
+  isSeatAvailable?: (seat: Seat) => boolean
 }
 
 export function StepSeatSelection({
@@ -33,7 +33,9 @@ export function StepSeatSelection({
       {!isConnected && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
           <p className="font-medium">Mất kết nối real-time. Đang kết nối lại...</p>
-          <p className="text-xs mt-1">Bạn có thể tiếp tục chọn ghế nhưng trạng thái có thể không cập nhật ngay.</p>
+          <p className="text-xs mt-1">
+            Bạn có thể tiếp tục chọn ghế nhưng trạng thái có thể không cập nhật ngay.
+          </p>
         </div>
       )}
 
@@ -47,9 +49,9 @@ export function StepSeatSelection({
 
       {/* Seat Map với real-time data */}
       <div className="relative">
-        <SeatMaps 
-          selectedSeats={selectedSeats} 
-          schedule={schedule} 
+        <SeatMaps
+          selectedSeats={selectedSeats}
+          schedule={schedule}
           onSeatClick={onSeatClick}
           realTimeSeats={realTimeSeats}
           isSeatAvailable={isSeatAvailable}
@@ -62,7 +64,7 @@ export function StepSeatSelection({
               {/* Spinner chính với Loader2 */}
               <div className="relative">
                 <Loader2 className="w-16 h-16 text-primary animate-spin" />
-                
+
                 {/* Vòng tròn ngoài (ant design style) */}
                 <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-ping"></div>
               </div>
@@ -72,21 +74,28 @@ export function StepSeatSelection({
                 <p className="text-lg font-semibold text-text-primary">
                   Đang tham gia phòng chọn ghế...
                 </p>
-                <p className="text-sm text-text-secondary">
-                  Vui lòng đợi trong giây lát
-                </p>
+                <p className="text-sm text-text-secondary">Vui lòng đợi trong giây lát</p>
               </div>
 
               {/* Progress dots */}
               <div className="flex gap-2">
-                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                <span
+                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                  style={{ animationDelay: '0ms' }}
+                ></span>
+                <span
+                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                  style={{ animationDelay: '150ms' }}
+                ></span>
+                <span
+                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                  style={{ animationDelay: '300ms' }}
+                ></span>
               </div>
             </div>
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }

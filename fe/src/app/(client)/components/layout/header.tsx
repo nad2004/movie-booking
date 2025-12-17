@@ -51,7 +51,6 @@ const NAV_LINKS = [
   { href: '/movies', label: 'Phim' },
 ]
 
-
 const MainNav = memo(({ className }: { className?: string }) => {
   const pathname = usePathname()
 
@@ -89,15 +88,13 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
   const debouncedSearch = useDebounce(query, 500)
 
   // Chỉ fetch khi có ít nhất 2 ký tự để tối ưu API call
-  const shouldFetch = debouncedSearch.length >= 2
-  const { data: movieData, isLoading: isSearching } = useMovies({
-    search: shouldFetch ? debouncedSearch : '',
+  const { data: movieData, isFetching: isSearching } = useMovies({
+    search: debouncedSearch ? debouncedSearch : '',
     limit: 5,
     status: '',
   })
 
   const movies = movieData?.movies || []
-
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -161,11 +158,16 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
 
           {query.trim() && (
             <div className="absolute top-full left-0 w-full mt-2 bg-popover border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
-              {movies.length > 0 ? (
+              {isSearching ? (
+                <div className="flex justify-center items-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : movies.length > 0 ? (
                 <div className="max-h-[60vh] overflow-y-auto py-2">
                   <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Phim gợi ý
                   </div>
+
                   {movies.map(movie => (
                     <Link
                       key={movie._id}
@@ -178,26 +180,29 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
                           src={movie.posterUrl || '/placeholder-movie.png'}
                           alt={movie.title}
                           fill
-                          width={400}
-                          height={400}
                           className="object-cover"
                           sizes="40px"
                         />
                       </div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
                           <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                             {movie.title}
                           </p>
+
                           <Badge variant="outline" className="text-[10px] h-5 px-1 shrink-0">
                             {movie.status}
                           </Badge>
                         </div>
+
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                           <span className="flex items-center gap-0.5">
                             <Clock className="h-3 w-3" /> {movie.duration}
                           </span>
+
                           <span>•</span>
+
                           <span className="flex items-center gap-0.5 text-yellow-500">
                             <Star className="h-3 w-3 fill-yellow-500" />
                             {movie.averageRating?.toFixed(1) || 'N/A'}
@@ -206,6 +211,7 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
                       </div>
                     </Link>
                   ))}
+
                   <div className="border-t border-border mt-2 pt-2 px-2">
                     <Link
                       href={`/movies?search=${encodeURIComponent(query)}`}
@@ -217,11 +223,10 @@ const SearchBar = ({ isOpen, onToggle, className }: SearchBarProps) => {
                   </div>
                 </div>
               ) : (
-                !isSearching && (
-                  <div className="p-6 text-center">
-                    <p className="text-sm text-muted-foreground">Không tìm thấy phim.</p>
-                  </div>
-                )
+                // 👉 hết search nhưng không có kết quả
+                <div className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Không tìm thấy phim.</p>
+                </div>
               )}
             </div>
           )}

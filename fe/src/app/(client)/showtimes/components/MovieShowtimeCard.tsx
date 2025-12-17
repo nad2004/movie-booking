@@ -34,7 +34,10 @@ export default function MovieShowtimeCard({ movie, schedules }: MovieShowtimeCar
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="mb-3">
-            <Link href={`/movies/${movie._id}/booking-flow`} className="hover:text-primary transition-colors">
+            <Link
+              href={`/movies/${movie._id}/booking-flow`}
+              className="hover:text-primary transition-colors"
+            >
               <h3 className="text-base sm:text-lg font-bold text-text-primary mb-1 line-clamp-2">
                 {movie.title}
               </h3>

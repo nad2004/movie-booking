@@ -69,10 +69,10 @@ export function useCreateConcession() {
 
   return useMutation({
     mutationFn: createConcession,
-    onSuccess: (data) => {
+    onSuccess: data => {
       // Invalidate products query to update stock
       queryClient.invalidateQueries({ queryKey: ['products'] })
-      
+
       console.log('✅ Đơn hàng đã được tạo thành công:', {
         mã_đơn: data.data.concessionId,
         tổng_tiền: data.data.finalAmount.toLocaleString('vi-VN') + 'đ',

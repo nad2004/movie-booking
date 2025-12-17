@@ -6,18 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  X, 
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  X,
   CreditCard,
   Loader2,
   CheckCircle2,
   User,
   Phone,
   Mail,
-  Ticket
+  Ticket,
 } from 'lucide-react'
 import { useProducts } from '@/lib/api/products'
 import { useCreateConcession, type ConcessionProduct } from '@/lib/api/concession'
@@ -30,7 +30,7 @@ interface CartItem extends Product {
 
 export default function ConcessionSalesPage() {
   const { showSuccess, showError } = useNotification()
-  
+
   // State
   const [cart, setCart] = useState<CartItem[]>([])
   const [customerInfo, setCustomerInfo] = useState({
@@ -53,9 +53,7 @@ export default function ConcessionSalesPage() {
     setCart(prev => {
       const existing = prev.find(i => i._id === item._id)
       if (existing) {
-        return prev.map(i =>
-          i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
-        )
+        return prev.map(i => (i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i))
       }
       return [...prev, { ...item, quantity: 1 }]
     })
@@ -65,9 +63,7 @@ export default function ConcessionSalesPage() {
     setCart(prev => {
       const existing = prev.find(i => i._id === itemId)
       if (existing && existing.quantity > 1) {
-        return prev.map(i =>
-          i._id === itemId ? { ...i, quantity: i.quantity - 1 } : i
-        )
+        return prev.map(i => (i._id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
       }
       return prev.filter(i => i._id !== itemId)
     })
@@ -120,12 +116,12 @@ export default function ConcessionSalesPage() {
 
     try {
       const result = await createConcession.mutateAsync(concessionData)
-      
+
       showSuccess(
         'Đơn hàng thành công!',
         `Mã đơn: ${result.data.concessionId} - Tổng: ${result.data.finalAmount.toLocaleString('vi-VN')}đ`
       )
-      
+
       clearCart()
     } catch (error: any) {
       showError(
@@ -136,13 +132,17 @@ export default function ConcessionSalesPage() {
   }
 
   // Group products by category
-  const groupedProducts = products?.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = []
-    }
-    acc[item.category].push(item)
-    return acc
-  }, {} as Record<string, Product[]>) || {}
+  const groupedProducts =
+    products?.reduce(
+      (acc, item) => {
+        if (!acc[item.category]) {
+          acc[item.category] = []
+        }
+        acc[item.category].push(item)
+        return acc
+      },
+      {} as Record<string, Product[]>
+    ) || {}
 
   const categoryNames: Record<string, string> = {
     Popcorn: 'Bắp rang',
@@ -158,9 +158,7 @@ export default function ConcessionSalesPage() {
     Snack: '🍫',
   }
 
-  const paymentMethods = [
-    { value: 'cash', label: 'Tiền mặt', icon: '💵' },
-  ]
+  const paymentMethods = [{ value: 'cash', label: 'Tiền mặt', icon: '💵' }]
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
@@ -169,9 +167,7 @@ export default function ConcessionSalesPage() {
         <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
           Bán sản phẩm tại quầy
         </h1>
-        <p className="text-muted-foreground mt-1">
-          Tạo đơn hàng bắp nước cho khách tại quầy
-        </p>
+        <p className="text-muted-foreground mt-1">Tạo đơn hàng bắp nước cho khách tại quầy</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -193,9 +189,7 @@ export default function ConcessionSalesPage() {
                   <div key={category}>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xl">{categoryIcons[category]}</span>
-                      <h3 className="font-semibold text-gray-900">
-                        {categoryNames[category]}
-                      </h3>
+                      <h3 className="font-semibold text-gray-900">{categoryNames[category]}</h3>
                       <Badge variant="secondary">{items.length}</Badge>
                     </div>
 
@@ -221,9 +215,7 @@ export default function ConcessionSalesPage() {
                               <p className="text-amber-600 font-semibold text-sm">
                                 {item.price.toLocaleString('vi-VN')}đ
                               </p>
-                              <p className="text-xs text-gray-500">
-                                Còn: {item.stockQuantity}
-                              </p>
+                              <p className="text-xs text-gray-500">Còn: {item.stockQuantity}</p>
                             </div>
 
                             {quantity === 0 ? (
@@ -280,12 +272,7 @@ export default function ConcessionSalesPage() {
                 Giỏ hàng
               </h2>
               {cart.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearCart}
-                  className="text-red-600"
-                >
+                <Button variant="ghost" size="sm" onClick={clearCart} className="text-red-600">
                   <X className="w-4 h-4" />
                 </Button>
               )}
@@ -299,10 +286,7 @@ export default function ConcessionSalesPage() {
             ) : (
               <div className="space-y-3">
                 {cart.map(item => (
-                  <div
-                    key={item._id}
-                    className="flex items-center justify-between text-sm"
-                  >
+                  <div key={item._id} className="flex items-center justify-between text-sm">
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
                       <p className="text-xs text-gray-500">
@@ -342,9 +326,7 @@ export default function ConcessionSalesPage() {
                 <Input
                   id="fullName"
                   value={customerInfo.fullName}
-                  onChange={e =>
-                    setCustomerInfo(prev => ({ ...prev, fullName: e.target.value }))
-                  }
+                  onChange={e => setCustomerInfo(prev => ({ ...prev, fullName: e.target.value }))}
                   placeholder="Nguyễn Văn A"
                 />
               </div>
@@ -356,9 +338,7 @@ export default function ConcessionSalesPage() {
                 <Input
                   id="phone"
                   value={customerInfo.phone}
-                  onChange={e =>
-                    setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={e => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="0912345678"
                 />
               </div>
@@ -369,9 +349,7 @@ export default function ConcessionSalesPage() {
                   id="email"
                   type="email"
                   value={customerInfo.email}
-                  onChange={e =>
-                    setCustomerInfo(prev => ({ ...prev, email: e.target.value }))
-                  }
+                  onChange={e => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="email@example.com"
                 />
               </div>

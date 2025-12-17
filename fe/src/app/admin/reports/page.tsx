@@ -132,14 +132,14 @@ export default function Performance() {
           onYearChange={setTopPerformersYear}
         />
 
-        {kpiData ? 
-       ( <Card className="p-12">
-          <div className="flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Đang tải dữ liệu...</p>
-          </div>
-        </Card>):
-        (
+        {kpiData ? (
+          <Card className="p-12">
+            <div className="flex flex-col items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+            </div>
+          </Card>
+        ) : (
           <KPIDetailSection
             employees={usersData?.users || []}
             selectedEmployeeId={selectedEmployeeId}
@@ -170,10 +170,7 @@ export default function Performance() {
         />
 
         {/* 🆕 Product Sales Section - Added after Comparison Section */}
-        <ProductSalesSection
-          selectedYear={productSalesYear}
-          onYearChange={setProductSalesYear}
-        />
+        <ProductSalesSection selectedYear={productSalesYear} onYearChange={setProductSalesYear} />
 
         <AlertsSection />
       </div>

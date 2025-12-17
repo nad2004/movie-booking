@@ -22,7 +22,7 @@ export function SeatMaps({
 }: SeatMapsProps) {
   const [currentTime, setCurrentTime] = useState(time)
 
-    console.log(realTimeSeats)
+  console.log(realTimeSeats)
   // 1. Xử lý dữ liệu: Gom nhóm ghế theo Hàng (Row)
   const rows = useMemo(() => {
     if (!schedule?.seatAvailability) return []
@@ -49,8 +49,8 @@ export function SeatMaps({
           return numA - numB
         }),
       }))
-  }, [schedule,realTimeSeats])
-//   console.log(rows)  
+  }, [schedule, realTimeSeats])
+  //   console.log(rows)
   // 2. Hàm lấy giá vé (chỉ để hiển thị tooltip, logic tính tiền chính nằm ở useBooking)
   const getSeatPrice = (seatType: string) => {
     if (!schedule?.ticketPrices) return 0
@@ -81,8 +81,8 @@ export function SeatMaps({
     }
 
     // Ghế đang được giữ bởi người khác (từ real-time data)
-     if (realTimeSeat?.holdUntil) {
-       return 'held'
+    if (realTimeSeat?.holdUntil) {
+      return 'held'
     }
 
     // Trạng thái bình thường theo loại ghế
@@ -107,18 +107,18 @@ export function SeatMaps({
   }
 
   // 5. Tính thời gian còn lại khi ghế đang được giữ
-//   const getHoldTimeRemaining = (seat: SeatAvailability): number | null => {
-//     const realTimeSeat = realTimeSeats?.get(seat.seatNumber)
+  //   const getHoldTimeRemaining = (seat: SeatAvailability): number | null => {
+  //     const realTimeSeat = realTimeSeats?.get(seat.seatNumber)
 
-//     if (realTimeSeat?.holdUntil) {
-//       const holdUntilTime = new Date(realTimeSeat.holdUntil).getTime()
-//       const remaining = Math.max(0, Math.floor((holdUntilTime - currentTime) / 1000))
+  //     if (realTimeSeat?.holdUntil) {
+  //       const holdUntilTime = new Date(realTimeSeat.holdUntil).getTime()
+  //       const remaining = Math.max(0, Math.floor((holdUntilTime - currentTime) / 1000))
 
-//       return remaining > 0 ? remaining : null
-//     }
+  //       return remaining > 0 ? remaining : null
+  //     }
 
-//     return null
-//   }
+  //     return null
+  //   }
 
   return (
     <>
@@ -138,7 +138,7 @@ export function SeatMaps({
                   const price = getSeatPrice(seat.seatType)
                   const isCouple = seat.seatType === 'Ghế đôi'
                   const canClick = canClickSeat(seat)
-                //   const holdTimeRemaining = getHoldTimeRemaining(seat)
+                  //   const holdTimeRemaining = getHoldTimeRemaining(seat)
 
                   return (
                     <button

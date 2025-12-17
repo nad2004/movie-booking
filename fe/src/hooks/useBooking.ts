@@ -23,7 +23,6 @@ export const STEPS = [
 export const MAX_SEATS = 10
 export const MAX_PRODUCTS = 20
 
-
 interface UseBookingProps {
   movieId: string
   preSelectedScheduleId?: string
@@ -100,7 +99,6 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   // Helper: Kiểm tra ghế có thể chọn không
   const isSeatAvailable = useCallback(
     (seat: Seat): boolean => {
-
       const realTimeSeat = realTimeSeats.get(seat.seatNumber)
 
       if (realTimeSeat) {
@@ -109,7 +107,7 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
 
         // Ghế đang được giữ bởi người khác
         if (realTimeSeat.holdUntil) {
-           return false
+          return false
         }
       }
 
@@ -191,7 +189,7 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
   // --- CORE LOGIC: TẠO ĐƠN (BƯỚC 3 -> 4) ---
   const handleCreateBooking = async () => {
     const scheduleId = preSelectedScheduleId || selectedSchedule?._id
-    
+
     if (!scheduleId) {
       toast.error('Vui lòng chọn suất chiếu')
       return null

@@ -14,7 +14,7 @@ export default function ConfirmTicket() {
   const [ticketInfo, setTicketInfo] = useState<TicketVerify | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
   const { confirmTicket } = useConfirmTicket()
-  
+
   // Mock stats data - replace with real API
   const stats: TicketStats = {
     total: 245,
