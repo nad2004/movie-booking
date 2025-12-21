@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
+import { ImageIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,8 +15,18 @@ import {
 } from '@/components/ui/select'
 import { Movie, MovieCreateDTO } from '@/types/movie'
 import { useMovieMutations } from '../hooks/useMovieMutations'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Plus } from 'lucide-react'
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback'
+import { useGenres } from '@/lib/api/genres' 
+
+// Mở rộng Type Form để bao gồm các trường mới (nếu DTO chưa cập nhật)
+interface MovieFormValues extends MovieCreateDTO {
+  director: string
+  actors: string[]
+  genres: string[] // Array of Genre IDs
+  language: string
+  subtitles: string[]
+}
 
 interface MovieFormDialogProps {
   open: boolean
@@ -25,14 +36,23 @@ interface MovieFormDialogProps {
 
 export function MovieFormDialog({ open, onOpenChange, movieToEdit }: MovieFormDialogProps) {
   const { createMutation, updateMutation, uploadPosterMutation } = useMovieMutations()
+  // Lấy danh sách Genres để hiển thị
+  const { data: genreData } = useGenres({ limit: 100, isActive: true })
+  
   const isEditMode = !!movieToEdit
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<MovieCreateDTO>({
+  const { register, handleSubmit, reset, setValue, watch, getValues } = useForm<MovieFormValues>({
     defaultValues: {
       title: '',
       duration: 0,
       status: 'Sắp chiếu',
       rating: 'P',
+      description: '',
+      director: '',
+      actors: [],
+      genres: [],
+      language: '',
+      subtitles: [],
     },
   })
 
@@ -41,18 +61,26 @@ export function MovieFormDialog({ open, onOpenChange, movieToEdit }: MovieFormDi
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Watch values để render UI
   const posterUrl = watch('posterUrl')
+  const watchedActors = watch('actors')
+  const watchedSubtitles = watch('subtitles')
+  const watchedGenres = watch('genres')
 
-  // Reset form khi mở dialog hoặc đổi movieToEdit
+  // Reset form
   useEffect(() => {
     if (movieToEdit) {
-      setValue('title', movieToEdit.title)
-      setValue('duration', movieToEdit.duration)
-      setValue('status', movieToEdit.status)
-      setValue('releaseDate', new Date(movieToEdit.releaseDate).toISOString().split('T')[0])
-      setValue('description', movieToEdit.description || '')
-      setValue('trailerUrl', movieToEdit.trailerUrl || '')
-      setValue('posterUrl', movieToEdit.posterUrl || '')
+      reset({
+        ...movieToEdit,
+        releaseDate: movieToEdit.releaseDate ? new Date(movieToEdit.releaseDate).toISOString().split('T')[0] : '',
+        // Map các trường array nếu có, nếu null thì về mảng rỗng
+        actors: movieToEdit.actors || [],
+        genres: movieToEdit.genres || [], // Giả sử BE trả về mảng ID, nếu trả về object thì cần map về ID
+        subtitles: movieToEdit.subtitles || [],
+        director: movieToEdit.director || '',
+        language: movieToEdit.language || '',
+      } as any) // Cast any vì DTO có thể chưa khớp hoàn toàn
+      
       setPreviewUrl(movieToEdit.posterUrl || '')
       setSelectedFile(null)
     } else {
@@ -61,78 +89,86 @@ export function MovieFormDialog({ open, onOpenChange, movieToEdit }: MovieFormDi
         duration: 0,
         status: 'Sắp chiếu',
         rating: 'P',
+        description: '',
+        director: '',
+        actors: [],
+        genres: [],
+        language: '',
+        subtitles: [],
       })
       setPreviewUrl('')
       setSelectedFile(null)
     }
-  }, [movieToEdit, open, reset, setValue])
+  }, [movieToEdit, open, reset])
 
-  // Handle file selection
+  // --- Helpers xử lý Array Input (Actors, Subtitles) ---
+  const handleAddArrayItem = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    field: 'actors' | 'subtitles'
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const val = e.currentTarget.value.trim()
+      if (val) {
+        const current = getValues(field) || []
+        if (!current.includes(val)) {
+          setValue(field, [...current, val])
+        }
+        e.currentTarget.value = ''
+      }
+    }
+  }
+
+  const handleRemoveArrayItem = (field: 'actors' | 'subtitles', index: number) => {
+    const current = getValues(field) || []
+    setValue(field, current.filter((_, i) => i !== index))
+  }
+
+  // --- Helper xử lý Genres (Checkbox logic) ---
+  const toggleGenre = (genreId: string) => {
+    const current = getValues('genres') || []
+    if (current.includes(genreId)) {
+      setValue('genres', current.filter(id => id !== genreId))
+    } else {
+      setValue('genres', [...current, genreId])
+    }
+  }
+
+  // --- File Handling (Giữ nguyên logic cũ) ---
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Vui lòng chọn file ảnh!')
-        return
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Kích thước file không được vượt quá 5MB!')
-        return
-      }
-
+      if (!file.type.startsWith('image/')) return alert('Vui lòng chọn file ảnh!')
+      if (file.size > 5 * 1024 * 1024) return alert('Kích thước file quá 5MB!')
       setSelectedFile(file)
-
-      // Create preview URL
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string)
-      }
+      reader.onloadend = () => setPreviewUrl(reader.result as string)
       reader.readAsDataURL(file)
     }
   }
 
-  // Clear selected file
-  const clearFile = () => {
-    setSelectedFile(null)
-    setPreviewUrl(posterUrl || '')
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  // Upload poster after creating/updating movie
   const uploadPosterIfNeeded = async (movieId: string) => {
     if (selectedFile) {
       try {
-        const result = await uploadPosterMutation.mutateAsync({
-          movieId,
-          file: selectedFile,
-        })
-        // Update posterUrl with the uploaded URL
-        if (result?.data?.url) {
-          setValue('posterUrl', result.data.url)
-        }
+        const result = await uploadPosterMutation.mutateAsync({ movieId, file: selectedFile })
+        if (result?.data?.url) setValue('posterUrl', result.data.url)
       } catch (error) {
         console.error('Upload poster error:', error)
       }
     }
   }
 
-  const onSubmit = async (data: MovieCreateDTO) => {
+  const onSubmit = async (data: MovieFormValues) => {
     try {
+      // Ép kiểu về DTO chuẩn nếu cần thiết trước khi gửi
+      const submitData = { ...data } as MovieCreateDTO
+
       if (isEditMode && movieToEdit) {
-        // Update movie first
-        await updateMutation.mutateAsync({ id: movieToEdit._id, data })
-        // Then upload poster if file is selected
+        await updateMutation.mutateAsync({ id: movieToEdit._id, data: submitData })
         await uploadPosterIfNeeded(movieToEdit._id)
         onOpenChange(false)
       } else {
-        // Create movie first
-        const result = await createMutation.mutateAsync(data)
-        // Then upload poster if file is selected
+        const result = await createMutation.mutateAsync(submitData)
         if (result?.data?._id) {
           await uploadPosterIfNeeded(result.data._id)
         }
@@ -143,154 +179,206 @@ export function MovieFormDialog({ open, onOpenChange, movieToEdit }: MovieFormDi
     }
   }
 
-  const isLoading =
-    createMutation.isPending || updateMutation.isPending || uploadPosterMutation.isPending
+  const isLoading = createMutation.isPending || updateMutation.isPending || uploadPosterMutation.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-50 text-gray-900">
+      <DialogContent className="w-fit! max-w-[95vw]! overflow-y-auto! bg-white! text-gray-900!">
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Cập nhật phim' : 'Thêm phim mới'}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label>Tên phim</Label>
-              <Input {...register('title', { required: true })} placeholder="Nhập tên phim..." />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* CỘT TRÁI: Thông tin cơ bản */}
+            <div className="space-y-4">
               <div>
-                <Label>Thời lượng (phút)</Label>
-                <Input type="number" {...register('duration', { valueAsNumber: true })} />
+                <Label>Tên phim <span className="text-red-500">*</span></Label>
+                <Input {...register('title', { required: true })} placeholder="Nhập tên phim..." />
               </div>
-              <div>
-                <Label>Ngày phát hành</Label>
-                <Input type="date" {...register('releaseDate')} />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Trạng thái</Label>
-                <Select
-                  onValueChange={(val: any) => setValue('status', val)}
-                  defaultValue={movieToEdit?.status || 'Sắp chiếu'}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sắp chiếu">Sắp chiếu</SelectItem>
-                    <SelectItem value="Đang chiếu">Đang chiếu</SelectItem>
-                    <SelectItem value="Ngừng chiếu">Ngừng chiếu</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Rating</Label>
-                <Select
-                  onValueChange={(val: any) => setValue('rating', val)}
-                  defaultValue={movieToEdit?.rating || 'P'}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn Rating" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="P">P - Mọi lứa tuổi</SelectItem>
-                    <SelectItem value="C13">C13 - 13+</SelectItem>
-                    <SelectItem value="C16">C16 - 16+</SelectItem>
-                    <SelectItem value="C18">C18 - 18+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* ✨ NEW: Upload Poster Section */}
-            <div className="space-y-2">
-              <Label>Poster phim</Label>
-
-              {/* Preview */}
-              {previewUrl && (
-                <div className="relative w-40 h-56 rounded-lg overflow-hidden border-2 border-gray-300">
-                  <ImageWithFallback
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  {selectedFile && (
-                    <button
-                      type="button"
-                      onClick={clearFile}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Đạo diễn</Label>
+                  <Input {...register('director')} placeholder="Ví dụ: Christopher Nolan" />
                 </div>
-              )}
-
-              {/* Upload Button */}
-              <div className="flex gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-2"
-                >
-                  <Upload size={16} />
-                  {selectedFile ? 'Chọn ảnh khác' : 'Chọn ảnh từ máy'}
-                </Button>
-                {selectedFile && (
-                  <span className="text-sm text-gray-600 self-center">{selectedFile.name}</span>
-                )}
+                <div>
+                  <Label>Ngôn ngữ gốc</Label>
+                  <Input {...register('language')} placeholder="Ví dụ: English" />
+                </div>
               </div>
 
-              {/* Manual URL Input (fallback) */}
-              <div className="pt-2">
-                <Label className="text-sm text-gray-500">Hoặc nhập URL poster</Label>
-                <Input
-                  {...register('posterUrl')}
-                  placeholder="https://example.com/poster.jpg"
-                  onChange={e => {
-                    setValue('posterUrl', e.target.value)
-                    if (e.target.value && !selectedFile) {
-                      setPreviewUrl(e.target.value)
-                    }
-                  }}
+              {/* Actors Input (Tags) */}
+              <div>
+                <Label>Diễn viên (Nhấn Enter để thêm)</Label>
+                <Input 
+                  placeholder="Nhập tên diễn viên..." 
+                  onKeyDown={(e) => handleAddArrayItem(e, 'actors')}
                 />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {watchedActors?.map((actor, idx) => (
+                    <div key={idx} className="bg-slate-100 border px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                      {actor}
+                      <button type="button" onClick={() => handleRemoveArrayItem('actors', idx)} className="text-gray-500 hover:text-red-500">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subtitles Input (Tags) */}
+              <div>
+                <Label>Phụ đề (Nhấn Enter để thêm)</Label>
+                <Input 
+                  placeholder="Nhập ngôn ngữ phụ đề..." 
+                  onKeyDown={(e) => handleAddArrayItem(e, 'subtitles')}
+                />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {watchedSubtitles?.map((sub, idx) => (
+                    <div key={idx} className="bg-slate-100 border px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                      {sub}
+                      <button type="button" onClick={() => handleRemoveArrayItem('subtitles', idx)} className="text-gray-500 hover:text-red-500">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Thời lượng (phút)</Label>
+                  <Input type="number" {...register('duration', { valueAsNumber: true })} />
+                </div>
+                <div>
+                  <Label>Ngày phát hành</Label>
+                  <Input type="date" {...register('releaseDate')} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Trạng thái</Label>
+                  <Select
+                    onValueChange={(val: any) => setValue('status', val)}
+                    value={watch('status')}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sắp chiếu">Sắp chiếu</SelectItem>
+                      <SelectItem value="Đang chiếu">Đang chiếu</SelectItem>
+                      <SelectItem value="Ngừng chiếu">Ngừng chiếu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Rating</Label>
+                  <Select
+                    onValueChange={(val: any) => setValue('rating', val)}
+                    value={watch('rating')}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P">P - Mọi lứa tuổi</SelectItem>
+                      <SelectItem value="C13">C13 - 13+</SelectItem>
+                      <SelectItem value="C16">C16 - 16+</SelectItem>
+                      <SelectItem value="C18">C18 - 18+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
+            {/* CỘT PHẢI: Genres, Ảnh, Trailer, Mô tả */}
+            <div className="space-y-4">
+               {/* Genres Selection */}
+               <div>
+                <Label className="mb-2 block">Thể loại</Label>
+                <div className="border rounded-md p-3 h-40 overflow-y-auto grid grid-cols-2 gap-2 bg-gray-50/50">
+                  {genreData?.items?.map((genre) => {
+                     const isSelected = watchedGenres?.includes(genre._id)
+                     return (
+                      <div 
+                        key={genre._id} 
+                        onClick={() => toggleGenre(genre._id)}
+                        className={`
+                          cursor-pointer flex items-center gap-2 p-2 rounded border transition-all text-sm
+                          ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-100 hover:border-gray-300'}
+                        `}
+                      >
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                          {isSelected && <span className="text-white text-[10px]">✓</span>}
+                        </div>
+                        <span className="truncate">{genre.name}</span>
+                      </div>
+                     )
+                  })}
+                  {!genreData?.items?.length && <p className="text-sm text-gray-400 col-span-2 text-center py-4">Chưa có thể loại nào</p>}
+                </div>
+              </div>
+
+              {/* Upload Poster */}
+              <div className="space-y-2">
+                <Label>Poster phim</Label>
+                <div className="flex gap-4 items-start">
+                  <div className="relative w-32 h-44 shrink-0 bg-gray-100 rounded-lg overflow-hidden border">
+                    {previewUrl ? (
+                      <ImageWithFallback src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full text-gray-400">
+                        <ImageIcon size={24} />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-col gap-2">
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                      <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="w-full">
+                        <Upload size={14} className="mr-2" /> Chọn ảnh
+                      </Button>
+                      {selectedFile && <Button type="button" variant="ghost" size="sm" onClick={() => { setSelectedFile(null); setPreviewUrl(posterUrl || ''); }} className="text-red-500 hover:text-red-600 h-8">Hủy chọn</Button>}
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Hoặc URL ảnh</Label>
+                      <Input 
+                        {...register('posterUrl')} 
+                        placeholder="https://..." 
+                        className="h-8 text-sm"
+                        onChange={e => {
+                          setValue('posterUrl', e.target.value)
+                          if (!selectedFile) setPreviewUrl(e.target.value)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+             
+            </div>
+          </div>
+          <div className="mt-6 space-y-5 border-t pt-5">
             <div>
-              <Label>Trailer URL</Label>
-              <Input {...register('trailerUrl')} placeholder="Link trailer..." />
+              <Label className="mb-1.5 block">Trailer URL</Label>
+              <Input {...register('trailerUrl')} placeholder="Link trailer Youtube..." className="w-full" />
             </div>
 
             <div>
-              <Label>Mô tả</Label>
-              <Textarea
-                {...register('description')}
-                placeholder="Nhập mô tả phim..."
-                className="h-24"
+              <Label className="mb-1.5 block">Mô tả</Label>
+              <Textarea 
+                {...register('description')} 
+                placeholder="Tóm tắt nội dung phim..." 
+                className="h-24 resize-none w-full" 
               />
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isLoading} variant="default">
-              {isLoading ? 'Đang lưu...' : isEditMode ? 'Cập nhật' : 'Thêm mới'}
+          <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Đang xử lý...' : isEditMode ? 'Cập nhật' : 'Thêm mới'}
             </Button>
           </div>
         </form>

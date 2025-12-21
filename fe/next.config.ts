@@ -17,10 +17,7 @@ const nextConfig: NextConfig = {
     }
     return config
   },
-  experimental: {
-    // @ts-expect-error - React Compiler is experimental
-    reactCompiler: true,
-  },
+  reactCompiler: true,
 }
 
 export default nextConfig
