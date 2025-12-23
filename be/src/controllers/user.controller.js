@@ -43,6 +43,57 @@ const userController = {
     }
   },
 
+  // Verification CCCD Demo
+  verifyAge: async (req, res) => {
+    try {
+      const { demo_cccd } = req.body;
+
+      if (!demo_cccd) {
+          return errorResponse(res, "Vui lòng nhập Demo CCCD", 400);
+      }
+
+      // Random verified age from 10 to 100
+      const verifiedLevel = Math.floor(Math.random() * (100 - 10 + 1)) + 10;
+      
+      const user = await User.findById(req.userId);
+      if (!user) {
+          return errorResponse(res, "Người dùng không tồn tại", 404);
+      }
+
+      user.verified_age_level = verifiedLevel;
+      user.age_verified_at = new Date();
+      await user.save();
+
+      return successResponse(res, {
+          verified_age_level: verifiedLevel,
+          age_verified_at: user.age_verified_at
+      }, "Xác minh độ tuổi thành công");
+      
+    } catch (error) {
+       console.error("Verify age error:", error);
+       return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
+  // Get Verified Age Status
+  getAgeStatus: async (req, res) => {
+    try {
+      const user = await User.findById(req.userId).select("verified_age_level age_verified_at");
+      if (!user) {
+        return errorResponse(res, "Người dùng không tồn tại", 404);
+      }
+
+      return successResponse(res, {
+        verified_age_level: user.verified_age_level,
+        age_verified_at: user.age_verified_at,
+        is_verified: !!user.verified_age_level
+      });
+    } catch (error) {
+       console.error("Get age status error:", error);
+       return errorResponse(res, "Lỗi server", 500);
+    }
+  },
+
   // Lấy thống kê chi tiêu của chính user (Customer)
   getSpendingStats: async (req, res) => {
     try {

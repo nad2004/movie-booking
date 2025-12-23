@@ -28,6 +28,7 @@ import voucherController from "../controllers/voucher.controller.js";
 import workScheduleController from "../controllers/workSchedule.controller.js";
 
 // Import middleware
+import { checkAge } from "../middlewares/age-check.middleware.js";
 import { authenticateToken, authorize, requireActiveShift } from "../middlewares/auth.middleware.js";
 import {
   bookingRateLimiter,
@@ -60,6 +61,8 @@ router.post("/auth/google-login", authController.googleLogin);
 router.post("/auth/forgot-password", passwordResetRateLimiter, authController.forgotPassword);
 router.post("/auth/reset-password", passwordResetRateLimiter, authController.resetPassword);
 router.post("/auth/set-password", authenticateToken, authController.setPassword);
+
+
 
 router.get("/movies", movieController.getAllMovies);
 router.get("/movies/now-showing", movieController.getNowShowingMovies);
@@ -99,12 +102,14 @@ router.post("/vouchers/verify", voucherController.verifyVoucher);
 // User routes (Customer)
 router.get("/auth/me", authenticateToken, authController.getCurrentUser);
 router.put("/auth/change-password", authenticateToken, authController.changePassword);
+router.post("/user/verify-age", authenticateToken, userController.verifyAge);
+router.get("/user/age-status", authenticateToken, userController.getAgeStatus);
 router.put("/users/profile", authenticateToken, userController.updateProfile);
 router.get("/users/loyalty-points", authenticateToken, userController.getLoyaltyPoints);
 router.get("/users/spending-stats", authenticateToken, userController.getSpendingStats);
 
 //  FIX #5 & #9: Add validation and rate limiting for bookings
-router.post("/bookings", authenticateToken, bookingRateLimiter, validateBookingInput, bookingController.createBooking);
+router.post("/bookings", authenticateToken, bookingRateLimiter, validateBookingInput, checkAge, bookingController.createBooking);
 router.get("/bookings/my-bookings", authenticateToken, bookingController.getMyBookings);
 router.get("/bookings/code/:bookingCode", bookingController.getBookingByCode);
 router.get("/bookings/:id", authenticateToken, validateObjectId("id"), bookingController.getBookingById);

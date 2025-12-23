@@ -279,6 +279,26 @@ const movieController = {
       if (movieData.subtitles && typeof movieData.subtitles === "object" && !Array.isArray(movieData.subtitles)) {
         movieData.subtitles = Object.values(movieData.subtitles);
       }
+      if (movieData.metaKeywords && typeof movieData.metaKeywords === "object" && !Array.isArray(movieData.metaKeywords)) {
+        movieData.metaKeywords = Object.values(movieData.metaKeywords);
+      }
+      // Handle case where metaKeywords might be stringified JSON or weird format from Swagger
+      if (movieData.metaKeywords) {
+          if (typeof movieData.metaKeywords === "string") {
+              try {
+                  const parsed = JSON.parse(movieData.metaKeywords);
+                  if (Array.isArray(parsed)) movieData.metaKeywords = parsed;
+                  else movieData.metaKeywords = [movieData.metaKeywords];
+              } catch (e) {
+                  movieData.metaKeywords = [movieData.metaKeywords];
+              }
+          }
+          if (Array.isArray(movieData.metaKeywords)) {
+              // Filter out objects or meaningless strings
+              movieData.metaKeywords = movieData.metaKeywords
+                  .filter(k => typeof k === 'string' && k.trim() !== '' && k !== '[{}]' && k !== '{}');
+          }
+      }
 
       if (movieData.trailerUrl) {
         movieData.trailerUrl = normalizeYoutubeTrailerUrl(movieData.trailerUrl);
@@ -331,6 +351,26 @@ const movieController = {
       }
       if (updateData.subtitles && typeof updateData.subtitles === "object" && !Array.isArray(updateData.subtitles)) {
         updateData.subtitles = Object.values(updateData.subtitles);
+      }
+      if (updateData.metaKeywords && typeof updateData.metaKeywords === "object" && !Array.isArray(updateData.metaKeywords)) {
+        updateData.metaKeywords = Object.values(updateData.metaKeywords);
+      }
+      // Handle case where metaKeywords might be stringified JSON or weird format from Swagger
+      if (updateData.metaKeywords) {
+          if (typeof updateData.metaKeywords === "string") {
+              try {
+                  const parsed = JSON.parse(updateData.metaKeywords);
+                  if (Array.isArray(parsed)) updateData.metaKeywords = parsed;
+                  else updateData.metaKeywords = [updateData.metaKeywords];
+              } catch (e) {
+                  updateData.metaKeywords = [updateData.metaKeywords];
+              }
+          }
+          if (Array.isArray(updateData.metaKeywords)) {
+              // Filter out objects or meaningless strings
+              updateData.metaKeywords = updateData.metaKeywords
+                  .filter(k => typeof k === 'string' && k.trim() !== '' && k !== '[{}]' && k !== '{}');
+          }
       }
 
       // Extract genre IDs if genres are objects

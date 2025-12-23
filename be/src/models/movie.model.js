@@ -160,7 +160,7 @@ const movieSchema = new Schema(
 );
 
 // === INDEXES ===
-movieSchema.index({ title: "text", description: "text", director: "text" });
+movieSchema.index({ title: "text", description: "text", director: "text" }, { language_override: "dummy_language_field" });
 movieSchema.index({ status: 1, releaseDate: -1 });
 movieSchema.index({ genres: 1, status: 1 });
 movieSchema.index({ averageRating: -1, totalReviews: -1 });

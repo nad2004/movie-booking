@@ -182,6 +182,15 @@ const userSchema = new Schema(
       type: Date,
     },
 
+    verified_age_level: {
+      type: Number,
+      default: null,
+    },
+    age_verified_at: {
+      type: Date,
+      default: null,
+    },
+
     refreshToken: {
       type: String,
     },
