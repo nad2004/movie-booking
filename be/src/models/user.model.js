@@ -233,6 +233,10 @@ userSchema.virtual("isAdmin").get(function () {
   return ["admin", "super-admin"].includes(this.role);
 });
 
+userSchema.virtual("isAgeVerified").get(function () {
+  return this.verified_age_level !== null && this.verified_age_level !== undefined;
+});
+
 userSchema.virtual("nextMembershipLevel").get(function () {
   if (this.membershipLevel === "Bạc" && this.loyaltyPoints >= 1000) return "Vàng";
   if (this.membershipLevel === "Vàng" && this.loyaltyPoints >= 5000) return "Bạch kim";
