@@ -49,6 +49,7 @@ export interface User {
   reviewsCount?: number
   isAdmin?: boolean
   nextMembershipLevel?: string
+  isAgeVerified: string
 }
 
 export interface PaginatedUserResponse {

@@ -6,7 +6,7 @@ import { ProfileInfo } from './components/ProfileInfo'
 import { ProfileSecurity } from './components/ProfileSecurity'
 import { ProfilePreferences } from './components/ProfilePreferences'
 import { Loader2 } from 'lucide-react'
-
+import { ProfileVerification } from './components/ProfileVerification'
 export default function ProfilePage() {
   const { user, isLoading, updateProfile, togglePreference } = useProfile()
 
@@ -48,7 +48,10 @@ export default function ProfilePage() {
           <div className="flex-1 space-y-6 w-full">
             <ProfileInfo user={user} onUpdate={updateProfile} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className='flex flex-col gap-3'>
               <ProfileSecurity user={user} />
+              <ProfileVerification user={user} />
+              </div>
               <ProfilePreferences preferences={user.preferences} onToggle={togglePreference} />
             </div>
           </div>

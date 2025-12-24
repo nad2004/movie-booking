@@ -76,3 +76,10 @@ export async function setPasswordApi(data: SetPasswordDTO) {
   const res = await api.post('/auth/set-password', data)
   return res.data
 }
+export interface VerifyAgeDTO {
+  demo_cccd: string;
+}
+export async function verifyAgeApi(data: VerifyAgeDTO) {
+  const res = await api.post('/user/verify-age', data);
+  return res.data;
+}
