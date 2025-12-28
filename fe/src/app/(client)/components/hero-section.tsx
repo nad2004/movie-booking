@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Play, Info, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { Play, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Movie } from '@/types/movie'
@@ -19,7 +19,7 @@ function HeroSkeleton() {
     <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
       <div className="absolute inset-0">
         {/* Background skeleton */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse" />
+        <div className="absolute inset-0 bg-linear-to-br from-gray-800 to-gray-900 animate-pulse" />
 
         {/* Overlay gradients */}
         <div className="absolute inset-0 bg-linear-to-r from-background via-background/85 to-transparent" />
@@ -106,19 +106,19 @@ export function HeroSection({ movies, isLoading = false }: MovieSectionProps) {
           className="absolute inset-0"
         >
           {/* Background */}
-          <div className="absolute inset-0 overflow-hidden aspect-2/3">
+          <div className="absolute inset-0 overflow-hidden"> 
             {/* Next.js Image as background */}
             <Image
               src={currentMovie.posterUrl || '/placeholder-poster.jpg'}
               alt={currentMovie.title || 'Movie poster'}
               fill
-              className="object-cover"
+              className="object-fill" 
               priority
-              quality={75}
+              quality={100}
               sizes="100vw"
             />
 
-            {/* Overlay gradients */}
+            {/* Overlay gradients giữ nguyên */}
             <div className="absolute inset-0 bg-linear-to-r from-background via-background/85 to-transparent" />
             <div className="absolute inset-0 bg-linear-to-t from-background/60 via-transparent to-transparent" />
           </div>

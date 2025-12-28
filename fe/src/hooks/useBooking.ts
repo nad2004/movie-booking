@@ -299,7 +299,6 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
     // Không cho quay lại từ bước 5 (đã thanh toán)
     if (currentStep === 5) return
     // Không cho quay lại step 1 nếu có preSelectedScheduleId
-    if (currentStep === 2 && preSelectedScheduleId) return
     if (currentStep > 1) setCurrentStep(prev => prev - 1)
   }
 

@@ -17,7 +17,7 @@ export interface ScheduleCreateDTO {
   roomId: string
   roomName: string // Backend yêu cầu gửi cả tên
   roomType: '2D' | '3D' | 'IMAX'
-  showDate: string // YYYY-MM-DD
+  date: string // YYYY-MM-DD
   startTime: string // HH:mm
   endTime: string // HH:mm
   ticketPrices: TicketPriceDTO

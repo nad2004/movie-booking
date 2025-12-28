@@ -54,7 +54,7 @@ export default function ScheduleManagementPage() {
     isLoading,
     isFetching,
   } = useSchedules({
-    showDate: formattedDate,
+    date: formattedDate,
     page: currentPage,
     limit: itemsPerPage,
     includePast: true,

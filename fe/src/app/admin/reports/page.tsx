@@ -82,7 +82,7 @@ export default function Performance() {
   const [comparisonEmployeeIds, setComparisonEmployeeIds] = useState<string[]>([])
 
   // 🟢 Fetch staff users
-  const { data: usersData, isLoading: isLoadingStaff } = useUsers({
+  const { data: usersData, isFetching: isLoadingStaff } = useUsers({
     role: 'staff',
     limit: 100, // Get all staff
   })
@@ -132,7 +132,7 @@ export default function Performance() {
           onYearChange={setTopPerformersYear}
         />
 
-        {kpiData ? (
+        {isLoadingKPI ? (
           <Card className="p-12">
             <div className="flex flex-col items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
