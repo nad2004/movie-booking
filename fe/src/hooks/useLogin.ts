@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import Cookies from 'js-cookie'
 import { useNotification } from '@/providers/NotificationProvider'
 import { api } from '@/lib/api/axios'
+import { queryClient } from '@/lib/queryClient'
 
 export const useLogin = () => {
   const router = useRouter()
@@ -50,7 +51,7 @@ export const useLogin = () => {
       }
 
       toast.success(response.message || 'Đăng nhập thành công!')
-
+      queryClient.invalidateQueries({ queryKey: ['me'] })
       // 4. QUAN TRỌNG: Refresh để Server Components nhận diện Cookie mới
       router.refresh()
 

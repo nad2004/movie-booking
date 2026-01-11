@@ -48,7 +48,7 @@ export function VerifyAgeDialog({ open, onOpenChange }: VerifyAgeDialogProps) {
         <DialogHeader>
           <DialogTitle>Xác minh danh tính</DialogTitle>
           <DialogDescription>
-            Nhập số Căn cước công dân (Demo) để xác minh độ tuổi của bạn.
+            Nhập số Căn cước công dân để xác minh độ tuổi của bạn.
           </DialogDescription>
         </DialogHeader>
         
