@@ -258,7 +258,7 @@ export function useBooking({ movieId, preSelectedScheduleId }: UseBookingProps) 
         return
       }
       if (selectedSeats.length > MAX_SEATS) {
-        toast.error(`Bạn chỉ được chọn tối đa ${MAX_SEATS} ghế`)
+        toast.error(`Bạn chỉ được chọn tối đa ${MAX_SEATS} ghế`, { position: 'top-right' })
         return
       }
     }

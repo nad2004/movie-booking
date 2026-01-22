@@ -34,7 +34,7 @@ const orderedProductSchema = new Schema({
   productName: { type: String, required: true }, // Denormalize để tránh populate
   quantity: { type: Number, required: true, min: 1 },
   priceAtBooking: { type: Number, required: true }, // Giá tại thời điểm đặt
-  size: { type: String, enum: ["S", "M", "L", "N/A"], default: "N/A" },
+  size: { type: String, enum: ["S", "M", "L", "XL", "N/A"], default: "N/A" },
   _id: false,
 });
 

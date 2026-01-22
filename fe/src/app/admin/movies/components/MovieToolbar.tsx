@@ -52,7 +52,7 @@ export function MovieToolbar({ params, setParams, onOpenAdd }: MovieToolbarProps
           value={params.sortBy || 'createdAt'}
           onValueChange={val => setParams({ ...params, sortBy: val })}
         >
-          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200">
+          <SelectTrigger className="w-40 bg-gray-50 border-gray-200">
             <SelectValue placeholder="Sắp xếp" />
           </SelectTrigger>
           <SelectContent className="bg-gray-50 text-gray-900 border-gray-200">

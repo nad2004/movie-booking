@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-export default function AdminPage({ children }: { children: React.ReactNode }) {
+export default function AdminPage() {
   redirect('/admin/dashboard')
   return <></>
 }

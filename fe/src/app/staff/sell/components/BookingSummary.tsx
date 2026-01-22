@@ -99,7 +99,7 @@ export function BookingSummary({
             >
               <Banknote className="w-4 h-4" /> Tiền mặt
             </button>
-            <button
+            {/* <button
               onClick={() => setPaymentMethod('VNPAY')}
               className={`p-2 rounded-lg border text-xs font-medium flex flex-col items-center gap-1 transition-all ${
                 paymentMethod === 'VNPAY'
@@ -108,7 +108,7 @@ export function BookingSummary({
               }`}
             >
               <QrCode className="w-4 h-4" /> QR Code
-            </button>
+            </button> */}
           </div>
         </div>
 

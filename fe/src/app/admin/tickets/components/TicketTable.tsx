@@ -53,7 +53,7 @@ export function TicketTable({ bookings, isLoading, onEditStatus, onDelete }: Tic
             <TableHead>Ghế</TableHead>
             <TableHead>Tổng Tiền</TableHead>
             <TableHead>Trạng Thái</TableHead>
-            <TableHead className="text-right">Thao Tác</TableHead>
+            {/* <TableHead className="text-right">Thao Tác</TableHead> */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -87,7 +87,7 @@ export function TicketTable({ bookings, isLoading, onEditStatus, onDelete }: Tic
                   {ticket.status}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">
+              {/* <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
                     size="icon"
@@ -108,7 +108,7 @@ export function TicketTable({ bookings, isLoading, onEditStatus, onDelete }: Tic
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-              </TableCell>
+              </TableCell> */}
             </TableRow>
           ))}
         </TableBody>

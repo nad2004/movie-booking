@@ -73,12 +73,6 @@ export function useCreateConcession() {
       // Invalidate products query to update stock
       queryClient.invalidateQueries({ queryKey: ['products'] })
 
-      console.log('✅ Đơn hàng đã được tạo thành công:', {
-        mã_đơn: data.data.concessionId,
-        tổng_tiền: data.data.finalAmount.toLocaleString('vi-VN') + 'đ',
-        khách_hàng: data.data.customerInfo.fullName,
-        sản_phẩm: data.data.products.length,
-      })
     },
     onError: (error: any) => {
       console.error('❌ Lỗi khi tạo đơn hàng:', error.response?.data?.message || error.message)

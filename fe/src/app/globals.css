@@ -247,3 +247,22 @@
 .corner-glow {
   animation: corner-glow 2s ease-in-out infinite;
 }
+[data-nextjs-toast],
+[data-nextjs-toast-wrapper] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Ẩn cả Portal hiển thị lỗi (để chắc chắn không hiện đè lên UI) */
+nextjs-portal {
+    display: none !important;
+}
+
+/* Ẩn bóng mờ overlay nếu có */
+[data-nextjs-dialog-overlay] {
+    display: none !important;
+}

@@ -119,11 +119,12 @@ export default function ConcessionSalesPage() {
 
       showSuccess(
         'Đơn hàng thành công!',
-        `Mã đơn: ${result.data.concessionId} - Tổng: ${result.data.finalAmount.toLocaleString('vi-VN')}đ`
+        `Mã đơn: ${result.data.transaction.transactionId} - Tổng: ${result.data.transaction.totalAmount}đ`
       )
 
       clearCart()
     } catch (error: any) {
+      console.log('Create concession error:', error)
       showError(
         'Tạo đơn thất bại',
         error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại'
@@ -290,11 +291,11 @@ export default function ConcessionSalesPage() {
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
                       <p className="text-xs text-gray-500">
-                        {item.price.toLocaleString('vi-VN')}đ × {item.quantity}
+                        {item.price}đ × {item.quantity}
                       </p>
                     </div>
                     <p className="font-semibold">
-                      {(item.price * item.quantity).toLocaleString('vi-VN')}đ
+                      {(item.price * item.quantity)}đ
                     </p>
                   </div>
                 ))}
@@ -303,7 +304,7 @@ export default function ConcessionSalesPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-semibold">Tổng cộng</span>
                     <span className="text-lg font-bold text-amber-600">
-                      {getTotalAmount().toLocaleString('vi-VN')}đ
+                      {getTotalAmount()}đ
                     </span>
                   </div>
                 </div>

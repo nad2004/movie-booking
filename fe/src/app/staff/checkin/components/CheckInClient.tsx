@@ -187,7 +187,7 @@ export function CheckInClient() {
   return (
     <div className="space-y-8 p-6">
       {/* Test Mode Banner */}
-      {TEST_MODE && (
+      {/* {TEST_MODE && (
         <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-xl p-4">
           <p className="text-yellow-900 dark:text-yellow-100 font-semibold">🧪 TEST MODE ACTIVE</p>
           <ul className="text-sm text-yellow-800 dark:text-yellow-200 mt-2 space-y-1">
@@ -196,7 +196,7 @@ export function CheckInClient() {
             <li>• All pending shifts available for check-in</li>
           </ul>
         </div>
-      )}
+      )} */}
 
       {/* Header */}
       <div>

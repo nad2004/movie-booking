@@ -185,10 +185,10 @@ export function TheaterFormDialog({ open, onOpenChange, theaterToEdit }: Theater
           </div>
 
           {/* Mock input cho Ảnh (Có thể nâng cấp upload file sau) */}
-          <div>
+          {/* <div>
             <Label>Ảnh / Logo Rạp (URL)</Label>
             <Input placeholder="https://..." className="mt-1.5" />
-          </div>
+          </div> */}
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="default" onClick={() => onOpenChange(false)}>

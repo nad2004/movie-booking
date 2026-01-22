@@ -132,15 +132,6 @@ function ComplaintCard({
                     </Button>
                   </>
                 )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={isDeleting}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
               </div>
             </div>
 
