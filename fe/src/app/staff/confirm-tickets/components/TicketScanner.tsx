@@ -67,6 +67,7 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
     setIsFetching(true)
     try {
       const bookingData = await getBookingByCode(bookingCode)
+      console.log('Fetched booking data:', bookingData)
       onScan(bookingData)
     } catch (error: any) {
       showError('Lỗi!', error.message || 'Không tìm thấy vé')
@@ -97,18 +98,20 @@ export function TicketScanner({ onScan, isLoading }: TicketScannerProps) {
       const controls = await readerRef.current.decodeFromVideoDevice(
         selectedCameraId || undefined,
         videoRef.current,
-        (result, error) => {
+        async (result, error) => {
           if (result) {
             const scannedText = result.getText()
             try {
               // Try to parse as JSON (QR code contains full booking object)
               const qrData = JSON.parse(scannedText)
-
+              console.log('Scanned QR data:', qrData) 
               // Extract bookingCode from QR data
               const bookingCode = qrData.bookingCode || qrData._id
 
               if (bookingCode) {
-                getBookingByCode(bookingCode)
+                const bookingData = await getBookingByCode(bookingCode)
+                console.log('Fetched booking data from QR:', bookingData)
+                onScan(bookingData)
                 stopCamera()
               } else {
                 showError('Lỗi!', 'Mã QR không hợp lệ')

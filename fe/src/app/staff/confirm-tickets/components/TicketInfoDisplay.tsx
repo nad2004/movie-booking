@@ -11,6 +11,7 @@ interface TicketInfoDisplayProps {
 }
 
 export function TicketInfoDisplay({ ticket, onConfirm, isConfirming }: TicketInfoDisplayProps) {
+  console.log('Rendering TicketInfoDisplay with ticket:', ticket)
   return (
     <Card className="p-6 border border-border rounded-[10px] shadow-sm hover:shadow-md transition-shadow">
       {/* Header */}

@@ -1,7 +1,7 @@
 // app/(admin)/shift-manager/components/modals/assign-staff-modal.tsx
 'use client'
 
-import { useEffect, useMemo, useCallback } from 'react'
+import { useEffect, useMemo, useCallback, useState } from 'react' // Thêm useState
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -15,21 +15,31 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+// Xóa Select imports cũ, thay bằng Command và Popover
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, Check, ChevronsUpDown } from 'lucide-react' // Thêm icons
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils' // Import cn utility
 
 // API & Types
 import { useAssignmentMutations } from '@/lib/api/shift-assignments'
 import { useUsers } from '@/lib/api/user'
-import { ShiftWithEmployees, CreateAssignmentDTO } from '@/types/shift'
+import { ShiftWithEmployees } from '@/types/shift'
+
 // Validation Schema
 const assignStaffSchema = z.object({
   userId: z.string().min(1, 'Vui lòng chọn nhân viên'),
@@ -50,8 +60,11 @@ export default function AssignStaffModal({
   selectedSchedule,
   selectedTheaterId,
 }: AssignStaffModalProps) {
-  const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'staff' })
+  const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'staff', limit: 100, isActive: true, active: true })
   const { bulkCreate } = useAssignmentMutations()
+  
+  // State quản lý đóng mở combobox
+  const [openCombobox, setOpenCombobox] = useState(false)
 
   const users = useMemo(() => usersData?.users || [], [usersData])
 
@@ -71,18 +84,17 @@ export default function AssignStaffModal({
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
-      reset({
-        userId: '',
-      })
+      reset({ userId: '' })
+      setOpenCombobox(false)
     }
   }, [open, reset])
+
   // --- Handlers ---
   const onSubmit = useCallback(
     async (data: AssignStaffFormData) => {
       if (!selectedSchedule || !selectedTheaterId) return
 
       try {
-        // Sử dụng bulk API với structure đúng theo swagger
         const payload = {
           theaterId: selectedTheaterId,
           assignments: [
@@ -130,56 +142,91 @@ export default function AssignStaffModal({
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-5 py-4">
-            {/* Select User */}
-            <div className="space-y-2">
+            {/* Select User via Combobox */}
+            <div className="space-y-2 flex flex-col">
               <Label htmlFor="userId">
                 Chọn Nhân Viên <span className="text-red-500">*</span>
               </Label>
+              
               <Controller
                 name="userId"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={isLoadingUsers}
-                  >
-                    <SelectTrigger
-                      id="userId"
-                      className={`h-12 ${errors.userId ? 'border-red-500' : ''}`}
-                    >
-                      <SelectValue placeholder="Tìm kiếm nhân viên..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {isLoadingUsers ? (
-                        <div className="flex items-center justify-center py-6">
-                          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                        </div>
-                      ) : users.length === 0 ? (
-                        <div className="text-center py-6 text-gray-400 text-sm">
-                          Không có nhân viên khả dụng
-                        </div>
-                      ) : (
-                        users.map(user => (
-                          <SelectItem key={user._id} value={user._id}>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage src={user.profilePicture} />
-                                <AvatarFallback className="text-xs">
-                                  {user.fullName.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span>
-                                {user.fullName} • {user.email}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCombobox}
+                        className={cn(
+                          "w-full justify-between h-12",
+                          !field.value && "text-muted-foreground",
+                          errors.userId && "border-red-500"
+                        )}
+                        disabled={isLoadingUsers}
+                      >
+                        {field.value
+                          ? (() => {
+                              const user = users.find((u) => u._id === field.value)
+                              return user ? (
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={user.profilePicture} />
+                                    <AvatarFallback className="text-[10px]">
+                                      {user.fullName.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span>{user.fullName}</span>
+                                </div>
+                              ) : "Chọn nhân viên..."
+                            })()
+                          : "Tìm kiếm nhân viên..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[430px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Tìm tên nhân viên..." />
+                        <CommandList>
+                          <CommandEmpty>Không tìm thấy nhân viên.</CommandEmpty>
+                          <CommandGroup>
+                            {users.map((user) => (
+                              <CommandItem
+                                key={user._id}
+                                value={user.fullName} // Search dựa trên value này
+                                onSelect={() => {
+                                  field.onChange(user._id)
+                                  setOpenCombobox(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === user._id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={user.profilePicture} />
+                                    <AvatarFallback className="text-[10px]">
+                                      {user.fullName.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex flex-col">
+                                    <span>{user.fullName}</span>
+                                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 )}
               />
+
               {errors.userId && (
                 <p className="text-xs text-red-500 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />

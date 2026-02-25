@@ -24,6 +24,7 @@ export default function ConfirmTicket() {
 
   // Handle ticket scan - now receives full Booking object from API
   const handleScanTicket = async (ticketData: TicketVerify) => {
+    
     setTicketInfo(ticketData)
   }
 
